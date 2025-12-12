@@ -5,14 +5,14 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { auth, db } from '@/lib/firebase'
-import { 
-  signInWithPhoneNumber, 
+import {
+  signInWithPhoneNumber,
   RecaptchaVerifier,
   ConfirmationResult
 } from 'firebase/auth'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import styles from './login.module.css'
-import LoadingSpinner from '@/components/LoadingSpinner'
+import MinionLoader from '@/components/MinionLoader'
 
 function LoginContent() {
   const router = useRouter()
@@ -158,7 +158,7 @@ function LoginContent() {
 
   const handleVerifyOtp = async (otpValue?: string) => {
     const otpCode = otpValue || otp.join('')
-    
+
     if (otpCode.length !== 6) {
       setError('Please enter the complete 6-digit OTP')
       return
@@ -207,14 +207,14 @@ function LoginContent() {
       }
 
       // Redirect
-      const redirectUrl = searchParams.get('redirect') || 
-                         (typeof window !== 'undefined' ? localStorage.getItem('redirectAfterLogin') : null) ||
-                         '/'
-      
+      const redirectUrl = searchParams.get('redirect') ||
+        (typeof window !== 'undefined' ? localStorage.getItem('redirectAfterLogin') : null) ||
+        '/'
+
       if (typeof window !== 'undefined') {
         localStorage.removeItem('redirectAfterLogin')
       }
-      
+
       router.push(redirectUrl)
     } catch (error: any) {
       console.error('Error verifying OTP:', error)
@@ -281,127 +281,162 @@ function LoginContent() {
 
   return (
     <div className={styles.loginPage}>
-      <div className={styles.loginContainer}>
-        {loading && (
-          <div className={styles.loadingOverlay}>
-            <LoadingSpinner message={showOtp ? 'Verifying...' : 'Sending OTP...'} />
-          </div>
-        )}
-        <div className={styles.loginHeader}>
-          <div className={styles.logo}>
-            <Link href="/">
-              <Image
-                src="/LOGO/d__1_-removebg-preview.png"
-                alt="DECZON Logo"
-                width={200}
-                height={60}
-                priority
-                style={{ objectFit: 'contain', height: 'auto', width: 'auto', maxHeight: '60px' }}
-              />
-            </Link>
-          </div>
-          <h1 className={styles.loginTitle}>Welcome Back</h1>
-          <p className={styles.loginSubtitle}>
-            {showOtp ? 'Enter the OTP sent to your phone' : 'Enter your phone number to continue'}
+      {/* Left Section - Hero Image / Branding */}
+      <div className={styles.imageSection}>
+        <div className={styles.circle1} />
+        <div className={styles.circle2} />
+        <div className={styles.brandContent}>
+          <h2 className={styles.brandTitle}>Smart Living.</h2>
+          <p className={styles.brandSubtitle}>
+            Experience the future of home automation with DECZON.
+            Seamless control, enhanced security, and ultimate comfort.
           </p>
         </div>
+      </div>
 
-        {error && (
-          <div className={styles.errorMessage}>
-            {error}
-          </div>
-        )}
+      {/* Right Section - Login Form */}
+      <div className={styles.formSection}>
+        <div className={styles.loginContainer}>
+          {loading && (
+            <div className={styles.loadingOverlay}>
+              <MinionLoader fullScreen={false} message={showOtp ? 'Verifying...' : 'Sending OTP...'} />
+            </div>
+          )}
 
-        {/* reCAPTCHA container (invisible) */}
-        <div id="recaptcha-container"></div>
-
-        {/* Phone Number Step */}
-        {!showOtp && (
-          <div className={styles.phoneStep}>
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel} htmlFor="phoneNumber">
-                Phone Number
-              </label>
-              <div className={styles.phoneInputContainer}>
-                <div className={styles.countryCode}>+91</div>
-                <input
-                  type="tel"
-                  id="phoneNumber"
-                  className={styles.formInput}
-                  placeholder="Enter your phone number"
-                  value={phoneNumber}
-                  onChange={handlePhoneChange}
-                  maxLength={10}
-                  disabled={loading}
+          <div className={styles.loginHeader}>
+            <div className={styles.logo}>
+              <Link href="/">
+                <Image
+                  src="/LOGO/d__1_-removebg-preview.png"
+                  alt="DECZON Logo"
+                  width={240}
+                  height={80}
+                  priority
+                  style={{ objectFit: 'contain', height: 'auto', width: 'auto', maxHeight: '80px' }}
                 />
+              </Link>
+            </div>
+            <h1 className={styles.loginTitle}>Welcome Back</h1>
+            <p className={styles.loginSubtitle}>
+              {showOtp ? 'Enter the verification code sent to your mobile' : 'Access your smart home dashboard securely'}
+            </p>
+          </div>
+
+          {error && (
+            <div className={styles.errorMessage}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '8px' }}>
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              {error}
+            </div>
+          )}
+
+          {/* reCAPTCHA container (invisible) */}
+          <div id="recaptcha-container"></div>
+
+          {/* Phone Number Step */}
+          {!showOtp && (
+            <div className={styles.phoneStep}>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel} htmlFor="phoneNumber">
+                  Mobile Number
+                </label>
+                <div className={styles.phoneInputContainer}>
+                  <div className={styles.countryCode}>
+                    <span>🇮🇳 +91</span>
+                  </div>
+                  <input
+                    type="tel"
+                    id="phoneNumber"
+                    className={styles.formInput}
+                    placeholder="Enter your mobile number"
+                    value={phoneNumber}
+                    onChange={handlePhoneChange}
+                    maxLength={10}
+                    disabled={loading}
+                    autoComplete="tel"
+                  />
+                </div>
+              </div>
+              <button
+                className={styles.btnPrimary}
+                onClick={handleSendOtp}
+                disabled={loading || phoneNumber.length !== 10}
+              >
+                {loading ? 'Sending Verification...' : 'Get Verification Code'}
+              </button>
+            </div>
+          )}
+
+          {/* OTP Verification Step */}
+          {showOtp && (
+            <div className={styles.otpStep}>
+              <div className={styles.formGroup}>
+                <p className={styles.loginSubtitle} style={{ textAlign: 'center', marginBottom: '24px' }}>
+                  We sent a 6-digit code to <strong>+91 {phoneNumber}</strong>
+                  <br />
+                  <a href="#" onClick={(e) => { e.preventDefault(); setShowOtp(false); }} style={{ color: '#ffc000', fontSize: '0.9em', textDecoration: 'none' }}>
+                    Change Number
+                  </a>
+                </p>
+              </div>
+
+              <div className={styles.otpInputs}>
+                {otp.map((digit, index) => (
+                  <input
+                    key={index}
+                    ref={(el) => {
+                      otpInputRefs.current[index] = el
+                    }}
+                    type="text"
+                    inputMode="numeric"
+                    className={styles.otpInput}
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleOtpChange(index, e.target.value)}
+                    onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                    disabled={loading}
+                    autoFocus={index === 0}
+                    autoComplete="one-time-code"
+                  />
+                ))}
+              </div>
+
+              <button
+                className={styles.btnPrimary}
+                onClick={() => handleVerifyOtp()}
+                disabled={loading || otp.join('').length !== 6}
+              >
+                {loading ? 'Verifying Code...' : 'Verify & Login'}
+              </button>
+
+              <div className={styles.resendOtp}>
+                <button
+                  className={`${styles.resendLink} ${resendTimer > 0 ? styles.disabled : ''}`}
+                  onClick={handleResendOtp}
+                  disabled={resendTimer > 0 || loading}
+                >
+                  Resend Code
+                </button>
+                {resendTimer > 0 && (
+                  <div className={styles.timer}>
+                    Wait {resendTimer}s to resend
+                  </div>
+                )}
               </div>
             </div>
-            <button
-              className={styles.btnPrimary}
-              onClick={handleSendOtp}
-              disabled={loading || phoneNumber.length !== 10}
-            >
-              {loading ? 'Sending OTP...' : 'Send OTP'}
-            </button>
+          )}
+
+          <div className={styles.backToHome}>
+            <Link href="/">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+              </svg>
+              Back to Home
+            </Link>
           </div>
-        )}
-
-        {/* OTP Verification Step */}
-        {showOtp && (
-          <div className={styles.otpStep}>
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>Enter OTP</label>
-              <p className={styles.loginSubtitle}>
-                We&apos;ve sent a 6-digit code to +91 {phoneNumber}
-              </p>
-            </div>
-
-            <div className={styles.otpInputs}>
-              {otp.map((digit, index) => (
-                <input
-                  key={index}
-                  ref={(el) => {
-                    otpInputRefs.current[index] = el
-                  }}
-                  type="text"
-                  className={styles.otpInput}
-                  maxLength={1}
-                  value={digit}
-                  onChange={(e) => handleOtpChange(index, e.target.value)}
-                  onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                  disabled={loading}
-                  autoFocus={index === 0}
-                />
-              ))}
-            </div>
-
-            <button
-              className={styles.btnPrimary}
-              onClick={() => handleVerifyOtp()}
-              disabled={loading || otp.join('').length !== 6}
-            >
-              {loading ? 'Verifying...' : 'Verify OTP'}
-            </button>
-
-            <div className={styles.resendOtp}>
-              <button
-                className={`${styles.resendLink} ${resendTimer > 0 ? styles.disabled : ''}`}
-                onClick={handleResendOtp}
-                disabled={resendTimer > 0 || loading}
-              >
-                Resend OTP
-              </button>
-              {resendTimer > 0 && (
-                <div className={styles.timer}>
-                  Resend OTP in {resendTimer}s
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        <div className={styles.backToHome}>
-          <Link href="/">← Back to Home</Link>
         </div>
       </div>
     </div>
@@ -413,7 +448,7 @@ export default function LoginPage() {
     <Suspense fallback={
       <div className={styles.loginPage}>
         <div className={styles.loginContainer}>
-          <LoadingSpinner message="Loading..." />
+          <MinionLoader fullScreen={false} message="Loading..." />
         </div>
       </div>
     }>
@@ -421,4 +456,3 @@ export default function LoginPage() {
     </Suspense>
   )
 }
-

@@ -39,7 +39,10 @@ interface Product {
 export default function Header() {
   const pathname = usePathname()
   const hideCategoryNav = (pathname?.startsWith('/products/') && pathname.split('/').length > 2) ||
-    (pathname?.startsWith('/services/') && pathname.split('/').length > 2)
+    (pathname?.startsWith('/services/') && pathname.split('/').length > 2) ||
+    pathname?.startsWith('/show-all-blogs') ||
+    pathname?.startsWith('/blog/') ||
+    pathname?.startsWith('/package-details')
   const [user, setUser] = useState<any>(null)
   const [userLabel, setUserLabel] = useState('Login')
   const [cartCount, setCartCount] = useState(0)
@@ -732,6 +735,7 @@ export default function Header() {
               <li className={styles.mainNavbarItem}>
                 <Link href="/products">All Categories</Link>
               </li>
+
               {categories.map((category) => (
                 <li
                   key={category.name}

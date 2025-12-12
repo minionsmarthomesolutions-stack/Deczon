@@ -6,7 +6,7 @@ import PromoSection from '@/components/PromoSection'
 import ProductsSection from '@/components/ProductsSection'
 import ServicesSection from '@/components/ServicesSection'
 import BlogSection from '@/components/BlogSection'
-import CategoryBanners from '@/components/CategoryBanners'
+
 import BackToTop from '@/components/BackToTop'
 import MinionLoader from '@/components/MinionLoader'
 import { db } from '@/lib/firebase'
@@ -17,7 +17,7 @@ export default function Home() {
   const [products, setProducts] = useState<any[]>([])
   const [services, setServices] = useState<any[]>([])
   const [banners, setBanners] = useState<any[]>([])
-  const [categoryBanners, setCategoryBanners] = useState<Record<string, any[]>>({})
+
   const [mainCategorySections, setMainCategorySections] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const loadStartTime = useRef<number | null>(null)
@@ -26,67 +26,6 @@ export default function Home() {
   useEffect(() => {
     loadData()
   }, [])
-
-  // Load category banners when mainCategorySections changes
-  useEffect(() => {
-    const loadCategoryBanners = async () => {
-      if (!db || mainCategorySections.length === 0) return
-      
-      try {
-        const categoryBannersData: Record<string, any[]> = {}
-        
-        for (const mainCategory of mainCategorySections) {
-          try {
-            // Try with status filter first
-            try {
-              const categoryBannersQuery = query(
-                collection(db, 'categoryBanners'),
-                where('status', '==', 'active'),
-                where('mainCategory', '==', mainCategory)
-              )
-              const categoryBannersSnapshot = await getDocs(categoryBannersQuery)
-              const banners = categoryBannersSnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-              })).sort((a: any, b: any) => (a.order || 0) - (b.order || 0)).slice(0, 2)
-              
-              if (banners.length > 0) {
-                categoryBannersData[mainCategory] = banners
-                console.log(`Loaded ${banners.length} banners for ${mainCategory}`)
-              }
-            } catch (statusError) {
-              // If status filter fails, try without status filter
-              console.warn(`Status filter failed for ${mainCategory}, trying without status:`, statusError)
-              const categoryBannersQuery = query(
-                collection(db, 'categoryBanners'),
-                where('mainCategory', '==', mainCategory)
-              )
-              const categoryBannersSnapshot = await getDocs(categoryBannersQuery)
-              const banners = categoryBannersSnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-              })).sort((a: any, b: any) => (a.order || 0) - (b.order || 0)).slice(0, 2)
-              
-              if (banners.length > 0) {
-                categoryBannersData[mainCategory] = banners
-                console.log(`Loaded ${banners.length} banners for ${mainCategory} (without status filter)`)
-              }
-            }
-          } catch (error) {
-            console.warn(`Error loading category banners for ${mainCategory}:`, error)
-          }
-        }
-        
-        setCategoryBanners(categoryBannersData)
-        console.log(`✅ Loaded category banners for ${Object.keys(categoryBannersData).length} categories:`, Object.keys(categoryBannersData))
-      } catch (error) {
-        console.warn('Error loading category banners:', error)
-        setCategoryBanners({})
-      }
-    }
-
-    loadCategoryBanners()
-  }, [mainCategorySections, db])
 
   const loadData = async () => {
     loadStartTime.current = Date.now()
@@ -100,7 +39,7 @@ export default function Home() {
     try {
       // Load categories structure
       let categoriesData: any = null
-      
+
       // Try loading from categories collection
       const categoriesSnapshot = await getDocs(collection(db, 'categories'))
       if (!categoriesSnapshot.empty) {
@@ -158,7 +97,7 @@ export default function Home() {
       // Load products - try multiple queries to get all products
       try {
         let allProducts: any[] = []
-        
+
         // Try to get products ordered by createdAt
         try {
           const productsQuery = query(collection(db, 'products'), orderBy('createdAt', 'desc'), limit(100))
@@ -193,7 +132,7 @@ export default function Home() {
             }
           }
         }
-        
+
         setProducts(allProducts)
         if (allProducts.length > 0) {
           console.log(`Loaded ${allProducts.length} products`)
@@ -212,7 +151,7 @@ export default function Home() {
       // Load banners - try multiple queries
       try {
         let allBanners: any[] = []
-        
+
         // Try ordered query first
         try {
           const bannersQuery = query(collection(db, 'banners'), orderBy('order', 'asc'), limit(10))
@@ -247,7 +186,7 @@ export default function Home() {
             }
           }
         }
-        
+
         setBanners(allBanners)
         if (allBanners.length > 0) {
           console.log(`Loaded ${allBanners.length} banners`)
@@ -266,7 +205,7 @@ export default function Home() {
       // Load services - try with status filter first (like HTML version)
       try {
         let allServices: any[] = []
-        
+
         // Try with status filter first (like HTML version)
         try {
           const servicesQuery = query(
@@ -320,7 +259,7 @@ export default function Home() {
             }
           }
         }
-        
+
         setServices(allServices)
         if (allServices.length > 0) {
           console.log(`Loaded ${allServices.length} services`)
@@ -354,7 +293,7 @@ export default function Home() {
       // Ensure loader shows for minimum time
       const elapsed = loadStartTime.current ? Date.now() - loadStartTime.current : 0
       const remainingTime = Math.max(0, MIN_LOAD_TIME - elapsed)
-      
+
       setTimeout(() => {
         setLoading(false)
       }, remainingTime)
@@ -380,11 +319,10 @@ export default function Home() {
             const categoryProducts = products.filter(
               (p: any) => p.mainCategory === mainCategory || p.category === mainCategory
             ).slice(0, 10)
-            
+
             if (categoryProducts.length === 0) return null
 
-            const categoryBannerData = categoryBanners[mainCategory]
-            
+
             return (
               <div key={mainCategory}>
                 <ProductsSection
@@ -392,16 +330,6 @@ export default function Home() {
                   productsList={categoryProducts}
                   showSeeAll={true}
                 />
-                {categoryBannerData && categoryBannerData.length > 0 ? (
-                  <CategoryBanners
-                    categoryName={mainCategory}
-                    banners={categoryBannerData}
-                  />
-                ) : (
-                  <div style={{ padding: '20px', textAlign: 'center', color: '#999' }}>
-                    {/* Debug: No banners for {mainCategory} */}
-                  </div>
-                )}
               </div>
             )
           })}
@@ -419,4 +347,3 @@ export default function Home() {
     </>
   )
 }
-

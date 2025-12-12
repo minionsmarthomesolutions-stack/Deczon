@@ -31,8 +31,11 @@ export default function ConditionalLayout({ children }: { children: React.ReactN
     return <>{children}</>
   }
 
-  const hideCategoryNav = (pathname?.startsWith('/products/') && pathname.split('/').length > 2) || 
-                          (pathname?.startsWith('/services/') && pathname.split('/').length > 2)
+  const hideCategoryNav = (pathname?.startsWith('/products/') && pathname.split('/').length > 2) ||
+    (pathname?.startsWith('/services/') && pathname.split('/').length > 2) ||
+    pathname?.startsWith('/show-all-blogs') ||
+    pathname?.startsWith('/blog/') ||
+    pathname?.startsWith('/package-details')
   // Calculate header height: 80px base + 56px category nav (when visible)
   const headerHeight = hideCategoryNav ? 'var(--header-height)' : 'calc(var(--header-height) + var(--category-nav-height))'
 
