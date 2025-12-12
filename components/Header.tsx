@@ -6,8 +6,10 @@ import Link from 'next/link'
 import Image from 'next/image'
 import styles from './Header.module.css'
 import { auth, db } from '@/lib/firebase'
+import LocationSelector from './LocationSelector'
 import { onAuthStateChanged } from 'firebase/auth'
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore'
+
 
 interface Category {
   name: string
@@ -36,8 +38,8 @@ interface Product {
 
 export default function Header() {
   const pathname = usePathname()
-  const hideCategoryNav = (pathname?.startsWith('/products/') && pathname.split('/').length > 2) || 
-                          (pathname?.startsWith('/services/') && pathname.split('/').length > 2)
+  const hideCategoryNav = (pathname?.startsWith('/products/') && pathname.split('/').length > 2) ||
+    (pathname?.startsWith('/services/') && pathname.split('/').length > 2)
   const [user, setUser] = useState<any>(null)
   const [userLabel, setUserLabel] = useState('Login')
   const [cartCount, setCartCount] = useState(0)
@@ -66,14 +68,14 @@ export default function Header() {
   useEffect(() => {
     // Load cart from localStorage
     updateCartCount()
-    
+
     // Listen for cart updates
     const handleCartUpdate = () => {
       updateCartCount()
     }
-    
+
     window.addEventListener('cartUpdated', handleCartUpdate)
-    
+
     if (typeof window !== 'undefined') {
       // Load saved location
       const savedLocation = localStorage.getItem('userLocation')
@@ -88,7 +90,7 @@ export default function Header() {
         }
       }
     }
-    
+
     return () => {
       window.removeEventListener('cartUpdated', handleCartUpdate)
     }
@@ -109,8 +111,8 @@ export default function Header() {
       setUser(currentUser)
       if (currentUser) {
         try {
-          const userPhone = currentUser.phoneNumber?.replace('+91', '') || 
-                           (typeof window !== 'undefined' ? localStorage.getItem('userPhone') : null)
+          const userPhone = currentUser.phoneNumber?.replace('+91', '') ||
+            (typeof window !== 'undefined' ? localStorage.getItem('userPhone') : null)
           if (userPhone && db) {
             const userDoc = await getDoc(doc(db, 'users', userPhone))
             if (userDoc.exists()) {
@@ -132,7 +134,8 @@ export default function Header() {
           setUserLabel(currentUser.displayName || 'My Account')
         }
       } else {
-        setUserLabel('Login')
+        setUserLabel(userLabel === 'Login' ? 'Login' : userLabel) // Conserve existing label if not auth related change? No, logic above sets it. Keep simple.
+        if (!currentUser) setUserLabel('Login')
       }
     })
 
@@ -252,38 +255,6 @@ export default function Header() {
     ])
   }
 
-  const handleLocationClick = async () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords
-          try {
-            const response = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1&accept-language=en`
-            )
-            const data = await response.json()
-            if (data.display_name) {
-              const addressParts = data.display_name.split(', ')
-              const city = addressParts[0] || 'Current Location'
-              const state = addressParts[1] || ''
-              setLocation(state ? `${city}, ${state}` : city)
-              
-              // Save to localStorage
-              if (typeof window !== 'undefined') {
-                localStorage.setItem('userLocation', JSON.stringify({ city, state, latitude, longitude }))
-              }
-            }
-          } catch (error) {
-            console.error('Error getting address:', error)
-          }
-        },
-        (error) => {
-          console.error('Error getting location:', error)
-        }
-      )
-    }
-  }
-
   // Load products for search
   const loadProducts = async () => {
     try {
@@ -305,14 +276,14 @@ export default function Header() {
     let relevance = 0
     const term = searchTerm.toLowerCase().trim()
     const searchWords = term.split(/\s+/).filter(w => w.length > 0)
-    
+
     // Handle different product data structures
     const productName = (product.name || product.productName || '').toLowerCase()
     const productCategory = (product.category || product.mainCategory || '').toLowerCase()
     const productDescription = (product.description || product.desc || product.longDescription || '').toLowerCase()
     const productBrand = (product.brand || '').toLowerCase()
     const productSubcategory = (product.subcategory || '').toLowerCase()
-    
+
     // PRIORITY 1: PRODUCT NAME MATCHES (Highest Priority)
     if (productName === term) {
       relevance += 1000
@@ -322,13 +293,13 @@ export default function Header() {
       relevance += 300
     } else if (searchWords.length > 0) {
       const nameWords = productName.split(/\s+/)
-      const allWordsMatch = searchWords.every(searchWord => 
+      const allWordsMatch = searchWords.every(searchWord =>
         nameWords.some(nameWord => nameWord.includes(searchWord) || searchWord.includes(nameWord))
       )
       if (allWordsMatch) {
         relevance += 250
       } else {
-        const wordMatches = searchWords.filter(searchWord => 
+        const wordMatches = searchWords.filter(searchWord =>
           nameWords.some(nameWord => nameWord.includes(searchWord) || searchWord.includes(nameWord))
         ).length
         if (wordMatches > 0) {
@@ -341,7 +312,7 @@ export default function Header() {
         relevance += 100
       }
     }
-    
+
     // PRIORITY 2: SPECIFICATIONS MATCHES
     let specMatchScore = 0
     if (product.specifications) {
@@ -357,11 +328,11 @@ export default function Header() {
           .join(' ')
           .toLowerCase()
       }
-      
+
       if (specText.includes(term)) {
         specMatchScore += 200
       }
-      
+
       if (searchWords.length > 0) {
         const specWordMatches = searchWords.filter(word => specText.includes(word)).length
         if (specWordMatches > 0) {
@@ -369,18 +340,18 @@ export default function Header() {
         }
       }
     }
-    
+
     // Also check productDetails array
     if (product.productDetails && Array.isArray(product.productDetails)) {
       const detailsText = product.productDetails
         .map((detail: any) => `${detail.name || ''} ${detail.value || ''}`)
         .join(' ')
         .toLowerCase()
-      
+
       if (detailsText.includes(term)) {
         specMatchScore += 150
       }
-      
+
       if (searchWords.length > 0) {
         const detailWordMatches = searchWords.filter(word => detailsText.includes(word)).length
         if (detailWordMatches > 0) {
@@ -388,15 +359,15 @@ export default function Header() {
         }
       }
     }
-    
+
     relevance += specMatchScore
-    
+
     // PRIORITY 3: DESCRIPTION MATCHES
     if (productDescription) {
       if (productDescription.includes(term)) {
         relevance += 150
       }
-      
+
       if (searchWords.length > 0) {
         const descWordMatches = searchWords.filter(word => productDescription.includes(word)).length
         if (descWordMatches > 0) {
@@ -404,30 +375,30 @@ export default function Header() {
         }
       }
     }
-    
+
     // PRIORITY 4: OTHER FIELDS
     if (productCategory && productCategory.includes(term)) {
       relevance += 100
     }
-    
+
     if (productBrand && productBrand.includes(term)) {
       relevance += 90
     }
-    
+
     if (productSubcategory && productSubcategory.includes(term)) {
       relevance += 85
     }
-    
+
     // Tags matching
     if (product.tags && Array.isArray(product.tags)) {
-      const tagMatches = product.tags.filter(tag => 
+      const tagMatches = product.tags.filter(tag =>
         tag.toLowerCase().includes(term)
       ).length
       if (tagMatches > 0) {
         relevance += 60 + (tagMatches * 10)
       }
     }
-    
+
     // PRIORITY 5: ALL CONTENT COMBINED
     const allContent = [
       productName,
@@ -435,36 +406,36 @@ export default function Header() {
       productDescription,
       productBrand,
       productSubcategory,
-      product.specifications ? (Array.isArray(product.specifications) 
+      product.specifications ? (Array.isArray(product.specifications)
         ? product.specifications.map((s: any) => `${s.name || ''} ${s.value || ''}`).join(' ')
         : Object.entries(product.specifications).map(([k, v]) => `${k} ${v}`).join(' ')) : '',
       product.tags ? product.tags.join(' ') : ''
     ].filter(Boolean).join(' ').toLowerCase()
-    
+
     if (relevance < 100 && allContent.includes(term)) {
       relevance += 50
     }
-    
+
     if (searchWords.length > 0 && relevance < 200) {
       const allContentWordMatches = searchWords.filter(word => allContent.includes(word)).length
       if (allContentWordMatches > 0) {
         relevance += 30 + (allContentWordMatches * 5)
       }
     }
-    
+
     return relevance
   }
 
   // Search products with relevance calculation
   const searchProducts = async (query: string): Promise<Product[]> => {
     await new Promise(resolve => setTimeout(resolve, 500))
-    
+
     const searchTerm = query.toLowerCase().trim()
     const results: Product[] = []
-    
+
     for (const product of products) {
       const relevance = calculateRelevance(product, searchTerm)
-      
+
       if (relevance > 0) {
         results.push({
           ...product,
@@ -472,22 +443,22 @@ export default function Header() {
         })
       }
     }
-    
+
     // Sort by relevance (highest first)
     results.sort((a, b) => (b.relevance || 0) - (a.relevance || 0))
-    
+
     return results.slice(0, 10) // Limit to top 10 results
   }
 
   // Handle search input with debouncing
   const handleSearchInput = (value: string) => {
     setSearchQuery(value)
-    
+
     // Clear previous timeout
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current)
     }
-    
+
     // Set new timeout for search (300ms delay like index.html)
     searchTimeoutRef.current = setTimeout(async () => {
       if (value.trim().length >= 2) {
@@ -568,15 +539,8 @@ export default function Header() {
                 />
               </Link>
             </div>
-            <div className={styles.locationSelector} onClick={handleLocationClick}>
-              <svg className={styles.locationIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                <circle cx="12" cy="10" r="3"></circle>
-              </svg>
-              <span className={styles.locationText}>{location}</span>
-              <svg className={styles.dropdownIcon} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M6 9l6 6 6-6"></path>
-              </svg>
+            <div style={{ marginLeft: '16px' }}>
+              <LocationSelector />
             </div>
           </div>
 
@@ -586,8 +550,8 @@ export default function Header() {
               <button type="button" className={styles.searchIconLeft} onClick={() => document.getElementById('searchInput')?.focus()}>
                 {isSearching ? (
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={styles.spinning}>
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="m21 21-4.35-4.35"/>
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="m21 21-4.35-4.35" />
                   </svg>
                 ) : (
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -633,7 +597,7 @@ export default function Header() {
                   </svg>
                 </button>
               </div>
-              
+
               {/* Search Results Dropdown */}
               {showSearchResults && (
                 <div className={styles.searchResults}>
@@ -688,8 +652,8 @@ export default function Header() {
           {/* Right Section: User Actions */}
 
           <div className={styles.headerRight}>
-            <Link 
-              href={user ? "/account" : "/login"} 
+            <Link
+              href={user ? "/account" : "/login"}
               className={styles.userSection}
               onClick={(e) => {
                 if (!user && typeof window !== 'undefined') {
@@ -785,14 +749,14 @@ export default function Header() {
                           {Object.keys(category.subcategories).slice(0, 6).map((subcategory) => {
                             const subcategoryItems = category.subcategories[subcategory]
                             // Handle both array and object formats
-                            const items = Array.isArray(subcategoryItems) 
-                              ? subcategoryItems 
+                            const items = Array.isArray(subcategoryItems)
+                              ? subcategoryItems
                               : (subcategoryItems?.items && Array.isArray(subcategoryItems.items))
-                              ? subcategoryItems.items
-                              : typeof subcategoryItems === 'object' && subcategoryItems !== null
-                              ? Object.keys(subcategoryItems)
-                              : []
-                            
+                                ? subcategoryItems.items
+                                : typeof subcategoryItems === 'object' && subcategoryItems !== null
+                                  ? Object.keys(subcategoryItems)
+                                  : []
+
                             return (
                               <div key={subcategory} className={styles.dropdownCategoryColumn}>
                                 <h4>{subcategory}</h4>

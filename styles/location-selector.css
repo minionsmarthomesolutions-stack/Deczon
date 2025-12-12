@@ -1,0 +1,332 @@
+/* Scoped: prefix classes with .lg-loc- */
+
+/* Button trigger in header */
+.lg-loc-trigger-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    max-width: 200px;
+}
+
+.lg-loc-trigger-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.lg-loc-trigger-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.2;
+}
+
+.lg-loc-trigger-label {
+    font-size: 10px;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.lg-loc-trigger-value {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+}
+
+/* Modal Overlay */
+.lg-loc-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 100px;
+    animation: lg-loc-fade-in 0.2s ease-out;
+}
+
+/* Modal Content */
+.lg-loc-modal {
+    background: #fff;
+    width: 90%;
+    max-width: 420px;
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    position: relative;
+    animation: lg-loc-slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    color: #111;
+    font-family: inherit;
+}
+
+.lg-loc-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.lg-loc-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+    color: #333;
+}
+
+.lg-loc-close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    color: #999;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.lg-loc-close-btn:hover {
+    background: #f5f5f5;
+    color: #333;
+}
+
+.lg-loc-body {
+    padding: 20px;
+}
+
+/* Section: Detect Location */
+.lg-loc-detect-section {
+    margin-bottom: 24px;
+}
+
+.lg-loc-detect-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    color: #d32f2f;
+    /* Brand color example - adjust as needed */
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.lg-loc-detect-btn:hover {
+    background: #fdfdfd;
+    border-color: #d32f2f;
+}
+
+.lg-loc-detect-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Spinner */
+.lg-loc-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(211, 47, 47, 0.3);
+    border-radius: 50%;
+    border-top-color: #d32f2f;
+    animation: lg-loc-spin 0.8s linear infinite;
+}
+
+/* Divider */
+.lg-loc-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #888;
+    font-size: 12px;
+    margin: 16px 0;
+}
+
+.lg-loc-divider::before,
+.lg-loc-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #eee;
+}
+
+.lg-loc-divider span {
+    padding: 0 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+/* Section: Manual Search */
+.lg-loc-search-box {
+    position: relative;
+    display: flex;
+    gap: 8px;
+}
+
+.lg-loc-input {
+    flex: 1;
+    padding: 12px 14px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.lg-loc-input:focus {
+    outline: none;
+    border-color: #d32f2f;
+    box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.1);
+}
+
+.lg-loc-search-btn {
+    background: #333;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.lg-loc-search-btn:hover {
+    background: #000;
+}
+
+/* Status Messages */
+.lg-loc-status {
+    margin-top: 12px;
+    font-size: 13px;
+    padding: 8px 12px;
+    border-radius: 6px;
+}
+
+.lg-loc-status.error {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.lg-loc-status.success {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+/* Search Results */
+.lg-loc-results {
+    margin-top: 16px;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 8px;
+}
+
+.lg-loc-result-item {
+    padding: 12px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.lg-loc-result-item:last-child {
+    border-bottom: none;
+}
+
+.lg-loc-result-item:hover {
+    background: #f9f9f9;
+}
+
+.lg-loc-result-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 2px;
+    color: #333;
+}
+
+.lg-loc-result-desc {
+    font-size: 12px;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Animations */
+@keyframes lg-loc-fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes lg-loc-slide-up {
+    from {
+        transform: translateY(10px) scale(0.98);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes lg-loc-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+    .lg-loc-overlay {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .lg-loc-modal {
+        width: 100%;
+        max-width: 100%;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        animation: lg-loc-slide-up-mobile 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes lg-loc-slide-up-mobile {
+        from {
+            transform: translateY(100%);
+        }
+
+        to {
+            transform: translateY(0);
+        }
+    }
+}
