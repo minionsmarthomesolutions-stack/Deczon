@@ -1,0 +1,267 @@
+/* Login Page Styles */
+.loginPage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
+  padding: 24px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.loginContainer {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px rgba(0, 0, 0, 0.1);
+  padding: 48px;
+  width: 100%;
+  max-width: 400px;
+  margin: 24px;
+  position: relative;
+}
+
+.loginHeader {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.logo {
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.logo a {
+  display: inline-block;
+}
+
+.loginTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 8px;
+}
+
+.loginSubtitle {
+  font-size: 12px;
+  color: #555555;
+}
+
+.formGroup {
+  margin-bottom: 24px;
+}
+
+.formLabel {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #000000;
+  margin-bottom: 8px;
+}
+
+.formInput {
+  width: 100%;
+  padding: 16px;
+  border: 2px solid #dddddd;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #000000;
+  background: #ffffff;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.formInput:focus {
+  outline: none;
+  border-color: #ffc000;
+  box-shadow: 0 0 0 3px rgba(255, 192, 0, 0.1);
+}
+
+.formInput:disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
+}
+
+.phoneInputContainer {
+  display: flex;
+  gap: 8px;
+}
+
+.countryCode {
+  padding: 16px;
+  border: 2px solid #dddddd;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #000000;
+  background: #f5f5f5;
+  min-width: 80px;
+  text-align: center;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.phoneStep {
+  display: block;
+}
+
+.otpStep {
+  display: block;
+}
+
+.otpInputs {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.otpInput {
+  width: 50px;
+  height: 50px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 600;
+  border: 2px solid #dddddd;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #000000;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.otpInput:focus {
+  outline: none;
+  border-color: #ffc000;
+  box-shadow: 0 0 0 3px rgba(255, 192, 0, 0.1);
+}
+
+.otpInput:disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
+}
+
+.btnPrimary {
+  width: 100%;
+  background: #ffc000;
+  color: #000000;
+  border: none;
+  padding: 16px 24px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 16px;
+  font-family: inherit;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: #ffc800;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btnPrimary:disabled {
+  background: #888888;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.resendOtp {
+  text-align: center;
+  margin-top: 16px;
+}
+
+.resendLink {
+  background: none;
+  border: none;
+  color: #ffc000;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+}
+
+.resendLink:hover:not(.disabled) {
+  color: #ffc800;
+}
+
+.resendLink.disabled {
+  color: #888888;
+  cursor: not-allowed;
+}
+
+.timer {
+  color: #555555;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.errorMessage {
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 12px;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.backToHome {
+  text-align: center;
+  margin-top: 24px;
+}
+
+.backToHome a {
+  color: #555555;
+  text-decoration: none;
+  font-size: 12px;
+  transition: color 0.2s ease;
+}
+
+.backToHome a:hover {
+  color: #ffc000;
+}
+
+/* reCAPTCHA container - must be in DOM and minimally visible for Firebase */
+#recaptcha-container {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loadingOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.7);
+  z-index: 10;
+}
+
+@media (max-width: 480px) {
+  .loginContainer {
+    margin: 16px;
+    padding: 24px;
+  }
+
+  .otpInput {
+    width: 45px;
+    height: 45px;
+    font-size: 16px;
+  }
+
+  .loginTitle {
+    font-size: 20px;
+  }
+}
+

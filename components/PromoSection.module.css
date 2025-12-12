@@ -1,0 +1,316 @@
+.promoSection {
+  padding: var(--spacing-3xl) 0;
+  background: var(--bg-secondary);
+  position: relative;
+}
+
+.container {
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+}
+
+.sectionHeader {
+  text-align: center;
+  margin-bottom: var(--spacing-2xl);
+}
+
+.sectionHeader h2 {
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.sectionSubtitle {
+  font-size: var(--font-size-base);
+  color: var(--text-secondary);
+}
+
+.promoSlider {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+}
+
+.promoGrid {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 0;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
+  scroll-snap-type: x mandatory;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.promoGrid::-webkit-scrollbar {
+  display: none;
+}
+
+.promoCard {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  width: 300px;
+  min-width: 300px;
+  flex: 0 0 300px;
+  color: var(--text-light);
+  position: relative;
+  overflow: hidden;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  box-sizing: border-box;
+  margin: 0;
+  margin-right: 16px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: transform 0.2s ease;
+}
+
+.promoCardAnimate {
+  animation: slideIn 0.5s ease-out forwards;
+}
+
+/* Touch feedback for promo cards */
+.promoCard:active {
+  transform: scale(0.98);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.promoCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  transform: translate(30px, -30px);
+}
+
+.promoHeader {
+  margin-bottom: var(--spacing-lg);
+}
+
+.brandPartners {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.partnersLabel {
+  font-size: var(--font-size-xs);
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.brandName {
+  font-size: var(--font-size-xs);
+  color: var(--accent-color);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.promoContent h2 {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+  line-height: 1.2;
+  color: var(--text-light);
+}
+
+.discountText {
+  font-size: var(--font-size-sm);
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: var(--spacing-lg);
+}
+
+.dealCategories {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.dealItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  color: rgba(255, 255, 255, 0.9);
+  transition: all 0.2s ease;
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.dealItem:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 1);
+  transform: translateX(4px);
+}
+
+.dealItem svg {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+}
+
+.dealItemLogo {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dealItem span {
+  flex: 1;
+}
+
+.sliderBtn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 2;
+  color: var(--text-secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.sliderBtn:hover {
+  background: var(--primary-color);
+  color: var(--text-light);
+  border-color: var(--primary-color);
+}
+
+.sliderBtn.prev {
+  left: var(--spacing-md);
+}
+
+.sliderBtn.next {
+  right: var(--spacing-md);
+}
+
+@media (max-width: 1200px) {
+  .promoCard {
+    width: 280px;
+    min-width: 280px;
+    flex: 0 0 280px;
+  }
+}
+
+@media (max-width: 992px) {
+  .promoSection {
+    padding: var(--spacing-2xl) 0;
+  }
+
+  .promoCard {
+    width: 260px;
+    min-width: 260px;
+    flex: 0 0 260px;
+    padding: var(--spacing-lg);
+  }
+
+  .sectionHeader h2 {
+    font-size: var(--font-size-2xl);
+  }
+}
+
+@media (max-width: 768px) {
+  .sliderBtn {
+    display: none;
+  }
+
+  .promoSection {
+    padding: var(--spacing-xl) 0;
+  }
+
+  .promoCard {
+    width: 85vw;
+    min-width: 85vw;
+    flex: 0 0 85vw;
+    padding: var(--spacing-md);
+    margin-right: var(--spacing-md);
+  }
+
+  .sectionHeader {
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .sectionHeader h2 {
+    font-size: var(--font-size-xl);
+  }
+
+  .sectionSubtitle {
+    font-size: var(--font-size-sm);
+  }
+
+  .promoContent h2 {
+    font-size: var(--font-size-lg);
+  }
+
+  .discountText {
+    font-size: var(--font-size-xs);
+  }
+}
+
+@media (max-width: 480px) {
+  .promoSection {
+    padding: var(--spacing-lg) 0;
+  }
+
+  .container {
+    padding: 0 var(--spacing-sm);
+  }
+
+  .promoCard {
+    width: 90vw;
+    min-width: 90vw;
+    flex: 0 0 90vw;
+    padding: var(--spacing-sm);
+  }
+
+  .sectionHeader h2 {
+    font-size: var(--font-size-lg);
+  }
+
+  .promoContent h2 {
+    font-size: var(--font-size-base);
+  }
+
+  .dealItem {
+    font-size: var(--font-size-xs);
+    padding: 3px 6px;
+  }
+}
+

@@ -1,0 +1,282 @@
+.categoryBanners {
+  margin-top: var(--spacing-3xl);
+  width: 100%;
+}
+
+/* SEO-only heading - visually hidden but accessible to screen readers and search engines */
+.seoHeading {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.seoDescription {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.categoryBannerGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-xl);
+}
+
+.categoryBannerGrid.two {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.categoryBanner {
+  position: relative;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  min-height: 260px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.categoryBanner:hover {
+  transform: scale(1.02);
+}
+
+.categoryBanner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.4) 50%, rgba(0, 0, 0, 0.2) 100%);
+  z-index: 1;
+}
+
+/* Remove overlay when there's only one banner */
+.categoryBannerGrid:not(.two) .categoryBanner::before {
+  display: none;
+}
+
+.bannerLink {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.bannerContent {
+  padding: var(--spacing-2xl);
+  position: relative;
+  z-index: 2;
+  color: white;
+  flex: 1;
+}
+
+.bannerTag {
+  display: inline-block;
+  font-size: var(--font-size-xs);
+  color: var(--accent-color);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text-primary);
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-bottom: var(--spacing-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.bannerTitle {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  margin-bottom: var(--spacing-sm);
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.bannerDesc {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: var(--font-size-base);
+  margin-bottom: var(--spacing-md);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.bannerPrice {
+  color: var(--accent-color);
+  font-weight: 700;
+  font-size: var(--font-size-xl);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Text alignment classes */
+.textAlignLeft,
+.textAlignleft {
+  text-align: left;
+  align-items: flex-start;
+}
+
+.textAlignCenter,
+.textAligncenter {
+  text-align: center;
+  align-items: center;
+}
+
+.textAlignRight,
+.textAlignright {
+  text-align: right;
+  align-items: flex-end;
+}
+
+/* Double banner container */
+.doubleBannerContainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+  width: 100%;
+  grid-column: 1 / -1;
+}
+
+.doubleBannerLeft,
+.doubleBannerRight {
+  min-height: 260px;
+}
+
+@media (max-width: 1200px) {
+  .categoryBanners {
+    margin-top: var(--spacing-2xl);
+  }
+
+  .categoryBanner {
+    min-height: 240px;
+  }
+}
+
+@media (max-width: 992px) {
+  .categoryBannerGrid.two {
+    gap: var(--spacing-lg);
+  }
+
+  .categoryBanner {
+    min-height: 220px;
+  }
+
+  .bannerContent {
+    padding: var(--spacing-xl);
+  }
+}
+
+@media (max-width: 768px) {
+  .categoryBanners {
+    margin-top: var(--spacing-xl);
+  }
+
+  .bannerSectionHeader {
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .bannerSectionHeader h3 {
+    font-size: var(--font-size-lg);
+  }
+
+  .categoryBannerGrid {
+    gap: var(--spacing-lg);
+  }
+
+  .categoryBannerGrid.two {
+    grid-template-columns: 1fr;
+  }
+
+  .doubleBannerContainer {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  .categoryBanner {
+    min-height: 200px;
+  }
+
+  .bannerContent {
+    padding: var(--spacing-lg);
+  }
+
+  .bannerTitle {
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .bannerDesc {
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .bannerPrice {
+    font-size: var(--font-size-lg);
+  }
+}
+
+@media (max-width: 480px) {
+  .categoryBanners {
+    margin-top: var(--spacing-lg);
+  }
+
+  .bannerSectionHeader {
+    margin-bottom: var(--spacing-md);
+  }
+
+  .bannerSectionHeader h3 {
+    font-size: var(--font-size-base);
+  }
+
+  .bannerSectionHeader p {
+    font-size: var(--font-size-xs);
+  }
+
+  .categoryBannerGrid {
+    gap: var(--spacing-md);
+  }
+
+  .categoryBanner {
+    min-height: 180px;
+  }
+
+  .bannerContent {
+    padding: var(--spacing-md);
+  }
+
+  .bannerTitle {
+    font-size: var(--font-size-base);
+  }
+
+  .bannerDesc {
+    font-size: var(--font-size-xs);
+    -webkit-line-clamp: 2;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .bannerPrice {
+    font-size: var(--font-size-base);
+  }
+
+  .bannerTag {
+    font-size: 9px;
+    padding: 3px 8px;
+  }
+}
+
