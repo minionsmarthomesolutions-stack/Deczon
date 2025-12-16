@@ -24,14 +24,14 @@ let auth: Auth | undefined;
 // Lazy initialization function
 function initializeFirebase() {
   if (app) return; // Already initialized
-  
+
   try {
     if (!getApps().length) {
       app = initializeApp(firebaseConfig);
     } else {
       app = getApps()[0];
     }
-    
+
     db = getFirestore(app);
     storage = getStorage(app);
     auth = getAuth(app);

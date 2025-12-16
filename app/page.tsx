@@ -1,14 +1,14 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import BannerSection from '@/components/BannerSection'
 import PromoSection from '@/components/PromoSection'
 import ProductsSection from '@/components/ProductsSection'
 import ServicesSection from '@/components/ServicesSection'
 import BlogSection from '@/components/BlogSection'
+import BannerSection from '@/components/BannerSection'
 
 import BackToTop from '@/components/BackToTop'
-import MinionLoader from '@/components/MinionLoader'
+
 import { db } from '@/lib/firebase'
 import { collection, getDocs, query, orderBy, limit, doc, getDoc, where } from 'firebase/firestore'
 
@@ -16,7 +16,7 @@ export default function Home() {
   const [categories, setCategories] = useState<any[]>([])
   const [products, setProducts] = useState<any[]>([])
   const [services, setServices] = useState<any[]>([])
-  const [banners, setBanners] = useState<any[]>([])
+  const [categoryBanners, setCategoryBanners] = useState<{ [key: string]: any[] }>({})
 
   const [mainCategorySections, setMainCategorySections] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -26,6 +26,55 @@ export default function Home() {
   useEffect(() => {
     loadData()
   }, [])
+
+  // Fetch banners for each category after categories are loaded
+  useEffect(() => {
+    if (mainCategorySections.length === 0 || !db) return
+
+    const fetchCategoryBanners = async () => {
+      if (!db) return // Type guard for TypeScript
+
+      try {
+        const bannersMap: { [key: string]: any[] } = {}
+
+        // Fetch banners for each main category
+        for (const mainCategory of mainCategorySections) {
+          try {
+            const bannersQuery = query(
+              collection(db, 'banners'),
+              where('categoryId', '==', mainCategory),
+              orderBy('createdAt', 'desc')
+            )
+            const bannersSnapshot = await getDocs(bannersQuery)
+            const categoryBannersList = bannersSnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }))
+
+            if (categoryBannersList.length > 0) {
+              bannersMap[mainCategory] = categoryBannersList
+              console.log(`Loaded ${categoryBannersList.length} banners for category: ${mainCategory}`)
+            }
+          } catch (error: any) {
+            // Handle permission errors or missing index gracefully
+            if (error?.code === 'permission-denied' || error?.code === 'missing-or-insufficient-permissions') {
+              console.warn(`Firebase permission denied for banners in category: ${mainCategory}`)
+            } else if (error?.code === 'failed-precondition') {
+              console.warn(`Missing index for banners query in category: ${mainCategory}. Banners will not be displayed.`)
+            } else {
+              console.warn(`Error loading banners for ${mainCategory}:`, error)
+            }
+          }
+        }
+
+        setCategoryBanners(bannersMap)
+      } catch (error) {
+        console.warn('Error fetching category banners:', error)
+      }
+    }
+
+    fetchCategoryBanners()
+  }, [mainCategorySections])
 
   const loadData = async () => {
     loadStartTime.current = Date.now()
@@ -67,12 +116,17 @@ export default function Home() {
 
       if (categoriesData) {
         const mainCategories = Object.keys(categoriesData)
-        setCategories(mainCategories.map(name => ({
+
+        // CRITICAL FIX: Sort categories alphabetically for stable order
+        // Object.keys() does not guarantee order, causing banners to appear under different categories on refresh
+        const sortedCategories = [...mainCategories].sort((a, b) => a.localeCompare(b))
+
+        setCategories(sortedCategories.map(name => ({
           name,
           subcategories: categoriesData[name]?.subcategories || {}
         })))
-        setMainCategorySections(mainCategories)
-        console.log(`Loaded ${mainCategories.length} categories:`, mainCategories)
+        setMainCategorySections(sortedCategories)
+        console.log(`Loaded ${sortedCategories.length} categories (sorted):`, sortedCategories)
       } else {
         // Fallback: try to get categories from products
         try {
@@ -84,10 +138,15 @@ export default function Home() {
             if (data.category) categorySet.add(data.category)
           })
           const fallbackCategories = Array.from(categorySet)
-          if (fallbackCategories.length > 0) {
-            setCategories(fallbackCategories.map(name => ({ name, subcategories: {} })))
-            setMainCategorySections(fallbackCategories)
-            console.log(`Using fallback categories from products: ${fallbackCategories.length} categories`)
+
+          // CRITICAL FIX: Sort categories alphabetically for stable order
+          // Set -> Array does not guarantee order
+          const sortedFallback = [...fallbackCategories].sort((a, b) => a.localeCompare(b))
+
+          if (sortedFallback.length > 0) {
+            setCategories(sortedFallback.map(name => ({ name, subcategories: {} })))
+            setMainCategorySections(sortedFallback)
+            console.log(`Using fallback categories from products (sorted): ${sortedFallback.length} categories`)
           }
         } catch (error) {
           console.warn('Error getting fallback categories:', error)
@@ -148,59 +207,9 @@ export default function Home() {
         }
       }
 
-      // Load banners - try multiple queries
-      try {
-        let allBanners: any[] = []
-
-        // Try ordered query first
-        try {
-          const bannersQuery = query(collection(db, 'banners'), orderBy('order', 'asc'), limit(10))
-          const bannersSnapshot = await getDocs(bannersQuery)
-          allBanners = bannersSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }))
-        } catch (orderError: any) {
-          // Check if it's a permission error
-          if (orderError?.code === 'permission-denied' || orderError?.code === 'missing-or-insufficient-permissions') {
-            // Permission denied - skip trying without order
-            console.warn('Firebase permission denied for banners. Skipping banner load.')
-            allBanners = []
-          } else {
-            // If orderBy fails for other reasons, try without ordering
-            console.warn('Banner orderBy failed, trying without order:', orderError)
-            try {
-              const bannersSnapshot = await getDocs(collection(db, 'banners'))
-              allBanners = bannersSnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-              })).slice(0, 10)
-            } catch (fallbackError: any) {
-              // If fallback also fails due to permissions, handle gracefully
-              if (fallbackError?.code === 'permission-denied' || fallbackError?.code === 'missing-or-insufficient-permissions') {
-                console.warn('Firebase permission denied for banners. Skipping banner load.')
-                allBanners = []
-              } else {
-                throw fallbackError
-              }
-            }
-          }
-        }
-
-        setBanners(allBanners)
-        if (allBanners.length > 0) {
-          console.log(`Loaded ${allBanners.length} banners`)
-        }
-      } catch (error: any) {
-        // Handle permission errors gracefully without showing error messages
-        if (error?.code === 'permission-denied' || error?.code === 'missing-or-insufficient-permissions') {
-          console.warn('Firebase permission denied for banners. The app will continue without banners.')
-          setBanners([])
-        } else {
-          console.warn('Error loading banners:', error)
-          setBanners([])
-        }
-      }
+      // ❌ REMOVED: Global banner loading pipeline (duplicate of category-based pipeline)
+      // This was causing state pollution and race conditions with categoryBanners
+      // Banners are now loaded ONLY in the category-based useEffect
 
       // Load services - try with status filter first (like HTML version)
       try {
@@ -274,8 +283,6 @@ export default function Home() {
           setServices([])
         }
       }
-
-      // Load category banners - will be called after mainCategorySections is set
     } catch (error: any) {
       // Handle permission errors gracefully
       if (error?.code === 'permission-denied' || error?.code === 'missing-or-insufficient-permissions') {
@@ -287,7 +294,7 @@ export default function Home() {
       setCategories([])
       setProducts([])
       setServices([])
-      setBanners([])
+      // ❌ REMOVED: setBanners([]) - no longer using global banners state
       setMainCategorySections([])
     } finally {
       // Ensure loader shows for minimum time
@@ -301,13 +308,14 @@ export default function Home() {
   }
 
   if (loading) {
-    return <MinionLoader fullScreen message="Getting your smart home experience ready..." />
+    return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>Getting your smart home experience ready...</div>
   }
 
   return (
     <>
       {/* Banner Section */}
-      <BannerSection banners={banners} />
+      {/* Banner Section - GLOBAL REMOVED per requirement (category based only) */}
+      {/* <BannerSection banners={banners} /> */}
 
       {/* Smart Home Categories Promo Section */}
       <PromoSection categories={categories} />
@@ -320,16 +328,33 @@ export default function Home() {
               (p: any) => p.mainCategory === mainCategory || p.category === mainCategory
             ).slice(0, 10)
 
-            if (categoryProducts.length === 0) return null
+            const hasProducts = categoryProducts.length > 0
 
+            // Skip category entirely if it has NO PRODUCTS
+            if (!hasProducts) return null
+
+            // Get banners for this category
+            const banners = categoryBanners[mainCategory] || []
+
+            const bannerElement = banners.length > 0 ? (
+              <BannerSection
+                mainCategory={mainCategory}
+                banners={banners}
+              />
+            ) : null
 
             return (
-              <div key={mainCategory}>
-                <ProductsSection
-                  categoryName={mainCategory}
-                  productsList={categoryProducts}
-                  showSeeAll={true}
-                />
+              <div key={mainCategory} style={{ marginTop: '3rem', clear: 'both', scrollMarginTop: '100px' }} id={`category-${mainCategory.replace(/\s+/g, '-').toLowerCase()}`}>
+
+                {/* Products Section with embedded Banner */}
+                {hasProducts && (
+                  <ProductsSection
+                    categoryName={mainCategory}
+                    productsList={categoryProducts}
+                    showSeeAll={true}
+                    banner={bannerElement}
+                  />
+                )}
               </div>
             )
           })}

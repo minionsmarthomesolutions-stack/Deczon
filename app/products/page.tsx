@@ -124,7 +124,7 @@ export default function ProductsPage() {
     try {
       const snapshot = await getDocs(collection(db, 'categories'))
       const categoriesData: Record<string, Category> = {}
-      
+
       snapshot.forEach(docSnapshot => {
         const data = docSnapshot.data()
         const mainCategory = docSnapshot.id
@@ -189,16 +189,16 @@ export default function ProductsPage() {
 
     // Apply category filters
     if (selectedItem) {
-      filtered = filtered.filter(item => 
+      filtered = filtered.filter(item =>
         item.name?.toLowerCase().includes(selectedItem.toLowerCase()) ||
         item.subcategory?.toLowerCase().includes(selectedItem.toLowerCase())
       )
     } else if (selectedSubcategory) {
-      filtered = filtered.filter(item => 
+      filtered = filtered.filter(item =>
         item.subcategory?.toLowerCase() === selectedSubcategory.toLowerCase()
       )
     } else if (selectedCategory) {
-      filtered = filtered.filter(item => 
+      filtered = filtered.filter(item =>
         item.mainCategory?.toLowerCase() === selectedCategory.toLowerCase() ||
         item.category?.toLowerCase() === selectedCategory.toLowerCase()
       )
@@ -258,7 +258,7 @@ export default function ProductsPage() {
       const newWishlist = prev.includes(itemId)
         ? prev.filter(id => id !== itemId)
         : [...prev, itemId]
-      
+
       if (typeof window !== 'undefined') {
         localStorage.setItem('wishlist', JSON.stringify(newWishlist))
       }
@@ -283,7 +283,7 @@ export default function ProductsPage() {
       quickViewItem.primaryImageUrl || quickViewItem.imageUrl,
       ...(quickViewItem.images || [])
     ].filter(Boolean)
-    
+
     if (direction === -1) {
       setCurrentModalImageIndex(prev => prev > 0 ? prev - 1 : images.length - 1)
     } else {
@@ -298,7 +298,7 @@ export default function ProductsPage() {
       const existingItem = cart.findIndex((ci: any) => ci.id === item.id)
       const price = item.currentPrice || item.price || 0
       const imageUrl = item.primaryImageUrl || item.imageUrl || '/placeholder.svg'
-      
+
       if (existingItem >= 0) {
         cart[existingItem].quantity += 1
       } else {
@@ -346,7 +346,7 @@ export default function ProductsPage() {
         <div className={styles.productsContent}>
           {/* Left Sidebar - Filters */}
           <div className={styles.productsFilters}>
-            <button 
+            <button
               className={styles.filterToggleBtn}
               onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
             >
@@ -355,10 +355,10 @@ export default function ProductsPage() {
 
             <div className={styles.filtersContent}>
               <h3>Categories</h3>
-              
+
               <div className={styles.categoryTree} id="category-tree">
                 <div className={styles.mainCategoryGroup}>
-                  <div 
+                  <div
                     className={`${styles.mainCategoryHeader} ${!selectedCategory ? styles.active : ''}`}
                     onClick={selectAllItems}
                   >
@@ -367,11 +367,11 @@ export default function ProductsPage() {
                 </div>
 
                 {Object.keys(categories).map(mainCategory => (
-                  <div 
+                  <div
                     key={mainCategory}
                     className={`${styles.mainCategoryGroup} ${expandedCategories.has(mainCategory) ? styles.expanded : ''}`}
                   >
-                    <div 
+                    <div
                       className={`${styles.mainCategoryHeader} ${selectedCategory === mainCategory ? styles.active : ''}`}
                       onClick={() => toggleMainCategory(mainCategory)}
                     >
@@ -381,7 +381,7 @@ export default function ProductsPage() {
                     <div className={styles.mainCategoryContent}>
                       {Object.keys(categories[mainCategory].subcategories).map(subcategoryName => (
                         <div key={subcategoryName} className={styles.categoryGroup}>
-                          <div 
+                          <div
                             className={`${styles.categoryHeader} ${expandedSubcategories.has(subcategoryName) ? styles.active : ''}`}
                             onClick={() => toggleSubcategory(subcategoryName)}
                           >
@@ -418,7 +418,7 @@ export default function ProductsPage() {
               <div className={styles.productsCount}>
                 {filteredItems.length} {filteredItems.length === 1 ? 'item' : 'items'} found
               </div>
-              <select 
+              <select
                 className={styles.sortDropdown}
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
@@ -435,13 +435,13 @@ export default function ProductsPage() {
                 const imageUrl = item.primaryImageUrl || item.imageUrl || '/placeholder.svg?height=280&width=280'
                 const currentPrice = item.currentPrice || item.price || 0
                 const originalPrice = item.originalPrice || 0
-                const discountPercent = originalPrice > currentPrice 
-                  ? Math.round((1 - currentPrice / originalPrice) * 100) 
+                const discountPercent = originalPrice > currentPrice
+                  ? Math.round((1 - currentPrice / originalPrice) * 100)
                   : 0
                 const isInWishlist = wishlist.includes(item.id)
 
                 return (
-                  <div 
+                  <div
                     key={item.id}
                     className={styles.mixedItem}
                     onClick={() => {
@@ -463,7 +463,7 @@ export default function ProductsPage() {
                           {discountPercent}% OFF
                         </div>
                       )}
-                      
+
                       <div className={styles.mixedItemActionButtons}>
                         <button
                           className={styles.mixedItemWishlistBtn}
@@ -471,7 +471,7 @@ export default function ProductsPage() {
                           title="Add to Wishlist"
                         >
                           <svg width="16" height="16" viewBox="0 0 24 24" fill={isInWishlist ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                           </svg>
                         </button>
                         <button
@@ -480,8 +480,8 @@ export default function ProductsPage() {
                           title="Quick View"
                         >
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
                           </svg>
                         </button>
                       </div>
@@ -517,7 +517,7 @@ export default function ProductsPage() {
         <div className={styles.quickViewModal} onClick={closeQuickView}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <button className={styles.modalCloseBtn} onClick={closeQuickView}>×</button>
-            
+
             <div className={styles.modalMain}>
               <div className={styles.modalImageSection}>
                 <div className={styles.modalMainImage}>

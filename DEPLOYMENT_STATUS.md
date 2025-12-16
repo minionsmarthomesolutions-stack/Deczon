@@ -99,3 +99,4 @@ If it still fails, enable Cloud Functions API (Option 1).
 **Note:** The webframeworks experiment is enabled, so Firebase will automatically handle your Next.js app once Cloud Functions API is enabled.
 
 
+

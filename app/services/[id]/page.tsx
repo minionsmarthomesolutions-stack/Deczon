@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import MinionLoader from '@/components/MinionLoader'
+
 import ServicesSection from '@/components/ServicesSection'
 import BlogSection from '@/components/BlogSection'
 import { db } from '@/lib/firebase'
@@ -60,12 +60,12 @@ export default function ServiceDetailPage() {
   const [squareFeet, setSquareFeet] = useState<number>(0)
   const [relatedServices, setRelatedServices] = useState<Service[]>([])
   const [relatedProducts, setRelatedProducts] = useState<any[]>([])
-  
+
   // Modal states
   const [addToCartModalOpen, setAddToCartModalOpen] = useState(false)
   const [buyNowModalOpen, setBuyNowModalOpen] = useState(false)
   const [enquiryModalOpen, setEnquiryModalOpen] = useState(false)
-  
+
   // Enquiry form state
   const [enquiryForm, setEnquiryForm] = useState({
     name: '',
@@ -106,7 +106,7 @@ export default function ServiceDetailPage() {
 
     try {
       const serviceDoc = await getDoc(doc(db, 'services', serviceId))
-      
+
       if (!serviceDoc.exists()) {
         setError(true)
         setLoading(false)
@@ -119,14 +119,14 @@ export default function ServiceDetailPage() {
       // Setup gallery images with proper Firebase URL formatting
       const mainImg = getServiceImageUrl(serviceData, '/placeholder.svg?height=400&width=600&text=Service')
       const allImages = extractAllImages(serviceData)
-      
+
       // Remove duplicates and ensure main image is first
       const uniqueImages = Array.from(new Set(allImages))
       const otherImages = uniqueImages.filter(img => img !== mainImg)
-      
+
       const finalMainImage = mainImg || otherImages[0] || '/placeholder.svg?height=400&width=600&text=Service'
       const galleryImages = otherImages.filter(img => img && img !== finalMainImage).slice(0, 4)
-      
+
       // Debug logging for troubleshooting - compare HTML vs Next.js
       if (serviceData.name?.toLowerCase().includes('saloon')) {
         console.debug('Service detail page', {
@@ -147,7 +147,7 @@ export default function ServiceDetailPage() {
           }
         })
       }
-      
+
       setMainImage(finalMainImage)
       setGalleryImages(galleryImages)
 
@@ -214,7 +214,7 @@ export default function ServiceDetailPage() {
 
   const getPackages = (): Package[] => {
     if (!service?.packages) return []
-    
+
     const packageOrder = ['basic', 'premium', 'elite']
     const packages: Package[] = []
 
@@ -224,7 +224,7 @@ export default function ServiceDetailPage() {
         const price = pkg.price || pkg.priceFrom || 0
         const priceInfo = pkg.priceInfo || `Starting from ₹${price.toLocaleString('en-IN')}`
         const features = pkg.includedFeatures?.map(f => f.text) || pkg.features || []
-        
+
         packages.push({
           type,
           price,
@@ -259,7 +259,7 @@ export default function ServiceDetailPage() {
 
     // Add to cart logic here
     console.log('Add to cart:', { serviceId, package: selectedPackage, squareFeet, advanceAmount })
-    
+
     // Close modal
     setAddToCartModalOpen(false)
   }
@@ -280,17 +280,17 @@ export default function ServiceDetailPage() {
 
   const handleEnquiry = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     // Submit enquiry logic here
     console.log('Enquiry submitted:', enquiryForm)
-    
+
     // Close modal and reset form
     setEnquiryModalOpen(false)
     setEnquiryForm({ name: '', phone: '', location: '', message: '', email: '' })
   }
 
   if (loading) {
-    return <MinionLoader />
+    return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>Loading...</div>
   }
 
   if (error || !service) {
@@ -325,25 +325,25 @@ export default function ServiceDetailPage() {
       <div className={styles.serviceHero}>
         <div className={styles.serviceInfo}>
           <h1 className={styles.serviceTitle}>{service.name || 'Service'}</h1>
-          <div 
+          <div
             className={styles.serviceDescription}
             dangerouslySetInnerHTML={{ __html: service.description || 'No description available' }}
           />
           <div className={styles.actionButtonsContainer}>
             <div className={styles.primaryActions}>
-              <button 
+              <button
                 className={styles.btnCart}
                 onClick={() => setAddToCartModalOpen(true)}
               >
                 🛒 Add to Cart
               </button>
-              <button 
+              <button
                 className={styles.btnBuy}
                 onClick={() => setBuyNowModalOpen(true)}
               >
                 💳 Buy Now
               </button>
-              <button 
+              <button
                 className={styles.btnEnquiry}
                 onClick={() => setEnquiryModalOpen(true)}
               >
@@ -357,15 +357,15 @@ export default function ServiceDetailPage() {
           <div className={styles.photoGallery} id="photo-gallery">
             {/* Dark Panel - Column 1, spans all rows (first in DOM for proper stacking) */}
             <div className={styles.galleryDarkPanel}></div>
-            
+
             {/* Large Featured Image - div1 */}
-            <div 
+            <div
               className={styles.galleryMain}
               onClick={() => changeMainImage(mainImage)}
             >
-              <img 
-                src={mainImage} 
-                alt={service.name || 'Service'} 
+              <img
+                src={mainImage}
+                alt={service.name || 'Service'}
                 id="main-gallery-image"
                 className={styles.mainGalleryImage}
                 onError={(e) => {
@@ -377,7 +377,7 @@ export default function ServiceDetailPage() {
                 }}
               />
             </div>
-            
+
             {/* Vertical Text Panel */}
             <div className={styles.galleryTextPanel}>
               <div className={styles.verticalText}>
@@ -385,20 +385,20 @@ export default function ServiceDetailPage() {
                 <div className={styles.catalogue}>Smart Solutions</div>
               </div>
             </div>
-            
+
             {/* Small Gallery Images - direct children of photoGallery */}
             {/* gallerySmall1 = grid-item-4, gallerySmall2 = grid-item-5, gallerySmall3 = grid-item-6, gallerySmall4 = grid-item-2 */}
             {galleryImages.slice(0, 4).map((image, index) => {
               // Map indices: 0->item4, 1->item5, 2->item6, 3->item2
               const itemMapping = ['gallerySmall1', 'gallerySmall2', 'gallerySmall3', 'gallerySmall4']
               return (
-                <div 
+                <div
                   key={index}
                   className={`${styles.gallerySmall} ${styles[itemMapping[index]]}`}
                   onClick={() => changeMainImage(image)}
                 >
-                  <img 
-                    src={image} 
+                  <img
+                    src={image}
                     alt={`${service.name} ${index + 1}`}
                     onError={(e) => {
                       const target = e.target as HTMLImageElement
@@ -423,16 +423,16 @@ export default function ServiceDetailPage() {
                 premium: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTIiIGZpbGw9IiNmZmQ3MDAiLz48cGF0aCBmaWxsPSIjMDAwMDAwIiBkPSJNMTIsMTcuMjdMMTguMTgsMjFMMTYuNTQsMTMuOTdMMjIsOS4yNEwxNC44MSw4LjYyTDEyLDJMMTAuMTksOC42MkwzLDkuMjQsOC40NiwxMy45N0w3LjEsMjFNMTIsMTUuNEwxMC4yNCwxOS42TDExLjEsMTQuNDYsNy41LDExLjgxTDEyLjEyLDExLjJMMTIsNkwxMS44OCwxMS4yTDE2LjUsMTEuODFMMTIuOSwxNC40NkwxMy43NiwxOS42IiAvPjwvc3ZnPg==',
                 elite: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTIiIGZpbGw9IiNmZmQ3MDAiLz48cGF0aCBmaWxsPSIjMDAwMDAwIiBkPSJNMTIsMkwxNSw2SDE5TDE2LDEwTDIwLDEyTDE3LDE1TDE1LDE2TDEyLDE0TDksMTZMNywxMkg1TDgsMTBMNSw2SDlNMTIsOEwxMCwxMEgxNEwxMiwxMloiLz48L3N2Zz4='
               }
-              
+
               return (
-                <div 
-                  key={pkg.type} 
+                <div
+                  key={pkg.type}
                   className={styles.packageCard}
                   onClick={() => router.push(`/package-details?service=${serviceId}&package=${pkg.type}`)}
                 >
                   <div className={styles.packageLogo}>
-                    <img 
-                      src={packageLogos[pkg.type] || packageLogos.basic} 
+                    <img
+                      src={packageLogos[pkg.type] || packageLogos.basic}
                       alt={`${pkg.type} Package Logo`}
                     />
                   </div>
@@ -440,7 +440,7 @@ export default function ServiceDetailPage() {
                     {pkg.type.charAt(0).toUpperCase() + pkg.type.slice(1)}
                   </div>
                   <div className={styles.packagePrice}>{pkg.priceInfo}</div>
-                  <a 
+                  <a
                     href={`/package-details?service=${serviceId}&package=${pkg.type}`}
                     className={styles.btnEnquiryPackage}
                     onClick={(e) => e.stopPropagation()}
@@ -461,7 +461,7 @@ export default function ServiceDetailPage() {
             <>
               <h2 className={styles.sectionTitle}>Related Services</h2>
               <div className={styles.servicesSectionWrapper}>
-                <ServicesSection 
+                <ServicesSection
                   services={relatedServices.map(s => ({ ...s, name: s.name || 'Service' }))}
                   title=""
                   subtitle=""
@@ -478,7 +478,7 @@ export default function ServiceDetailPage() {
               </h2>
               <div className={`${styles.relatedGrid} ${styles.productsGrid}`}>
                 {relatedProducts.map((product) => (
-                  <Link 
+                  <Link
                     key={product.id}
                     href={`/products/${product.id}`}
                     className={styles.relatedCard}
@@ -512,21 +512,21 @@ export default function ServiceDetailPage() {
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Add to Cart</h3>
-              <button 
+              <button
                 className={styles.closeModal}
                 onClick={() => setAddToCartModalOpen(false)}
               >
                 &times;
               </button>
             </div>
-            
+
             <div className={styles.paymentNote}>
               <div className={styles.noteIcon}>ℹ️</div>
               <div className={styles.noteText}>
                 <strong>Payment Note:</strong> This payment is only 10% of the tentative total amount. Final cost will vary based on design, package, and selected services.
               </div>
             </div>
-            
+
             <form onSubmit={handleAddToCart} id="addToCartForm">
               <div className={styles.formSection}>
                 <div className={styles.formGroup}>
@@ -534,13 +534,13 @@ export default function ServiceDetailPage() {
                     Approximate Total squareFeet
                   </label>
                   <div className={styles.areaInputContainer}>
-                    <input 
-                      type="number" 
-                      className={styles.formControl} 
-                      id="cartSquareFeet" 
-                      required 
-                      min="100" 
-                      step="50" 
+                    <input
+                      type="number"
+                      className={styles.formControl}
+                      id="cartSquareFeet"
+                      required
+                      min="100"
+                      step="50"
                       placeholder="Enter area"
                       value={squareFeet || ''}
                       onChange={(e) => setSquareFeet(Number(e.target.value))}
@@ -548,7 +548,7 @@ export default function ServiceDetailPage() {
                   </div>
                 </div>
               </div>
-              
+
               <div className={styles.formSection}>
                 <div className={styles.sectionTitle}>
                   <span>📦</span>
@@ -561,7 +561,7 @@ export default function ServiceDetailPage() {
                       premium: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTIiIGZpbGw9IiNmZmQ3MDAiLz48cGF0aCBmaWxsPSIjMDAwMDAwIiBkPSJNMTIsMTcuMjdMMTguMTgsMjFMMTYuNTQsMTMuOTdMMjIsOS4yNEwxNC44MSw4LjYyTDEyLDJMMTAuMTksOC42MkwzLDkuMjQsOC40NiwxMy45N0w3LjEsMjFNMTIsMTUuNEwxMC4yNCwxOS42TDExLjEsMTQuNDYsNy41LDExLjgxTDEyLjEyLDExLjJMMTIsNkwxMS44OCwxMS4yTDE2LjUsMTEuODFMMTIuOSwxNC40NkwxMy43NiwxOS42IiAvPjwvc3ZnPg==',
                       elite: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTIiIGZpbGw9IiNmZmQ3MDAiLz48cGF0aCBmaWxsPSIjMDAwMDAwIiBkPSJNMTIsMkwxNSw2SDE5TDE2LDEwTDIwLDEyTDE3LDE1TDE1LDE2TDEyLDE0TDksMTZMNywxMkg1TDgsMTBMNSw2SDlNMTIsOEwxMCwxMEgxNEwxMiwxMloiLz48L3N2Zz4='
                     }
-                    
+
                     return (
                       <div
                         key={pkg.type}
@@ -571,8 +571,8 @@ export default function ServiceDetailPage() {
                         data-price={pkg.price || 0}
                       >
                         <div className={styles.packageSelectionLogo}>
-                          <img 
-                            src={packageLogos[pkg.type] || packageLogos.basic} 
+                          <img
+                            src={packageLogos[pkg.type] || packageLogos.basic}
                             alt={`${pkg.type} Package Logo`}
                           />
                         </div>
@@ -585,7 +585,7 @@ export default function ServiceDetailPage() {
                   })}
                 </div>
               </div>
-              
+
               {selectedPackage && (
                 <div className={styles.calculationDisplay} id="cartCalculation">
                   <div className={styles.calculationHeader}>
@@ -596,7 +596,7 @@ export default function ServiceDetailPage() {
                     const selectedPkg = packages.find(p => p.type === selectedPackage)!
                     const basePrice = selectedPkg.price || 0
                     const currentArea = squareFeet || 0
-                    
+
                     if (!currentArea || currentArea < 100) {
                       return (
                         <>
@@ -611,11 +611,11 @@ export default function ServiceDetailPage() {
                         </>
                       )
                     }
-                    
+
                     const pricePerSqFt = basePrice > 0 ? basePrice / 1 : 0
                     const totalPrice = pricePerSqFt * currentArea
                     const advanceAmount = totalPrice * 0.1
-                    
+
                     if (basePrice === 0) {
                       return (
                         <>
@@ -636,7 +636,7 @@ export default function ServiceDetailPage() {
                         </>
                       )
                     }
-                    
+
                     return (
                       <>
                         <div className={styles.calculationRow}>
@@ -668,17 +668,17 @@ export default function ServiceDetailPage() {
                   })()}
                 </div>
               )}
-              
+
               <div className={styles.formActions}>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className={styles.btnCancel}
                   onClick={() => setAddToCartModalOpen(false)}
                 >
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className={styles.btnSubmit}
                   disabled={!selectedPackage || !squareFeet || squareFeet < 100}
                 >
@@ -696,21 +696,21 @@ export default function ServiceDetailPage() {
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Buy Now</h3>
-              <button 
+              <button
                 className={styles.closeModal}
                 onClick={() => setBuyNowModalOpen(false)}
               >
                 &times;
               </button>
             </div>
-            
+
             <div className={styles.paymentNote}>
               <div className={styles.noteIcon}>ℹ️</div>
               <div className={styles.noteText}>
                 <strong>Payment Note:</strong> This payment is only 10% of the tentative total amount. Final cost will vary based on design, package, and selected services.
               </div>
             </div>
-            
+
             <form onSubmit={handleBuyNow} id="buyNowForm">
               <div className={styles.formSection}>
                 <div className={styles.formGroup}>
@@ -718,13 +718,13 @@ export default function ServiceDetailPage() {
                     Approximate Total squareFeet
                   </label>
                   <div className={styles.areaInputContainer}>
-                    <input 
-                      type="number" 
-                      className={styles.formControl} 
-                      id="buySquareFeet" 
-                      required 
-                      min="100" 
-                      step="50" 
+                    <input
+                      type="number"
+                      className={styles.formControl}
+                      id="buySquareFeet"
+                      required
+                      min="100"
+                      step="50"
                       placeholder="Enter area"
                       value={squareFeet || ''}
                       onChange={(e) => setSquareFeet(Number(e.target.value))}
@@ -732,7 +732,7 @@ export default function ServiceDetailPage() {
                   </div>
                 </div>
               </div>
-              
+
               <div className={styles.formSection}>
                 <div className={styles.sectionTitle}>
                   <span>📦</span>
@@ -745,7 +745,7 @@ export default function ServiceDetailPage() {
                       premium: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTIiIGZpbGw9IiNmZmQ3MDAiLz48cGF0aCBmaWxsPSIjMDAwMDAwIiBkPSJNMTIsMTcuMjdMMTguMTgsMjFMMTYuNTQsMTMuOTdMMjIsOS4yNEwxNC44MSw4LjYyTDEyLDJMMTAuMTksOC42MkwzLDkuMjQsOC40NiwxMy45N0w3LjEsMjFNMTIsMTUuNEwxMC4yNCwxOS42TDExLjEsMTQuNDYsNy41LDExLjgxTDEyLjEyLDExLjJMMTIsNkwxMS44OCwxMS4yTDE2LjUsMTEuODFMMTIuOSwxNC40NkwxMy43NiwxOS42IiAvPjwvc3ZnPg==',
                       elite: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTIiIGZpbGw9IiNmZmQ3MDAiLz48cGF0aCBmaWxsPSIjMDAwMDAwIiBkPSJNMTIsMkwxNSw2SDE5TDE2LDEwTDIwLDEyTDE3LDE1TDE1LDE2TDEyLDE0TDksMTZMNywxMkg1TDgsMTBMNSw2SDlNMTIsOEwxMCwxMEgxNEwxMiwxMloiLz48L3N2Zz4='
                     }
-                    
+
                     return (
                       <div
                         key={pkg.type}
@@ -755,8 +755,8 @@ export default function ServiceDetailPage() {
                         data-price={pkg.price || 0}
                       >
                         <div className={styles.packageSelectionLogo}>
-                          <img 
-                            src={packageLogos[pkg.type] || packageLogos.basic} 
+                          <img
+                            src={packageLogos[pkg.type] || packageLogos.basic}
                             alt={`${pkg.type} Package Logo`}
                           />
                         </div>
@@ -769,7 +769,7 @@ export default function ServiceDetailPage() {
                   })}
                 </div>
               </div>
-              
+
               {selectedPackage && (
                 <div className={styles.calculationDisplay} id="buyCalculation">
                   <div className={styles.calculationHeader}>
@@ -780,7 +780,7 @@ export default function ServiceDetailPage() {
                     const selectedPkg = packages.find(p => p.type === selectedPackage)!
                     const basePrice = selectedPkg.price || 0
                     const currentArea = squareFeet || 0
-                    
+
                     if (!currentArea || currentArea < 100) {
                       return (
                         <>
@@ -795,11 +795,11 @@ export default function ServiceDetailPage() {
                         </>
                       )
                     }
-                    
+
                     const pricePerSqFt = basePrice > 0 ? basePrice / 1 : 0
                     const totalPrice = pricePerSqFt * currentArea
                     const advanceAmount = totalPrice * 0.1
-                    
+
                     if (basePrice === 0) {
                       return (
                         <>
@@ -820,7 +820,7 @@ export default function ServiceDetailPage() {
                         </>
                       )
                     }
-                    
+
                     return (
                       <>
                         <div className={styles.calculationRow}>
@@ -852,17 +852,17 @@ export default function ServiceDetailPage() {
                   })()}
                 </div>
               )}
-              
+
               <div className={styles.formActions}>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className={styles.btnCancel}
                   onClick={() => setBuyNowModalOpen(false)}
                 >
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className={styles.btnSubmit}
                   disabled={!selectedPackage || !squareFeet || squareFeet < 100}
                 >
@@ -880,7 +880,7 @@ export default function ServiceDetailPage() {
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Service Enquiry</h3>
-              <button 
+              <button
                 className={styles.closeModal}
                 onClick={() => setEnquiryModalOpen(false)}
               >
@@ -893,41 +893,41 @@ export default function ServiceDetailPage() {
                   <label className={`${styles.formLabel} ${styles.required}`} htmlFor="enquiryName">
                     Your Name
                   </label>
-                  <input 
-                    type="text" 
-                    className={styles.formControl} 
-                    id="enquiryName" 
-                    required 
+                  <input
+                    type="text"
+                    className={styles.formControl}
+                    id="enquiryName"
+                    required
                     placeholder="Enter your full name"
                     value={enquiryForm.name}
                     onChange={(e) => setEnquiryForm({ ...enquiryForm, name: e.target.value })}
                   />
                 </div>
-                
+
                 <div className={styles.formGroup}>
                   <label className={`${styles.formLabel} ${styles.required}`} htmlFor="enquiryPhone">
                     Phone Number
                   </label>
-                  <input 
-                    type="tel" 
-                    className={styles.formControl} 
-                    id="enquiryPhone" 
-                    required 
+                  <input
+                    type="tel"
+                    className={styles.formControl}
+                    id="enquiryPhone"
+                    required
                     placeholder="Enter your phone number"
                     value={enquiryForm.phone}
                     onChange={(e) => setEnquiryForm({ ...enquiryForm, phone: e.target.value })}
                   />
                 </div>
-                
+
                 <div className={styles.formGroup}>
                   <label className={`${styles.formLabel} ${styles.required}`} htmlFor="enquiryLocation">
                     Location
                   </label>
-                  <input 
-                    type="text" 
-                    className={styles.formControl} 
-                    id="enquiryLocation" 
-                    required 
+                  <input
+                    type="text"
+                    className={styles.formControl}
+                    id="enquiryLocation"
+                    required
                     placeholder="Enter your city/area"
                     value={enquiryForm.location}
                     onChange={(e) => setEnquiryForm({ ...enquiryForm, location: e.target.value })}
@@ -940,10 +940,10 @@ export default function ServiceDetailPage() {
                   <label className={styles.formLabel} htmlFor="enquiryMessage">
                     Requirements
                   </label>
-                  <textarea 
-                    className={styles.formControl} 
-                    id="enquiryMessage" 
-                    rows={4} 
+                  <textarea
+                    className={styles.formControl}
+                    id="enquiryMessage"
+                    rows={4}
                     placeholder="Tell us about your requirements, budget, timeline, etc."
                     value={enquiryForm.message}
                     onChange={(e) => setEnquiryForm({ ...enquiryForm, message: e.target.value })}
@@ -955,19 +955,19 @@ export default function ServiceDetailPage() {
                 <label className={styles.formLabel} htmlFor="enquiryEmail">
                   Email Address
                 </label>
-                <input 
-                  type="email" 
-                  className={styles.formControl} 
-                  id="enquiryEmail" 
+                <input
+                  type="email"
+                  className={styles.formControl}
+                  id="enquiryEmail"
                   placeholder="Enter your email (optional)"
                   value={enquiryForm.email}
                   onChange={(e) => setEnquiryForm({ ...enquiryForm, email: e.target.value })}
                 />
               </div>
-              
+
               <div className={styles.formActions}>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className={styles.btnCancel}
                   onClick={() => setEnquiryModalOpen(false)}
                 >

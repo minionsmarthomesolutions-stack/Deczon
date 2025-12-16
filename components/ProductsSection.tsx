@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, ReactNode } from 'react'
 import Link from 'next/link'
 import ProductCard from './ProductCard'
 import ProductDetailPopup from './ProductDetailPopup'
@@ -30,14 +30,16 @@ interface ProductsSectionProps {
   categoryName?: string
   productsList?: Product[]
   showSeeAll?: boolean
+  banner?: ReactNode
 }
 
-export default function ProductsSection({ 
-  categories, 
-  products, 
+export default function ProductsSection({
+  categories,
+  products,
   categoryName,
   productsList,
-  showSeeAll = false
+  showSeeAll = false,
+  banner
 }: ProductsSectionProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [selectedProduct, setSelectedProduct] = useState<any>(null)
@@ -56,14 +58,14 @@ export default function ProductsSection({
   const handleAddToCart = (product: any) => {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]')
     const existingItem = cart.find((item: any) => item.id === product.id)
-    
+
     if (existingItem) {
       existingItem.quantity = (existingItem.quantity || 1) + 1
     } else {
       const currentPrice = typeof product.currentPrice === 'string'
         ? parseFloat(product.currentPrice.replace(/[₹,]/g, ''))
         : (product.currentPrice as number) || 0
-      
+
       cart.push({
         id: product.id,
         name: product.name,
@@ -72,7 +74,7 @@ export default function ProductsSection({
         quantity: 1
       })
     }
-    
+
     localStorage.setItem('cart', JSON.stringify(cart))
     window.dispatchEvent(new Event('cartUpdated'))
   }
@@ -109,6 +111,8 @@ export default function ProductsSection({
               )}
             </div>
 
+            {banner && <div style={{ marginBottom: '2rem' }}>{banner}</div>}
+
             <div className={styles.productsSlider}>
               <button
                 className={`${styles.sliderBtn} ${styles.prev}`}
@@ -137,7 +141,7 @@ export default function ProductsSection({
               </button>
             </div>
           </div>
-        </section>
+        </section >
         <ProductDetailPopup
           product={selectedProduct}
           isOpen={isPopupOpen}

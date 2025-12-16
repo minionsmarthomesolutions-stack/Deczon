@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import MinionLoader from '@/components/MinionLoader'
+
 import ServicesSection from '@/components/ServicesSection'
 import BlogSection from '@/components/BlogSection'
 import { db } from '@/lib/firebase'
@@ -66,12 +66,12 @@ function PackageDetailContent() {
   const [squareFeet, setSquareFeet] = useState<number>(0)
   const [relatedServices, setRelatedServices] = useState<Service[]>([])
   const [relatedProducts, setRelatedProducts] = useState<any[]>([])
-  
+
   // Modal states
   const [addToCartModalOpen, setAddToCartModalOpen] = useState(false)
   const [buyNowModalOpen, setBuyNowModalOpen] = useState(false)
   const [enquiryModalOpen, setEnquiryModalOpen] = useState(false)
-  
+
   // Enquiry form state
   const [enquiryForm, setEnquiryForm] = useState({
     name: '',
@@ -106,7 +106,7 @@ function PackageDetailContent() {
 
     try {
       const serviceDoc = await getDoc(doc(db, 'services', serviceId))
-      
+
       if (!serviceDoc.exists()) {
         router.push('/services')
         return
@@ -302,7 +302,7 @@ function PackageDetailContent() {
   }
 
   if (loading) {
-    return <MinionLoader />
+    return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>Loading...</div>
   }
 
   if (error || !service || !packageData) {
@@ -317,7 +317,7 @@ function PackageDetailContent() {
     )
   }
 
-  const priceDisplay = packageData.priceInfo || 
+  const priceDisplay = packageData.priceInfo ||
     (packageData.price ? `₹${packageData.price.toLocaleString('en-IN')}` : 'Price on enquiry')
 
   return (
@@ -344,7 +344,7 @@ function PackageDetailContent() {
           <h1 className={styles.packageTitle}>{service.name || 'Package'}</h1>
           <p className={styles.packageSubtitle}>{service.category || 'Smart Home Service'}</p>
           {packageData.description && (
-            <div 
+            <div
               className={styles.packageDescription}
               dangerouslySetInnerHTML={{ __html: packageData.description }}
             />
@@ -353,22 +353,22 @@ function PackageDetailContent() {
             <span className={styles.pricePrefix}>Starting from</span>
             {priceDisplay}
           </div>
-          
+
           <div className={styles.actionButtonsContainer}>
             <div className={styles.primaryActions}>
-              <button 
+              <button
                 className={styles.btnCart}
                 onClick={() => setAddToCartModalOpen(true)}
               >
                 🛒 Add to Cart
               </button>
-              <button 
+              <button
                 className={styles.btnBuy}
                 onClick={() => setBuyNowModalOpen(true)}
               >
                 💳 Buy Now
               </button>
-              <button 
+              <button
                 className={styles.btnEnquiry}
                 onClick={() => setEnquiryModalOpen(true)}
               >
@@ -377,17 +377,17 @@ function PackageDetailContent() {
             </div>
           </div>
         </div>
-        
+
         <div className={styles.serviceVisual}>
           <div className={styles.gridContainer}>
             {galleryImages.length > 0 && (
-              <div 
-                className={styles.gridItem1} 
+              <div
+                className={styles.gridItem1}
                 onClick={() => changeMainImage(galleryImages[0].url)}
               >
-                <img 
-                  src={galleryImages[0].url} 
-                  alt={galleryImages[0].title || service.name || 'Package Image 1'} 
+                <img
+                  src={galleryImages[0].url}
+                  alt={galleryImages[0].title || service.name || 'Package Image 1'}
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = '/placeholder.svg?height=400&width=600&text=Package+Image+1'
                   }}
@@ -395,12 +395,12 @@ function PackageDetailContent() {
               </div>
             )}
             {galleryImages.length > 1 && (
-              <div 
-                className={styles.gridItem2} 
+              <div
+                className={styles.gridItem2}
                 onClick={() => changeMainImage(galleryImages[1].url)}
               >
-                <img 
-                  src={galleryImages[1].url} 
+                <img
+                  src={galleryImages[1].url}
                   alt={galleryImages[1].title || service.name || 'Package Image 2'}
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = '/placeholder.svg?height=300&width=400&text=Package+Image+2'
@@ -409,12 +409,12 @@ function PackageDetailContent() {
               </div>
             )}
             {galleryImages.length > 2 && (
-              <div 
-                className={styles.gridItem3} 
+              <div
+                className={styles.gridItem3}
                 onClick={() => changeMainImage(galleryImages[2].url)}
               >
-                <img 
-                  src={galleryImages[2].url} 
+                <img
+                  src={galleryImages[2].url}
                   alt={galleryImages[2].title || service.name || 'Package Image 3'}
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = '/placeholder.svg?height=200&width=300&text=Package+Image+3'
@@ -423,12 +423,12 @@ function PackageDetailContent() {
               </div>
             )}
             {galleryImages.length > 3 && (
-              <div 
-                className={styles.gridItem4} 
+              <div
+                className={styles.gridItem4}
                 onClick={() => changeMainImage(galleryImages[3].url)}
               >
-                <img 
-                  src={galleryImages[3].url} 
+                <img
+                  src={galleryImages[3].url}
                   alt={galleryImages[3].title || service.name || 'Package Image 4'}
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = '/placeholder.svg?height=200&width=300&text=Package+Image+4'
@@ -437,12 +437,12 @@ function PackageDetailContent() {
               </div>
             )}
             {galleryImages.length > 4 && (
-              <div 
-                className={styles.gridItem5} 
+              <div
+                className={styles.gridItem5}
                 onClick={() => changeMainImage(galleryImages[4].url)}
               >
-                <img 
-                  src={galleryImages[4].url} 
+                <img
+                  src={galleryImages[4].url}
                   alt={galleryImages[4].title || service.name || 'Package Image 5'}
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = '/placeholder.svg?height=150&width=250&text=Package+Image+5'
@@ -462,7 +462,7 @@ function PackageDetailContent() {
             <h3 className={styles.featureGroupTitle}>What's Included</h3>
             <div className={styles.featureList}>
               {(packageData.includedFeatures || []).map((feature, index) => (
-                <div 
+                <div
                   key={index}
                   className={`${styles.featureItem} ${styles.clickable}`}
                   onClick={() => scrollToDetail('inclusion', index)}
@@ -482,12 +482,12 @@ function PackageDetailContent() {
               ))}
             </div>
           </div>
-          
+
           <div className={`${styles.featureGroup} ${styles.excludedFeatures}`}>
             <h3 className={styles.featureGroupTitle}>What's Not Included</h3>
             <div className={styles.featureList}>
               {(packageData.excludedFeatures || []).map((feature, index) => (
-                <div 
+                <div
                   key={index}
                   className={`${styles.featureItem} ${styles.clickable}`}
                   onClick={() => scrollToDetail('exclusion', index)}
@@ -505,7 +505,7 @@ function PackageDetailContent() {
                   </div>
                 </div>
               ))}
-              
+
               {packageData.complimentaryFeatures && packageData.complimentaryFeatures.length > 0 && (
                 <div className={styles.complimentaryWorksSection}>
                   <div className={styles.complimentaryWorksHeader}>
@@ -513,7 +513,7 @@ function PackageDetailContent() {
                   </div>
                   <div className={styles.complimentaryWorksList}>
                     {packageData.complimentaryFeatures.map((feature, index) => (
-                      <div 
+                      <div
                         key={index}
                         className={`${styles.featureItem} ${styles.complimentaryItem} ${styles.clickable}`}
                         onClick={() => scrollToDetail('complimentary', index)}
@@ -542,25 +542,25 @@ function PackageDetailContent() {
       {/* Details Section with Switch Options */}
       <div className={styles.detailsSection}>
         <h2 className={styles.sectionTitle}>Package Details</h2>
-        
+
         {/* Switch Options */}
         <div className={styles.detailsSwitchContainer}>
           <div className={styles.switchOptions}>
-            <button 
+            <button
               className={`${styles.switchBtn} ${activeDetailSection === 'inclusion' ? styles.active : ''}`}
               onClick={() => switchDetailSection('inclusion')}
             >
               <i className="fas fa-check-circle"></i>
               Inclusion Details
             </button>
-            <button 
+            <button
               className={`${styles.switchBtn} ${activeDetailSection === 'exclusion' ? styles.active : ''}`}
               onClick={() => switchDetailSection('exclusion')}
             >
               <i className="fas fa-times-circle"></i>
               Exclusion Details
             </button>
-            <button 
+            <button
               className={`${styles.switchBtn} ${activeDetailSection === 'complimentary' ? styles.active : ''}`}
               onClick={() => switchDetailSection('complimentary')}
             >
@@ -569,7 +569,7 @@ function PackageDetailContent() {
             </button>
           </div>
         </div>
-        
+
         {/* Inclusion Details */}
         <div className={`${styles.detailSection} ${activeDetailSection === 'inclusion' ? styles.active : ''}`}>
           <div className={styles.detailSectionHeader}>
@@ -581,10 +581,10 @@ function PackageDetailContent() {
           <div className={styles.detailItemsGrid}>
             {(() => {
               // Use includedFeatures first (matching HTML logic), fallback to inclusionDetails
-              const inclusionData = (packageData.includedFeatures && packageData.includedFeatures.length > 0) 
-                ? packageData.includedFeatures 
+              const inclusionData = (packageData.includedFeatures && packageData.includedFeatures.length > 0)
+                ? packageData.includedFeatures
                 : (packageData.inclusionDetails || [])
-              
+
               if (inclusionData.length === 0) {
                 return (
                   <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
@@ -593,15 +593,15 @@ function PackageDetailContent() {
                   </div>
                 )
               }
-              
+
               return inclusionData.map((feature: any, index: number) => {
                 // Handle both formats: includedFeatures (has 'text') and inclusionDetails (has 'title')
                 const title = feature.text || feature.title || 'Included Feature'
                 const description = feature.description || 'This feature is included in your package and provides enhanced functionality for your smart home system.'
                 const imageUrl = feature.imageUrl || getFeatureImage(feature, service)
-                
+
                 return (
-                  <div 
+                  <div
                     key={index}
                     id={`inclusion-detail-${index}`}
                     className={`${styles.detailItem} ${highlightedDetailIndex === index && activeDetailSection === 'inclusion' ? styles.highlighted : ''}`}
@@ -625,7 +625,7 @@ function PackageDetailContent() {
             })()}
           </div>
         </div>
-        
+
         {/* Exclusion Details */}
         <div className={`${styles.detailSection} ${activeDetailSection === 'exclusion' ? styles.active : ''}`}>
           <div className={styles.detailSectionHeader}>
@@ -637,10 +637,10 @@ function PackageDetailContent() {
           <div className={styles.detailItemsGrid}>
             {(() => {
               // Use excludedFeatures first (matching HTML logic), fallback to exclusionDetails
-              const exclusionData = (packageData.excludedFeatures && packageData.excludedFeatures.length > 0) 
-                ? packageData.excludedFeatures 
+              const exclusionData = (packageData.excludedFeatures && packageData.excludedFeatures.length > 0)
+                ? packageData.excludedFeatures
                 : (packageData.exclusionDetails || [])
-              
+
               if (exclusionData.length === 0) {
                 return (
                   <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
@@ -649,15 +649,15 @@ function PackageDetailContent() {
                   </div>
                 )
               }
-              
+
               return exclusionData.map((feature: any, index: number) => {
                 // Handle both formats: excludedFeatures (has 'text') and exclusionDetails (has 'title')
                 const title = feature.text || feature.title || 'Excluded Feature'
                 const description = feature.description || 'This feature is not included in your package and may require additional purchase or separate service.'
                 const imageUrl = feature.imageUrl || getFeatureImage(feature, service)
-                
+
                 return (
-                  <div 
+                  <div
                     key={index}
                     id={`exclusion-detail-${index}`}
                     className={`${styles.detailItem} ${highlightedDetailIndex === index && activeDetailSection === 'exclusion' ? styles.highlighted : ''}`}
@@ -681,7 +681,7 @@ function PackageDetailContent() {
             })()}
           </div>
         </div>
-        
+
         {/* Complimentary Details */}
         <div className={`${styles.detailSection} ${activeDetailSection === 'complimentary' ? styles.active : ''}`}>
           <div className={styles.detailSectionHeader}>
@@ -693,10 +693,10 @@ function PackageDetailContent() {
           <div className={styles.detailItemsGrid}>
             {(() => {
               // Use complimentaryFeatures first (matching HTML logic), fallback to complimentaryDetails
-              const complimentaryData = (packageData.complimentaryFeatures && packageData.complimentaryFeatures.length > 0) 
-                ? packageData.complimentaryFeatures 
+              const complimentaryData = (packageData.complimentaryFeatures && packageData.complimentaryFeatures.length > 0)
+                ? packageData.complimentaryFeatures
                 : (packageData.complimentaryDetails || [])
-              
+
               if (complimentaryData.length === 0) {
                 return (
                   <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
@@ -705,15 +705,15 @@ function PackageDetailContent() {
                   </div>
                 )
               }
-              
+
               return complimentaryData.map((feature: any, index: number) => {
                 // Handle both formats: complimentaryFeatures (has 'text' or 'title') and complimentaryDetails (has 'title')
                 const title = feature.text || feature.title || 'Complimentary Work'
                 const description = feature.description || 'This complimentary work is included as a bonus with your package at no additional cost.'
                 const imageUrl = feature.imageUrl || getFeatureImage(feature, service)
-                
+
                 return (
-                  <div 
+                  <div
                     key={index}
                     id={`complimentary-detail-${index}`}
                     className={`${styles.detailItem} ${highlightedDetailIndex === index && activeDetailSection === 'complimentary' ? styles.highlighted : ''}`}
@@ -743,7 +743,7 @@ function PackageDetailContent() {
       {relatedServices.length > 0 && (
         <div className={styles.relatedServicesSection}>
           <h2 className={styles.sectionTitle}>Related Services</h2>
-          <ServicesSection 
+          <ServicesSection
             services={relatedServices.map(s => ({ ...s, name: s.name || 'Service' }))}
             title=""
             subtitle=""
@@ -758,7 +758,7 @@ function PackageDetailContent() {
           <h2 className={styles.sectionTitle}>Related Products</h2>
           <div className={styles.relatedGrid}>
             {relatedProducts.map((product) => (
-              <Link 
+              <Link
                 key={product.id}
                 href={`/products/${product.id}`}
                 className={styles.relatedItem}
@@ -778,7 +778,7 @@ function PackageDetailContent() {
                   <p className={styles.relatedItemCategory}>{product.category || product.quantity}</p>
                   <div className={styles.relatedItemPrice}>
                     <span className={styles.relatedPrice}>₹{(product.currentPrice || 0).toLocaleString('en-IN')}</span>
-                    <button 
+                    <button
                       className={`${styles.relatedBtn} ${styles.relatedAddBtn}`}
                       onClick={(e) => {
                         e.preventDefault()
@@ -805,21 +805,21 @@ function PackageDetailContent() {
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Add to Cart</h3>
-              <button 
+              <button
                 className={styles.closeModal}
                 onClick={() => setAddToCartModalOpen(false)}
               >
                 &times;
               </button>
             </div>
-            
+
             <div className={styles.paymentNote}>
               <div className={styles.noteIcon}>ℹ️</div>
               <div className={styles.noteText}>
                 <strong>Payment Note:</strong> This payment is only 10% of the tentative total amount. Final cost will vary based on design, package, and selected services.
               </div>
             </div>
-            
+
             <form onSubmit={handleAddToCart} id="addToCartForm">
               <div className={styles.formSection}>
                 <div className={styles.formGroup}>
@@ -827,13 +827,13 @@ function PackageDetailContent() {
                     Approximate Total Square Feet
                   </label>
                   <div className={styles.areaInputContainer}>
-                    <input 
-                      type="number" 
-                      className={styles.formControl} 
-                      id="cartSquareFeet" 
-                      required 
-                      min="100" 
-                      step="50" 
+                    <input
+                      type="number"
+                      className={styles.formControl}
+                      id="cartSquareFeet"
+                      required
+                      min="100"
+                      step="50"
                       placeholder="Enter area"
                       value={squareFeet || ''}
                       onChange={(e) => setSquareFeet(Number(e.target.value))}
@@ -841,7 +841,7 @@ function PackageDetailContent() {
                   </div>
                 </div>
               </div>
-              
+
               <div className={styles.formSection}>
                 <div className={styles.sectionTitleModal}>
                   <span>📦</span>
@@ -854,10 +854,10 @@ function PackageDetailContent() {
                     data-price={packageData.price || 0}
                   >
                     <div className={styles.packageSelectionLogo}>
-                      <img 
+                      <img
                         src={packageType === 'basic' ? 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#ffd700"/><path fill="#000000" d="M10,20V14H14V20H18V12H12V10H10V12H6V20H10Z"/></svg>') :
-                             packageType === 'premium' ? 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#ffd700"/><path fill="#000000" d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L10.19,8.62L3,9.24,8.46,13.97L7.1,21M12,15.4L10.24,19.6L11.1,14.46,7.5,11.81L12.12,11.2L12,6L11.88,11.2L16.5,11.81L12.9,14.46L13.76,19.6"/></svg>') :
-                             'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#ffd700"/><path fill="#000000" d="M12,2L15,6H19L16,10L20,12L17,15L15,16L12,14L9,16L7,12H5L8,10L5,6H9M12,8L10,10H14L12,12Z"/></svg>')}
+                          packageType === 'premium' ? 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#ffd700"/><path fill="#000000" d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L10.19,8.62L3,9.24,8.46,13.97L7.1,21M12,15.4L10.24,19.6L11.1,14.46,7.5,11.81L12.12,11.2L12,6L11.88,11.2L16.5,11.81L12.9,14.46L13.76,19.6"/></svg>') :
+                            'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#ffd700"/><path fill="#000000" d="M12,2L15,6H19L16,10L20,12L17,15L15,16L12,14L9,16L7,12H5L8,10L5,6H9M12,8L10,10H14L12,12Z"/></svg>')}
                         alt={`${packageType} Package Logo`}
                       />
                     </div>
@@ -868,7 +868,7 @@ function PackageDetailContent() {
                   </div>
                 </div>
               </div>
-              
+
               {squareFeet >= 100 && (
                 <div className={styles.calculationDisplay} id="cartCalculation">
                   <div className={styles.calculationHeader}>
@@ -878,7 +878,7 @@ function PackageDetailContent() {
                   {(() => {
                     const basePrice = packageData.price || 0
                     const currentArea = squareFeet || 0
-                    
+
                     if (!currentArea || currentArea < 100) {
                       return (
                         <>
@@ -893,11 +893,11 @@ function PackageDetailContent() {
                         </>
                       )
                     }
-                    
+
                     const pricePerSqFt = basePrice > 0 ? basePrice / 1 : 0
                     const totalPrice = pricePerSqFt * currentArea
                     const advanceAmount = totalPrice * 0.1
-                    
+
                     if (basePrice === 0) {
                       return (
                         <>
@@ -918,7 +918,7 @@ function PackageDetailContent() {
                         </>
                       )
                     }
-                    
+
                     return (
                       <>
                         <div className={styles.calculationRow}>
@@ -950,17 +950,17 @@ function PackageDetailContent() {
                   })()}
                 </div>
               )}
-              
+
               <div className={styles.formActions}>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className={styles.btnCancel}
                   onClick={() => setAddToCartModalOpen(false)}
                 >
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className={styles.btnSubmit}
                   disabled={!squareFeet || squareFeet < 100}
                 >
@@ -978,21 +978,21 @@ function PackageDetailContent() {
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Buy Now</h3>
-              <button 
+              <button
                 className={styles.closeModal}
                 onClick={() => setBuyNowModalOpen(false)}
               >
                 &times;
               </button>
             </div>
-            
+
             <div className={styles.paymentNote}>
               <div className={styles.noteIcon}>ℹ️</div>
               <div className={styles.noteText}>
                 <strong>Payment Note:</strong> This payment is only 10% of the tentative total amount. Final cost will vary based on design, package, and selected services.
               </div>
             </div>
-            
+
             <form onSubmit={handleBuyNow} id="buyNowForm">
               <div className={styles.formSection}>
                 <div className={styles.formGroup}>
@@ -1000,13 +1000,13 @@ function PackageDetailContent() {
                     Approximate Total Square Feet
                   </label>
                   <div className={styles.areaInputContainer}>
-                    <input 
-                      type="number" 
-                      className={styles.formControl} 
-                      id="buySquareFeet" 
-                      required 
-                      min="100" 
-                      step="50" 
+                    <input
+                      type="number"
+                      className={styles.formControl}
+                      id="buySquareFeet"
+                      required
+                      min="100"
+                      step="50"
                       placeholder="Enter area"
                       value={squareFeet || ''}
                       onChange={(e) => setSquareFeet(Number(e.target.value))}
@@ -1014,7 +1014,7 @@ function PackageDetailContent() {
                   </div>
                 </div>
               </div>
-              
+
               <div className={styles.formSection}>
                 <div className={styles.sectionTitleModal}>
                   <span>📦</span>
@@ -1027,10 +1027,10 @@ function PackageDetailContent() {
                     data-price={packageData.price || 0}
                   >
                     <div className={styles.packageSelectionLogo}>
-                      <img 
+                      <img
                         src={packageType === 'basic' ? 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#ffd700"/><path fill="#000000" d="M10,20V14H14V20H18V12H12V10H10V12H6V20H10Z"/></svg>') :
-                             packageType === 'premium' ? 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#ffd700"/><path fill="#000000" d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L10.19,8.62L3,9.24,8.46,13.97L7.1,21M12,15.4L10.24,19.6L11.1,14.46,7.5,11.81L12.12,11.2L12,6L11.88,11.2L16.5,11.81L12.9,14.46L13.76,19.6"/></svg>') :
-                             'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#ffd700"/><path fill="#000000" d="M12,2L15,6H19L16,10L20,12L17,15L15,16L12,14L9,16L7,12H5L8,10L5,6H9M12,8L10,10H14L12,12Z"/></svg>')}
+                          packageType === 'premium' ? 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#ffd700"/><path fill="#000000" d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L10.19,8.62L3,9.24,8.46,13.97L7.1,21M12,15.4L10.24,19.6L11.1,14.46,7.5,11.81L12.12,11.2L12,6L11.88,11.2L16.5,11.81L12.9,14.46L13.76,19.6"/></svg>') :
+                            'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#ffd700"/><path fill="#000000" d="M12,2L15,6H19L16,10L20,12L17,15L15,16L12,14L9,16L7,12H5L8,10L5,6H9M12,8L10,10H14L12,12Z"/></svg>')}
                         alt={`${packageType} Package Logo`}
                       />
                     </div>
@@ -1041,7 +1041,7 @@ function PackageDetailContent() {
                   </div>
                 </div>
               </div>
-              
+
               {squareFeet >= 100 && (
                 <div className={styles.calculationDisplay} id="buyCalculation">
                   <div className={styles.calculationHeader}>
@@ -1051,7 +1051,7 @@ function PackageDetailContent() {
                   {(() => {
                     const basePrice = packageData.price || 0
                     const currentArea = squareFeet || 0
-                    
+
                     if (!currentArea || currentArea < 100) {
                       return (
                         <>
@@ -1066,11 +1066,11 @@ function PackageDetailContent() {
                         </>
                       )
                     }
-                    
+
                     const pricePerSqFt = basePrice > 0 ? basePrice / 1 : 0
                     const totalPrice = pricePerSqFt * currentArea
                     const advanceAmount = totalPrice * 0.1
-                    
+
                     if (basePrice === 0) {
                       return (
                         <>
@@ -1091,7 +1091,7 @@ function PackageDetailContent() {
                         </>
                       )
                     }
-                    
+
                     return (
                       <>
                         <div className={styles.calculationRow}>
@@ -1123,17 +1123,17 @@ function PackageDetailContent() {
                   })()}
                 </div>
               )}
-              
+
               <div className={styles.formActions}>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className={styles.btnCancel}
                   onClick={() => setBuyNowModalOpen(false)}
                 >
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className={styles.btnSubmit}
                   disabled={!squareFeet || squareFeet < 100}
                 >
@@ -1151,7 +1151,7 @@ function PackageDetailContent() {
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Service Enquiry</h3>
-              <button 
+              <button
                 className={styles.closeModal}
                 onClick={() => setEnquiryModalOpen(false)}
               >
@@ -1164,41 +1164,41 @@ function PackageDetailContent() {
                   <label className={`${styles.formLabel} ${styles.required}`} htmlFor="enquiryName">
                     Your Name
                   </label>
-                  <input 
-                    type="text" 
-                    className={styles.formControl} 
-                    id="enquiryName" 
-                    required 
+                  <input
+                    type="text"
+                    className={styles.formControl}
+                    id="enquiryName"
+                    required
                     placeholder="Enter your full name"
                     value={enquiryForm.name}
                     onChange={(e) => setEnquiryForm({ ...enquiryForm, name: e.target.value })}
                   />
                 </div>
-                
+
                 <div className={styles.formGroup}>
                   <label className={`${styles.formLabel} ${styles.required}`} htmlFor="enquiryPhone">
                     Phone Number
                   </label>
-                  <input 
-                    type="tel" 
-                    className={styles.formControl} 
-                    id="enquiryPhone" 
-                    required 
+                  <input
+                    type="tel"
+                    className={styles.formControl}
+                    id="enquiryPhone"
+                    required
                     placeholder="Enter your phone number"
                     value={enquiryForm.phone}
                     onChange={(e) => setEnquiryForm({ ...enquiryForm, phone: e.target.value })}
                   />
                 </div>
-                
+
                 <div className={styles.formGroup}>
                   <label className={`${styles.formLabel} ${styles.required}`} htmlFor="enquiryLocation">
                     Location
                   </label>
-                  <input 
-                    type="text" 
-                    className={styles.formControl} 
-                    id="enquiryLocation" 
-                    required 
+                  <input
+                    type="text"
+                    className={styles.formControl}
+                    id="enquiryLocation"
+                    required
                     placeholder="Enter your city/area"
                     value={enquiryForm.location}
                     onChange={(e) => setEnquiryForm({ ...enquiryForm, location: e.target.value })}
@@ -1211,10 +1211,10 @@ function PackageDetailContent() {
                   <label className={styles.formLabel} htmlFor="enquiryMessage">
                     Requirements
                   </label>
-                  <textarea 
-                    className={styles.formControl} 
-                    id="enquiryMessage" 
-                    rows={4} 
+                  <textarea
+                    className={styles.formControl}
+                    id="enquiryMessage"
+                    rows={4}
                     placeholder="Tell us about your requirements, budget, timeline, etc."
                     value={enquiryForm.message}
                     onChange={(e) => setEnquiryForm({ ...enquiryForm, message: e.target.value })}
@@ -1226,19 +1226,19 @@ function PackageDetailContent() {
                 <label className={styles.formLabel} htmlFor="enquiryEmail">
                   Email Address
                 </label>
-                <input 
-                  type="email" 
-                  className={styles.formControl} 
-                  id="enquiryEmail" 
+                <input
+                  type="email"
+                  className={styles.formControl}
+                  id="enquiryEmail"
                   placeholder="Enter your email (optional)"
                   value={enquiryForm.email}
                   onChange={(e) => setEnquiryForm({ ...enquiryForm, email: e.target.value })}
                 />
               </div>
-              
+
               <div className={styles.formActions}>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className={styles.btnCancel}
                   onClick={() => setEnquiryModalOpen(false)}
                 >
@@ -1258,7 +1258,7 @@ function PackageDetailContent() {
 
 export default function PackageDetailPage() {
   return (
-    <Suspense fallback={<MinionLoader />}>
+    <Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>Loading...</div>}>
       <PackageDetailContent />
     </Suspense>
   )

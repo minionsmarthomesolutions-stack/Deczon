@@ -77,3 +77,4 @@ After deploying, visit your Firebase Hosting URL:
 You should now see your Next.js app instead of the default Firebase page!
 
 
+

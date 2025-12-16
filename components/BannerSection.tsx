@@ -1,176 +1,157 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import Link from 'next/link'
+import { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import styles from './BannerSection.module.css'
 
+interface BannerImage {
+    url: string
+    alt?: string
+    cta?: string
+    linkType: 'product' | 'category' | 'custom'
+    linkData?: {
+        productId?: string
+        productName?: string
+        main?: string
+        sub?: string
+        subSub?: string
+        url?: string
+    }
+}
+
 interface Banner {
-  id: string
-  imageUrl?: string
-  title?: string
-  description?: string
-  desc?: string
-  tag?: string
-  price?: string
-  textAlignment?: string
-  textAlign?: string
-  link?: string
-  productLink?: string
-  status?: string
-  order?: number
+    id: string
+    type: 'single' | 'double'
+    categoryId: string
+    banners: {
+        a: BannerImage
+        b?: BannerImage
+    }
 }
 
 interface BannerSectionProps {
-  banners: Banner[]
+    mainCategory: string
+    banners: Banner[]
 }
 
-export default function BannerSection({ banners }: BannerSectionProps) {
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+export default function BannerSection({ mainCategory, banners }: BannerSectionProps) {
+    const router = useRouter()
+    const [currentSlide, setCurrentSlide] = useState(0)
 
-  // Filter active banners and sort by order
-  const activeBanners = banners
-    .filter(banner => !banner.status || banner.status === 'active')
-    .sort((a, b) => (a.order || 0) - (b.order || 0))
+    // Filter banners to only show those matching this category
+    const categoryBanners = banners.filter(b => b.categoryId === mainCategory)
 
-  useEffect(() => {
-    if (activeBanners.length > 1 && isAutoPlaying) {
-      intervalRef.current = setInterval(() => {
-        setCurrentIndex((prev) => (prev + 1) % activeBanners.length)
-      }, 5000) // Auto-slide every 5 seconds
-      
-      return () => {
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current)
+    // Separate single and double banners
+    const singleBanners = categoryBanners.filter(b => b.type === 'single')
+    const doubleBanners = categoryBanners.filter(b => b.type === 'double')
+
+    // Auto-slide for single banners only
+    useEffect(() => {
+        if (singleBanners.length <= 1) return
+
+        const interval = setInterval(() => {
+            setCurrentSlide((prev) => (prev + 1) % singleBanners.length)
+        }, 5000) // 5 seconds per slide
+
+        return () => clearInterval(interval)
+    }, [singleBanners.length])
+
+    const handleBannerClick = useCallback((bannerImage: BannerImage) => {
+        if (!bannerImage.linkType || !bannerImage.linkData) return
+
+        const { linkType, linkData } = bannerImage
+
+        if (linkType === 'product' && linkData.productId) {
+            router.push(`/product/${linkData.productId}`)
+        } else if (linkType === 'category') {
+            const params = new URLSearchParams()
+            if (linkData.main) params.set('main', linkData.main)
+            if (linkData.sub) params.set('sub', linkData.sub)
+            if (linkData.subSub) params.set('subSub', linkData.subSub)
+            router.push(`/products?${params.toString()}`)
+        } else if (linkType === 'custom' && linkData.url) {
+            window.open(linkData.url, '_blank', 'noopener,noreferrer')
         }
-      }
+    }, [router])
+
+    const renderBannerImage = (bannerImage: BannerImage, isSingle: boolean = false) => {
+        if (!bannerImage || !bannerImage.url) return null
+
+        return (
+            <div
+                className={isSingle ? styles.singleBannerWrapper : styles.doubleBannerWrapper}
+                onClick={() => handleBannerClick(bannerImage)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        handleBannerClick(bannerImage)
+                    }
+                }}
+            >
+                <div className={styles.bannerImageContainer}>
+                    <Image
+                        src={bannerImage.url}
+                        alt={bannerImage.alt || 'Banner'}
+                        fill
+                        sizes={isSingle ? '100vw' : '50vw'}
+                        style={{ objectFit: 'cover' }}
+                        priority={isSingle}
+                        quality={90}
+                    />
+                    {bannerImage.cta && (
+                        <div className={styles.ctaOverlay}>
+                            <span className={styles.ctaText}>{bannerImage.cta}</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+        )
     }
-  }, [activeBanners.length, isAutoPlaying])
 
-  // Pause auto-play on hover
-  const handleMouseEnter = () => {
-    setIsAutoPlaying(false)
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-    }
-  }
+    // Don't render if no banners for this category
+    if (categoryBanners.length === 0) return null
 
-  const handleMouseLeave = () => {
-    setIsAutoPlaying(true)
-  }
+    return (
+        <section className={styles.bannerSection}>
+            {/* Single Banners - Slider */}
+            {singleBanners.length > 0 && (
+                <div className={styles.singleBannerContainer}>
+                    <div
+                        className={styles.sliderTrack}
+                        style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+                    >
+                        {singleBanners.map((banner) => (
+                            <div key={banner.id} className={styles.slide}>
+                                {renderBannerImage(banner.banners.a, true)}
+                            </div>
+                        ))}
+                    </div>
 
-  const goToSlide = (index: number) => {
-    setCurrentIndex(index)
-    setIsAutoPlaying(false)
-    // Resume auto-play after 10 seconds
-    setTimeout(() => setIsAutoPlaying(true), 10000)
-  }
+                    {/* Slider Indicators */}
+                    {singleBanners.length > 1 && (
+                        <div className={styles.sliderIndicators}>
+                            {singleBanners.map((_, index) => (
+                                <button
+                                    key={index}
+                                    className={`${styles.indicator} ${index === currentSlide ? styles.active : ''}`}
+                                    onClick={() => setCurrentSlide(index)}
+                                    aria-label={`Go to slide ${index + 1}`}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
 
-  const goToPrev = () => {
-    setCurrentIndex((prev) => (prev - 1 + activeBanners.length) % activeBanners.length)
-    setIsAutoPlaying(false)
-    setTimeout(() => setIsAutoPlaying(true), 10000)
-  }
-
-  const goToNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % activeBanners.length)
-    setIsAutoPlaying(false)
-    setTimeout(() => setIsAutoPlaying(true), 10000)
-  }
-
-  if (!activeBanners || activeBanners.length === 0) {
-    return null
-  }
-
-  const currentBanner = activeBanners[currentIndex]
-  const bannerLink = currentBanner.productLink || currentBanner.link
-  const textAlignment = currentBanner.textAlignment || currentBanner.textAlign || 'center'
-  const description = currentBanner.description || currentBanner.desc
-
-  const getAlignmentClass = (alignment: string) => {
-    const align = alignment.toLowerCase()
-    if (align === 'left') return styles.textAlignLeft
-    if (align === 'right') return styles.textAlignRight
-    return styles.textAlignCenter
-  }
-
-  const BannerContent = (
-    <div
-      className={styles.banner}
-      style={{
-        backgroundImage: currentBanner.imageUrl
-          ? `url(${currentBanner.imageUrl})`
-          : 'linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%)',
-      }}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      <div className={`${styles.bannerContent} ${getAlignmentClass(textAlignment)}`}>
-        {currentBanner.tag && (
-          <span className={styles.bannerTag}>{currentBanner.tag}</span>
-        )}
-        {currentBanner.title && (
-          <h2 className={styles.bannerTitle}>{currentBanner.title}</h2>
-        )}
-        {description && (
-          <p className={styles.bannerDesc}>{description}</p>
-        )}
-        {currentBanner.price && (
-          <div className={styles.bannerPrice}>{currentBanner.price}</div>
-        )}
-      </div>
-    </div>
-  )
-
-  return (
-    <section className={styles.bannerSection} id="banner-section">
-      <div className={styles.container}>
-        <div className={styles.bannersContainer} id="banners-container">
-          {bannerLink && bannerLink !== '#' ? (
-            <Link href={bannerLink} className={styles.bannerLink}>
-              {BannerContent}
-            </Link>
-          ) : (
-            BannerContent
-          )}
-
-          {activeBanners.length > 1 && (
-            <>
-              <button
-                className={`${styles.sliderBtn} ${styles.prev}`}
-                onClick={goToPrev}
-                aria-label="Previous banner"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M15 18l-6-6 6-6" />
-                </svg>
-              </button>
-              <button
-                className={`${styles.sliderBtn} ${styles.next}`}
-                onClick={goToNext}
-                aria-label="Next banner"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 18l6-6-6-6" />
-                </svg>
-              </button>
-
-              <div className={styles.bannerIndicators}>
-                {activeBanners.map((_, index) => (
-                  <button
-                    key={index}
-                    className={`${styles.indicator} ${index === currentIndex ? styles.active : ''}`}
-                    onClick={() => goToSlide(index)}
-                    aria-label={`Go to banner ${index + 1}`}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-    </section>
-  )
+            {/* Double Banners - Static Grid */}
+            {doubleBanners.map((banner) => (
+                <div key={banner.id} className={styles.doubleBannerContainer}>
+                    {renderBannerImage(banner.banners.a, false)}
+                    {banner.banners.b && renderBannerImage(banner.banners.b, false)}
+                </div>
+            ))}
+        </section>
+    )
 }
-

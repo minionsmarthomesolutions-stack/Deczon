@@ -12,7 +12,7 @@ import {
 } from 'firebase/auth'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import styles from './login.module.css'
-import MinionLoader from '@/components/MinionLoader'
+
 
 function LoginContent() {
   const router = useRouter()
@@ -299,7 +299,7 @@ function LoginContent() {
         <div className={styles.loginContainer}>
           {loading && (
             <div className={styles.loadingOverlay}>
-              <MinionLoader fullScreen={false} message={showOtp ? 'Verifying...' : 'Sending OTP...'} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>{showOtp ? 'Verifying...' : 'Sending OTP...'}</div>
             </div>
           )}
 
@@ -448,7 +448,7 @@ export default function LoginPage() {
     <Suspense fallback={
       <div className={styles.loginPage}>
         <div className={styles.loginContainer}>
-          <MinionLoader fullScreen={false} message="Loading..." />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>Loading...</div>
         </div>
       </div>
     }>
