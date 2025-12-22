@@ -100,11 +100,6 @@ export default function BannerSection({ mainCategory, banners }: BannerSectionPr
                         priority={isSingle}
                         quality={90}
                     />
-                    {bannerImage.cta && (
-                        <div className={styles.ctaOverlay}>
-                            <span className={styles.ctaText}>{bannerImage.cta}</span>
-                        </div>
-                    )}
                 </div>
             </div>
         )

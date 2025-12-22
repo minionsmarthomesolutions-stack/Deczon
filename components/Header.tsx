@@ -42,7 +42,8 @@ export default function Header() {
     (pathname?.startsWith('/services/') && pathname.split('/').length > 2) ||
     pathname?.startsWith('/show-all-blogs') ||
     pathname?.startsWith('/blog/') ||
-    pathname?.startsWith('/package-details')
+    pathname?.startsWith('/package-details') ||
+    pathname === '/cart'
   const [user, setUser] = useState<any>(null)
   const [userLabel, setUserLabel] = useState('Login')
   const [cartCount, setCartCount] = useState(0)
