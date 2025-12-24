@@ -39,12 +39,26 @@ export default function BannerSection({ mainCategory, banners }: BannerSectionPr
     const router = useRouter()
     const [currentSlide, setCurrentSlide] = useState(0)
 
-    // Filter banners to only show those matching this category
+    // Filter banners to only show those matching this category relative to the passed prop
+    // Note: page.tsx typically passes banners pre-filtered or we filter here to be safe.
+    // The prop name is 'banners', usually containing all banners or relevant ones.
+    // Based on previous code, it filtered by categoryId.
     const categoryBanners = banners.filter(b => b.categoryId === mainCategory)
 
-    // Separate single and double banners
-    const singleBanners = categoryBanners.filter(b => b.type === 'single')
-    const doubleBanners = categoryBanners.filter(b => b.type === 'double')
+    // Don't render if no banners for this category
+    if (categoryBanners.length === 0) return null
+
+    // Determine the primary display mode based on the latest banner (banners[0])
+    // We assume banners are sorted by date desc as per page.tsx query
+    const latestBanner = categoryBanners[0]
+    const displayType = latestBanner.type
+
+    // Logic:
+    // 1. If latest is 'single', show Slider of available Single Banners
+    // 2. If latest is 'double', show ONLY the latest Double Banner instance (no stacking)
+
+    const singleBanners = displayType === 'single' ? categoryBanners.filter(b => b.type === 'single') : []
+    const activeDoubleBanner = displayType === 'double' ? latestBanner : null
 
     // Auto-slide for single banners only
     useEffect(() => {
@@ -105,13 +119,10 @@ export default function BannerSection({ mainCategory, banners }: BannerSectionPr
         )
     }
 
-    // Don't render if no banners for this category
-    if (categoryBanners.length === 0) return null
-
     return (
         <section className={styles.bannerSection}>
             {/* Single Banners - Slider */}
-            {singleBanners.length > 0 && (
+            {displayType === 'single' && singleBanners.length > 0 && (
                 <div className={styles.singleBannerContainer}>
                     <div
                         className={styles.sliderTrack}
@@ -140,13 +151,13 @@ export default function BannerSection({ mainCategory, banners }: BannerSectionPr
                 </div>
             )}
 
-            {/* Double Banners - Static Grid */}
-            {doubleBanners.map((banner) => (
-                <div key={banner.id} className={styles.doubleBannerContainer}>
-                    {renderBannerImage(banner.banners.a, false)}
-                    {banner.banners.b && renderBannerImage(banner.banners.b, false)}
+            {/* Double Banner - Single Instance */}
+            {displayType === 'double' && activeDoubleBanner && (
+                <div key={activeDoubleBanner.id} className={styles.doubleBannerContainer}>
+                    {renderBannerImage(activeDoubleBanner.banners.a, false)}
+                    {activeDoubleBanner.banners.b && renderBannerImage(activeDoubleBanner.banners.b, false)}
                 </div>
-            ))}
+            )}
         </section>
     )
 }
