@@ -13,6 +13,7 @@ import styles from './product-detail.module.css'
 
 interface Product {
   id: string
+  slug?: string
   name?: string
   productName?: string
   primaryImageUrl?: string
@@ -35,6 +36,7 @@ interface Product {
   specifications?: Record<string, string> | Array<{ name: string; value: string }>
   colorVariants?: Array<{
     productId: string
+    slug?: string
     name: string
     colorName: string
     imageUrl: string
@@ -115,6 +117,7 @@ interface ColorOption {
   currentPrice: number
   originalPrice: number
   productId?: string
+  slug?: string
   isVariant?: boolean
   description?: string
   discountPercent?: number
@@ -125,11 +128,13 @@ interface ColorOption {
 export default function ProductDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const productId = params.id as string
+  const slug = params.slug as string
+  // Retrieve ID from product state once loaded
 
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  // ... (keeping other state initializations same)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [selectedColorIndex, setSelectedColorIndex] = useState(-1)
   const [selectedColor, setSelectedColor] = useState<ColorOption | null>(null)
@@ -207,7 +212,7 @@ export default function ProductDetailPage() {
   useEffect(() => {
     let isMounted = true
 
-    if (productId) {
+    if (slug) {
       loadProductDetail().then(() => {
         // Only update state if component is still mounted
         if (!isMounted) return
@@ -222,7 +227,7 @@ export default function ProductDetailPage() {
     return () => {
       isMounted = false
     }
-  }, [productId])
+  }, [slug])
 
   // Simple sticky behavior - matching HTML exactly
   useEffect(() => {
@@ -365,7 +370,7 @@ export default function ProductDetailPage() {
 
 
   const loadProductDetail = async () => {
-    if (!productId) {
+    if (!slug) {
       setError(true)
       setLoading(false)
       return
@@ -378,15 +383,34 @@ export default function ProductDetailPage() {
         return
       }
 
-      const productDoc = await getDoc(doc(db, 'products', productId))
+      let productData: Product | null = null
 
-      if (!productDoc.exists()) {
+      // First try to query by slug
+      const slugQuery = query(collection(db, 'products'), where('slug', '==', slug), limit(1))
+      const slugSnapshot = await getDocs(slugQuery)
+
+      if (!slugSnapshot.empty) {
+        const doc = slugSnapshot.docs[0]
+        productData = { id: doc.id, ...doc.data() } as Product
+      } else {
+        // Fallback: try to fetch by ID (legacy support for URLs using ID)
+        try {
+          // Verify if the slug looks like an ID (optional check, but good for skipping invalid IDs)
+          // Simple check: if it has no hyphens or is 20 chars
+          const productDoc = await getDoc(doc(db, 'products', slug))
+          if (productDoc.exists()) {
+            productData = { id: productDoc.id, ...productDoc.data() } as Product
+          }
+        } catch (e) {
+          // Error fetching by ID, so it was probably a slug that wasn't found
+        }
+      }
+
+      if (!productData) {
         setError(true)
         setLoading(false)
         return
       }
-
-      const productData = { id: productDoc.id, ...productDoc.data() } as Product
 
       // Check if component is still mounted before setting state
       if (typeof window === 'undefined') return
@@ -488,6 +512,7 @@ export default function ProductDetailPage() {
           groupProducts.push({
             id: doc.id,
             ...variantData,
+            slug: variantData.slug,
             colorName: colorName, // Use extracted color name
             material: variantData.material || variantData.colorVariant?.material || '',
             imageUrl: variantData.primaryImageUrl || variantData.imageUrl || '',
@@ -499,6 +524,7 @@ export default function ProductDetailPage() {
       // Build colorVariants array exactly like HTML
       const colorVariants = groupProducts.length > 0 ? groupProducts.map((p) => ({
         productId: p.id,
+        slug: p.slug,
         name: p.colorName || '', // Use the extracted color name
         colorName: p.colorName || '',
         imageUrl: p.imageUrl || '',
@@ -632,7 +658,7 @@ export default function ProductDetailPage() {
 
       const related: Product[] = []
       relatedSnapshot.forEach(doc => {
-        if (doc.id !== productId) {
+        if (doc.id !== product?.id) {
           related.push({
             id: doc.id,
             ...doc.data()
@@ -655,8 +681,8 @@ export default function ProductDetailPage() {
     const selectedColorOption = colors[index]
 
     // If it's a variant, navigate to that product (like HTML)
-    if (selectedColorOption.isVariant && selectedColorOption.productId) {
-      navigateToColorVariant(selectedColorOption.productId)
+    if (selectedColorOption.isVariant) {
+      navigateToColorVariant(selectedColorOption.slug || selectedColorOption.productId || '')
       return
     }
 
@@ -738,6 +764,7 @@ export default function ProductDetailPage() {
           imageUrl: variant.imageUrl,
           thumbnailUrls: variant.thumbnailUrls,
           productId: variant.productId,
+          slug: variant.slug,
           isVariant: true,
           // Show VIEW tag for the last couple of variants like HTML
           showViewTag: index >= Math.max(0, colorVariants.length - 2),
@@ -748,9 +775,9 @@ export default function ProductDetailPage() {
     return allColors
   }
 
-  const navigateToColorVariant = (variantProductId: string) => {
-    if (variantProductId) {
-      router.push(`/products/${variantProductId}`)
+  const navigateToColorVariant = (slugOrId: string) => {
+    if (slugOrId) {
+      router.push(`/products/${slugOrId}`)
     }
   }
 

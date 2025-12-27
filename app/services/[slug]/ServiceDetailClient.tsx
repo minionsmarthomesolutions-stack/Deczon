@@ -14,6 +14,7 @@ import styles from './service-detail.module.css'
 
 interface Service {
     id: string
+    slug?: string
     name?: string
     category?: string
     description?: string
@@ -51,7 +52,7 @@ interface Package {
 export default function ServiceDetailPage() {
     const params = useParams()
     const router = useRouter()
-    const serviceId = params?.id as string
+    const slug = params?.slug as string
 
     const [service, setService] = useState<Service | null>(null)
     const [loading, setLoading] = useState(true)
@@ -80,10 +81,10 @@ export default function ServiceDetailPage() {
     const [galleryImages, setGalleryImages] = useState<string[]>([])
 
     useEffect(() => {
-        if (serviceId) {
+        if (slug) {
             loadServiceDetail()
         }
-    }, [serviceId])
+    }, [slug])
 
     // Initialize first package as selected when packages are loaded
     useEffect(() => {
@@ -98,22 +99,46 @@ export default function ServiceDetailPage() {
 
 
     const loadServiceDetail = async () => {
-        if (!serviceId || !db) {
+        if (!slug || !db) {
             setError(true)
             setLoading(false)
             return
         }
 
         try {
-            const serviceDoc = await getDoc(doc(db, 'services', serviceId))
+            let serviceData: Service | null = null;
 
-            if (!serviceDoc.exists()) {
+            // Try fetching by slug first
+            try {
+                const q = query(collection(db, 'services'), where('slug', '==', slug), limit(1));
+                const querySnapshot = await getDocs(q);
+
+                if (!querySnapshot.empty) {
+                    const doc = querySnapshot.docs[0];
+                    serviceData = { id: doc.id, ...doc.data() } as Service;
+                }
+            } catch (err) {
+                console.error('Error fetching by slug:', err);
+            }
+
+            // Fallback: Try identifying as ID if slug fetch failed or returned empty
+            if (!serviceData) {
+                try {
+                    const serviceDoc = await getDoc(doc(db, 'services', slug));
+                    if (serviceDoc.exists()) {
+                        serviceData = { id: serviceDoc.id, ...serviceDoc.data() } as Service;
+                    }
+                } catch (err) {
+                    console.error('Error fetching by ID:', err);
+                }
+            }
+
+            if (!serviceData) {
                 setError(true)
                 setLoading(false)
                 return
             }
 
-            const serviceData = { id: serviceDoc.id, ...serviceDoc.data() } as Service
             setService(serviceData)
 
             // Setup gallery images with proper Firebase URL formatting
@@ -132,6 +157,7 @@ export default function ServiceDetailPage() {
                 console.debug('Service detail page', {
                     id: serviceData.id,
                     name: serviceData.name,
+                    slug: serviceData.slug,
                     resolvedMainImage: finalMainImage,
                     allImagesCount: allImages.length,
                     allImages: allImages,
@@ -258,7 +284,7 @@ export default function ServiceDetailPage() {
         const advanceAmount = Math.round(calculatedPrice * 0.1) // 10% advance
 
         // Add to cart logic here
-        console.log('Add to cart:', { serviceId, package: selectedPackage, squareFeet, advanceAmount })
+        console.log('Add to cart:', { serviceId: service?.id, package: selectedPackage, squareFeet, advanceAmount })
 
         // Close modal
         setAddToCartModalOpen(false)
@@ -275,7 +301,7 @@ export default function ServiceDetailPage() {
         const advanceAmount = Math.round(calculatedPrice * 0.1) // 10% advance
 
         // Navigate to checkout
-        router.push(`/checkout?serviceId=${serviceId}&package=${selectedPackage}&squareFeet=${squareFeet}&amount=${advanceAmount}`)
+        router.push(`/checkout?serviceId=${service?.id}&package=${selectedPackage}&squareFeet=${squareFeet}&amount=${advanceAmount}`)
     }
 
     const handleEnquiry = async (e: React.FormEvent) => {
@@ -428,7 +454,7 @@ export default function ServiceDetailPage() {
                                 <div
                                     key={pkg.type}
                                     className={styles.packageCard}
-                                    onClick={() => router.push(`/package-details?service=${serviceId}&package=${pkg.type}`)}
+                                    onClick={() => router.push(`/package-details?service=${service?.id}&package=${pkg.type}`)}
                                 >
                                     <div className={styles.packageLogo}>
                                         <img
@@ -441,7 +467,7 @@ export default function ServiceDetailPage() {
                                     </div>
                                     <div className={styles.packagePrice}>{pkg.priceInfo}</div>
                                     <a
-                                        href={`/package-details?service=${serviceId}&package=${pkg.type}`}
+                                        href={`/package-details?service=${service?.id}&package=${pkg.type}`}
                                         className={styles.btnEnquiryPackage}
                                         onClick={(e) => e.stopPropagation()}
                                     >
@@ -462,7 +488,7 @@ export default function ServiceDetailPage() {
                             <h2 className={styles.sectionTitle}>Related Services</h2>
                             <div className={styles.servicesSectionWrapper}>
                                 <ServicesSection
-                                    services={relatedServices.map(s => ({ ...s, name: s.name || 'Service' }))}
+                                    services={relatedServices.map(s => ({ ...s, name: s.name || 'Service', slug: s.slug }))}
                                     title=""
                                     subtitle=""
                                     showSeeAll={false}
@@ -480,7 +506,7 @@ export default function ServiceDetailPage() {
                                 {relatedProducts.map((product) => (
                                     <Link
                                         key={product.id}
-                                        href={`/products/${product.id}`}
+                                        href={`/products/${product.slug || product.id}`}
                                         className={styles.relatedCard}
                                     >
                                         <div className={styles.relatedImage}>

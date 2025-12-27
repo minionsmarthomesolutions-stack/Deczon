@@ -7,6 +7,7 @@ import styles from './ProductCard.module.css'
 
 interface Product {
   id: string
+  slug?: string
   name: string
   imageUrl?: string
   primaryImageUrl?: string
@@ -107,7 +108,7 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
   }
 
   // Product URL logic
-  const productUrl = `/products/${product.id}`
+  const productUrl = `/products/${product.slug || product.id}`
 
   return (
     <div className={styles.productCard}>

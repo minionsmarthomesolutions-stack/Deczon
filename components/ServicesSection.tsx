@@ -9,6 +9,7 @@ import styles from './ServicesSection.module.css'
 
 interface Service {
   id: string
+  slug?: string
   name: string
   imageUrl?: string
   primaryImageUrl?: string
@@ -202,7 +203,7 @@ export default function ServicesSection({
               return (
                 <Link
                   key={service.id}
-                  href={`/services/${service.id}`}
+                  href={`/services/${service.slug || service.id}`}
                   className={styles.productCard}
                   target="_blank"
                   rel="noopener noreferrer"

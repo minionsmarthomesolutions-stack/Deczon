@@ -10,6 +10,7 @@ import styles from './products.module.css'
 
 interface Product {
   id: string
+  slug?: string
   name?: string
   productName?: string
   primaryImageUrl?: string
@@ -440,15 +441,17 @@ export default function ProductsPage() {
                   : 0
                 const isInWishlist = wishlist.includes(item.id)
 
+                const href = item.itemType === 'product'
+                  ? `/products/${item.slug || item.id}`
+                  : `/services/${item.id}`
+
                 return (
-                  <div
+                  <Link
                     key={item.id}
+                    href={href}
                     className={styles.mixedItem}
-                    onClick={() => {
-                      if (typeof window !== 'undefined') {
-                        window.location.href = `/products/${item.id}`
-                      }
-                    }}
+                    target={item.itemType === 'product' ? "_blank" : undefined}
+                    rel={item.itemType === 'product' ? "noopener noreferrer" : undefined}
                   >
                     <div className={styles.mixedItemImage}>
                       <Image
@@ -504,7 +507,7 @@ export default function ProductsPage() {
                         </button>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 )
               })}
             </div>

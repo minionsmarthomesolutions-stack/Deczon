@@ -12,6 +12,7 @@ interface BannerImage {
     linkType: 'product' | 'category' | 'custom'
     linkData?: {
         productId?: string
+        slug?: string
         productName?: string
         main?: string
         sub?: string
@@ -67,8 +68,8 @@ export default function BannerSection({ mainCategory, banners }: BannerSectionPr
 
         const { linkType, linkData } = bannerImage
 
-        if (linkType === 'product' && linkData.productId) {
-            return `/product/${linkData.productId}`
+        if (linkType === 'product' && (linkData.productId || linkData.slug)) {
+            return `/products/${linkData.slug || linkData.productId}`
         } else if (linkType === 'category') {
             const params = new URLSearchParams()
             if (linkData.main) params.set('main', linkData.main)

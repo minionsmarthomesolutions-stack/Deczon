@@ -760,7 +760,7 @@ function PackageDetailContent() {
             {relatedProducts.map((product) => (
               <Link
                 key={product.id}
-                href={`/products/${product.id}`}
+                href={`/products/${product.slug || product.id}`}
                 className={styles.relatedItem}
               >
                 <div className={styles.relatedItemImage}>

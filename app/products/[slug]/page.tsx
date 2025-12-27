@@ -1,15 +1,15 @@
 import { Metadata } from 'next'
 import ProductClient from './ProductDetailClient'
 import { getDb } from '@/lib/firebase'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, collection, query, where, limit, getDocs } from 'firebase/firestore'
 
 interface Props {
-    params: { id: string }
+    params: { slug: string }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const db = getDb()
-    const id = params.id
+    const slug = params.slug
 
     if (!db) {
         return {
@@ -18,14 +18,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
 
     try {
-        const productDoc = await getDoc(doc(db, 'products', id))
-        if (!productDoc.exists()) {
+        const productsRef = collection(db, 'products')
+        const q = query(productsRef, where('slug', '==', slug), limit(1))
+        const querySnapshot = await getDocs(q)
+
+        if (querySnapshot.empty) {
             return {
                 title: 'Product Not Found | Deczon'
             }
         }
 
-        const product = productDoc.data()
+        const product = querySnapshot.docs[0].data()
         const name = product.name || 'Product'
         const brand = product.brand ? ` | ${product.brand}` : ''
 
