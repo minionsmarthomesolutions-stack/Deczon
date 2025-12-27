@@ -1,0 +1,208 @@
+/* ========================================
+   MOBILE RESPONSIVE STYLES
+   Added for tablet and mobile devices
+   ======================================== */
+
+/* Tablet (768px - 1024px) */
+@media (max-width: 1024px) {
+    .productDetailMain {
+        grid-template-columns: 400px 1fr 300px;
+        gap: var(--spacing-md);
+    }
+
+    .mainImage {
+        height: 350px;
+    }
+}
+
+/* Mobile Landscape & Small Tablets (768px) */
+@media (max-width: 768px) {
+    .productDetailMain {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-lg);
+    }
+
+    .productImagesColumn {
+        position: static !important;
+        border-right: none;
+        border-bottom: 1px solid var(--border-light);
+        padding-bottom: var(--spacing-lg);
+    }
+
+    .mainImage {
+        height: 300px;
+    }
+
+    .productInfo {
+        padding: var(--spacing-md) var(--spacing-sm);
+    }
+
+    .productHeader h1 {
+        font-size: var(--font-size-xl);
+    }
+
+    .currentPrice {
+        font-size: var(--font-size-xl);
+    }
+
+    .originalPrice {
+        font-size: var(--font-size-base);
+    }
+
+    .productSidebar {
+        position: static !important;
+        width: 100%;
+        margin-top: var(--spacing-lg);
+    }
+
+    .stickyPurchaseBox {
+        position: fixed !important;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        z-index: 1000;
+        border-radius: 0;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+        padding: var(--spacing-md);
+    }
+
+    .actionButtons {
+        flex-direction: row;
+        gap: var(--spacing-sm);
+    }
+
+    .actionButtons button {
+        flex: 1;
+        padding: var(--spacing-md);
+        font-size: var(--font-size-base);
+    }
+}
+
+/* Mobile Portrait (425px - 767px) */
+@media (max-width: 425px) {
+    .productDetailPage {
+        padding: 0;
+        margin-top: var(--spacing-md);
+    }
+
+    .mainImage {
+        height: 250px;
+    }
+
+    .thumbnail {
+        width: 60px;
+        height: 60px;
+    }
+
+    .productHeader h1 {
+        font-size: var(--font-size-lg);
+        line-height: 1.4;
+    }
+
+    .productBrand {
+        font-size: var(--font-size-sm);
+    }
+
+    .currentPrice {
+        font-size: var(--font-size-lg);
+    }
+
+    .originalPrice {
+        font-size: var(--font-size-sm);
+    }
+
+    .discountBadge {
+        font-size: 10px;
+        padding: 4px 8px;
+    }
+
+    .descriptionTitle {
+        font-size: var(--font-size-lg);
+    }
+
+    .descriptionContent {
+        font-size: var(--font-size-sm);
+    }
+
+    .stickyPurchaseBox {
+        padding: var(--spacing-sm);
+    }
+
+    .actionButtons button {
+        padding: var(--spacing-sm);
+        font-size: var(--font-size-sm);
+    }
+
+    .quantitySelector {
+        gap: var(--spacing-xs);
+    }
+
+    .quantityBtn {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+    }
+
+    .quantityValue {
+        font-size: var(--font-size-base);
+        min-width: 40px;
+    }
+}
+
+/* Small Mobile (320px - 374px) */
+@media (max-width: 375px) {
+    .mainImage {
+        height: 220px;
+    }
+
+    .thumbnail {
+        width: 50px;
+        height: 50px;
+    }
+
+    .productHeader h1 {
+        font-size: var(--font-size-base);
+    }
+
+    .currentPrice {
+        font-size: var(--font-size-base);
+    }
+
+    .actionButtons {
+        flex-direction: column;
+    }
+
+    .actionButtons button {
+        width: 100%;
+    }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) and (pointer: coarse) {
+    .thumbnail:hover {
+        transform: none;
+    }
+
+    .thumbnail:active {
+        transform: scale(0.95);
+    }
+
+    .colorOption:hover {
+        transform: none;
+    }
+
+    .colorOption:active {
+        transform: scale(0.95);
+    }
+
+    /* Increase touch targets */
+    .actionButtons button {
+        min-height: 48px;
+    }
+
+    .quantityBtn {
+        min-width: 44px;
+        min-height: 44px;
+    }
+}
