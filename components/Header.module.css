@@ -579,22 +579,23 @@
 }
 
 
+
 /* ========================================
-   MOBILE HEADER - Samsung-Style Minimal Design
-   Single row, icon-only, premium feel
+   MOBILE HEADER - Samsung-Style with Search Bar
+   Single row: Logo | Search | Icons
    ======================================== */
 
 @media (max-width: 768px) {
 
-  /* Mobile header - Single row layout */
+  /* Mobile header - Single row with search in center */
   .headerTop {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
     justify-content: space-between !important;
     height: 56px !important;
-    padding: 0 16px !important;
-    gap: 12px !important;
+    padding: 0 12px !important;
+    gap: 8px !important;
     grid-template-columns: unset !important;
     grid-template-rows: unset !important;
     position: relative;
@@ -631,13 +632,13 @@
   }
 
   .logoMain {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 700;
     letter-spacing: -0.3px;
   }
 
   .logoCom {
-    font-size: 8px;
+    font-size: 7px;
     margin-top: -1px;
   }
 
@@ -646,11 +647,56 @@
     display: none !important;
   }
 
-  /* Hide default search bar on mobile */
+  /* Center - Search bar (visible on mobile) */
   .headerSearch {
-    display: none !important;
+    display: flex !important;
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+    margin: 0 8px;
     grid-column: unset;
     grid-row: unset;
+  }
+
+  .searchInputGroup {
+    width: 100%;
+    max-width: 100%;
+    height: 36px;
+    border-radius: 18px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+  }
+
+  .searchInputGroup:focus-within {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(255, 192, 0, 0.1);
+  }
+
+  .searchIconLeft {
+    width: 36px;
+    height: 36px;
+  }
+
+  .searchForm {
+    flex: 1;
+  }
+
+  .searchInput {
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+
+  .searchInput::placeholder {
+    font-size: 13px;
+  }
+
+  .searchActions {
+    padding-right: 4px;
+  }
+
+  .cameraBtn {
+    width: 32px;
+    height: 32px;
   }
 
   /* Right side - Icon-only navigation */
@@ -671,8 +717,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     padding: 0;
     border-radius: 50%;
     transition: background-color 0.2s ease;
@@ -688,23 +734,23 @@
   /* Icon sizing */
   .userSection svg,
   .cartSection svg {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
   }
 
   /* Cart count badge */
   .cartCount {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 6px;
+    right: 6px;
     background: var(--accent-color);
     color: white;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 700;
     padding: 2px 5px;
     border-radius: 10px;
-    min-width: 16px;
-    height: 16px;
+    min-width: 14px;
+    height: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -716,8 +762,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     padding: 0;
     border-radius: 50%;
     cursor: pointer;
@@ -725,8 +771,8 @@
   }
 
   .threeDotMenu svg {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
   }
 
   /* Touch feedback */
@@ -742,8 +788,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     padding: 0;
     border-radius: 50%;
     cursor: pointer;
@@ -752,8 +798,8 @@
   }
 
   .mobileMenuToggle svg {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
   }
 
   .mobileMenuToggle:active {
