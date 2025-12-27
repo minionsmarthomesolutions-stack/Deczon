@@ -564,62 +564,209 @@
     gap: var(--spacing-sm);
     padding: 0 var(--spacing-md);
   }
-  
+
   .headerLeft {
     gap: var(--spacing-sm);
   }
-  
+
   .headerSearch {
     margin: 0 var(--spacing-sm);
   }
-  
+
   .searchInputGroup {
     max-width: 100%;
   }
 }
 
+
+/* ========================================
+   MOBILE HEADER - Samsung-Style Minimal Design
+   Single row, icon-only, premium feel
+   ======================================== */
+
 @media (max-width: 768px) {
+
+  /* Mobile header - Single row layout */
   .headerTop {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
-    height: auto;
-    padding: var(--spacing-md) var(--spacing-sm);
-    gap: var(--spacing-sm);
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    height: 56px !important;
+    padding: 0 16px !important;
+    gap: 12px !important;
+    grid-template-columns: unset !important;
+    grid-template-rows: unset !important;
+    position: relative;
   }
 
+  /* Left side - Logo only */
   .headerLeft {
-    grid-column: 1;
-    grid-row: 1;
-    justify-content: flex-start;
-    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-shrink: 0;
+    width: auto;
+    grid-column: unset;
+    grid-row: unset;
   }
 
-  .headerSearch {
-    grid-column: 1;
-    grid-row: 2;
-    width: 100%;
-    max-width: 100%;
+  /* Logo - Compact for mobile */
+  .logo {
+    height: 56px;
+    display: flex;
+    align-items: center;
   }
 
-  .headerRight {
-    grid-column: 1;
-    grid-row: 3;
-    justify-content: flex-end;
-    gap: var(--spacing-sm);
+  .logoLink {
+    display: flex;
+    align-items: center;
+    height: 100%;
   }
 
+  .logoText {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+  }
+
+  .logoMain {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+
+  .logoCom {
+    font-size: 8px;
+    margin-top: -1px;
+  }
+
+  /* Hide location selector on mobile */
   .locationSelector {
-    display: none;
+    display: none !important;
   }
 
-  .searchInputGroup {
-    width: 100%;
+  /* Hide default search bar on mobile */
+  .headerSearch {
+    display: none !important;
+    grid-column: unset;
+    grid-row: unset;
   }
 
+  /* Right side - Icon-only navigation */
+  .headerRight {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    width: auto;
+    grid-column: unset;
+    grid-row: unset;
+    justify-content: flex-end;
+  }
+
+  /* Icon buttons - Samsung style */
+  .userSection,
+  .cartSection {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+    position: relative;
+  }
+
+  /* Hide text labels on mobile */
+  .userSection span:not(.cartCount),
+  .cartSection span:not(.cartCount) {
+    display: none !important;
+  }
+
+  /* Icon sizing */
+  .userSection svg,
+  .cartSection svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* Cart count badge */
+  .cartCount {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--accent-color);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 5px;
+    border-radius: 10px;
+    min-width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  /* Three dot menu (hamburger) */
+  .threeDotMenu {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+
+  .threeDotMenu svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* Touch feedback */
+  .userSection:active,
+  .cartSection:active,
+  .threeDotMenu:active {
+    background-color: var(--bg-secondary);
+    transform: scale(0.95);
+  }
+
+  /* Mobile menu toggle (hamburger) */
   .mobileMenuToggle {
     display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin: 0;
   }
 
+  .mobileMenuToggle svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .mobileMenuToggle:active {
+    background-color: var(--bg-secondary);
+    transform: scale(0.95);
+  }
+
+  /* Hide category navbar on mobile */
+  .mainNavbar {
+    display: none !important;
+  }
+
+  /* Category drawer (slide-in from hamburger) */
   .mainNavbarList {
     display: none;
   }
@@ -627,25 +774,36 @@
   .mainNavbarList.mobileOpen {
     display: flex;
     flex-direction: column;
-    position: absolute;
-    top: 100%;
-    left: 0;
+    position: fixed;
+    top: 0;
     right: 0;
+    bottom: 0;
+    width: 280px;
+    max-width: 85vw;
     background: var(--bg-primary);
-    border-top: 1px solid var(--border-color);
-    box-shadow: var(--shadow-lg);
-    padding: var(--spacing-md);
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+    padding: 20px;
     gap: 0;
-    z-index: 1000;
-    max-height: calc(100vh - 200px);
+    z-index: 10000;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    animation: slideInRight 0.3s ease-out;
+  }
+
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+    }
+
+    to {
+      transform: translateX(0);
+    }
   }
 
   .mainNavbarList.mobileOpen .mainNavbarItem {
     width: 100%;
     height: auto;
-    padding: var(--spacing-sm) 0;
+    padding: 0;
     border-bottom: 1px solid var(--border-light);
   }
 
@@ -655,9 +813,11 @@
 
   .mainNavbarList.mobileOpen .mainNavbarItem a {
     width: 100%;
-    padding: var(--spacing-sm);
+    padding: 16px 12px;
     height: auto;
-    font-size: var(--font-size-base);
+    font-size: 15px;
+    font-weight: 500;
+    display: block;
   }
 
   .mainNavbarList.mobileOpen .mainNavbarDropdown {
@@ -666,104 +826,84 @@
     transform: none;
     box-shadow: none;
     border: none;
-    padding: var(--spacing-sm) 0;
-    margin-top: var(--spacing-sm);
+    padding: 8px 0 8px 16px;
+    margin: 0;
     background: var(--bg-secondary);
-    border-radius: var(--radius-sm);
+    border-radius: 0;
   }
 
-  .mainNavbar {
-    justify-content: flex-start;
-    padding: 0 var(--spacing-sm);
-    position: relative;
+  /* Dropdown menu positioning */
+  .dropdownMenu {
+    position: fixed;
+    top: 56px;
+    right: 16px;
+    left: auto;
+    min-width: 200px;
   }
 }
 
+
+
+/* Small mobile refinements (600px and below) */
 @media (max-width: 600px) {
   .headerTop {
-    padding: var(--spacing-sm);
-    gap: var(--spacing-xs);
+    height: 56px !important;
+    padding: 0 12px !important;
   }
 
-  .logo {
-    height: auto;
+  .logoMain {
+    font-size: 18px;
   }
 
-  .logoLink img {
-    width: 250px;
-    height: auto;
+  .logoCom {
+    font-size: 7px;
   }
 
-  .searchInputGroup {
-    height: 36px;
-  }
-
-  .searchIconLeft,
-  .cameraBtn {
-    width: 36px;
-    height: 36px;
-  }
-
-  .searchInput {
-    font-size: 11px;
-    padding: var(--spacing-sm);
-  }
-
-  .searchInput::placeholder {
-    font-size: 11px;
-  }
-}
-
-@media (max-width: 480px) {
-  .headerRight {
-    gap: var(--spacing-xs);
-  }
-
+  /* Icon buttons slightly smaller on very small screens */
   .userSection,
-  .cartSection {
-    padding: 6px;
-    font-size: var(--font-size-xs);
-  }
-
-  .userSection span,
-  .cartSection span {
-    display: none;
+  .cartSection,
+  .threeDotMenu,
+  .mobileMenuToggle {
+    width: 40px;
+    height: 40px;
   }
 
   .userSection svg,
-  .cartSection svg {
-    width: 18px;
-    height: 18px;
-  }
-
-  .threeDotMenu {
-    padding: 6px;
-  }
-
-  .threeDotMenu svg {
-    width: 18px;
-    height: 18px;
+  .cartSection svg,
+  .threeDotMenu svg,
+  .mobileMenuToggle svg {
+    width: 20px;
+    height: 20px;
   }
 
   .cartCount {
-    font-size: 10px;
-    padding: 1px 5px;
-    min-width: 16px;
-    height: 16px;
-    top: -6px;
-    right: -6px;
-  }
-
-  .mainNavbar {
-    padding: var(--spacing-xs) var(--spacing-sm);
-    height: 44px;
-  }
-
-  .mobileMenuToggle {
-    width: 36px;
-    height: 36px;
+    top: 6px;
+    right: 6px;
+    font-size: 9px;
+    min-width: 14px;
+    height: 14px;
   }
 }
+
+/* Extra small mobile (480px and below) */
+@media (max-width: 480px) {
+  .headerTop {
+    padding: 0 8px !important;
+  }
+
+  .logoMain {
+    font-size: 16px;
+  }
+
+  .logoCom {
+    font-size: 6px;
+  }
+
+  .headerRight {
+    gap: 2px;
+  }
+}
+
 
 @media (max-width: 360px) {
   .logoLink img {
@@ -811,6 +951,7 @@
     opacity: 0;
     transform: translateY(50px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -987,8 +1128,8 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
 }
-
