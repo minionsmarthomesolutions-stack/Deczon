@@ -26,31 +26,31 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, onQuickView }: ProductCardProps) {
   const [imageError, setImageError] = useState(false)
-  
+
   // Get primary image URL
-  let primaryImageUrl = product.primaryImageUrl 
-    || (product.images && product.images[0]) 
-    || product.imageUrl 
+  let primaryImageUrl = product.primaryImageUrl
+    || (product.images && product.images[0])
+    || product.imageUrl
     || '/placeholder.svg?height=200&width=200&text=Product'
-  
+
   // Ensure Firebase Storage URLs have proper format
   if (primaryImageUrl && primaryImageUrl.includes('firebasestorage.googleapis.com') && !primaryImageUrl.includes('?')) {
     primaryImageUrl = `${primaryImageUrl}?alt=media`
   }
 
   // Calculate discount percentage
-  const currentPriceNum = typeof product.currentPrice === 'string' 
-    ? parseFloat(product.currentPrice.replace(/[₹,]/g, '')) 
+  const currentPriceNum = typeof product.currentPrice === 'string'
+    ? parseFloat(product.currentPrice.replace(/[₹,]/g, ''))
     : (product.currentPrice as number) || 0
-  const originalPriceNum = typeof product.originalPrice === 'string' 
-    ? parseFloat(product.originalPrice.replace(/[₹,]/g, '')) 
+  const originalPriceNum = typeof product.originalPrice === 'string'
+    ? parseFloat(product.originalPrice.replace(/[₹,]/g, ''))
     : (product.originalPrice as number) || 0
-  
+
   const discountPercent = originalPriceNum > 0 && currentPriceNum > 0
     ? Math.round((1 - currentPriceNum / originalPriceNum) * 100)
-    : (typeof product.discountPercent === 'string' 
-        ? parseFloat(product.discountPercent) 
-        : (product.discountPercent as number)) || 0
+    : (typeof product.discountPercent === 'string'
+      ? parseFloat(product.discountPercent)
+      : (product.discountPercent as number)) || 0
 
   // Generate badge text
   const badgeText = product.badge || (discountPercent >= 30 ? 'HOT DEAL' : discountPercent > 0 ? 'BEST SELLER' : null)
@@ -67,14 +67,15 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
   }
 
   const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault() // Prevent navigation if clicked within Link
     e.stopPropagation()
-    
+
     // Get cart from localStorage
     const cart = JSON.parse(localStorage.getItem('cart') || '[]')
-    
+
     // Check if product already in cart
     const existingItem = cart.find((item: any) => item.id === product.id)
-    
+
     if (existingItem) {
       existingItem.quantity = (existingItem.quantity || 1) + 1
     } else {
@@ -86,117 +87,121 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
         quantity: 1
       })
     }
-    
+
     // Save to localStorage
     localStorage.setItem('cart', JSON.stringify(cart))
-    
+
     // Update cart count in header (trigger custom event)
     window.dispatchEvent(new Event('cartUpdated'))
-    
+
     // Visual feedback
     const button = e.currentTarget
     const originalText = button.textContent
     button.textContent = 'ADDED'
     button.classList.add(styles.loading)
-    
+
     setTimeout(() => {
       button.textContent = originalText
       button.classList.remove(styles.loading)
     }, 1500)
   }
 
-  const handleCardClick = () => {
-    window.location.href = `/products/${product.id}`
-  }
+  // Product URL logic
+  const productUrl = `/products/${product.id}`
 
   return (
-    <div className={styles.productCard} onClick={handleCardClick}>
-      {badgeText && (
-        <div className={styles.productBadge}>{badgeText}</div>
-      )}
-      
-      {discountPercent > 0 && (
-        <div className={styles.discountTag}>-{discountPercent}%</div>
-      )}
-
-      <div className={styles.productImage}>
-        {imageError ? (
-          <div className={styles.placeholderImage}>
-            <svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-              <circle cx="8.5" cy="8.5" r="1.5"/>
-              <polyline points="21 15 16 10 5 21"/>
-            </svg>
-          </div>
-        ) : (
-          <img
-            src={primaryImageUrl}
-            alt={product.name}
-            className={styles.image}
-            onError={handleImageError}
-            loading="lazy"
-            decoding="async"
-          />
+    <div className={styles.productCard}>
+      <Link href={productUrl} className={styles.linkWrapper} aria-label={product.name} target="_blank" rel="noopener noreferrer">
+        {badgeText && (
+          <div className={styles.productBadge}>{badgeText}</div>
         )}
-        
-        {/* Action Buttons - Hidden by default, shown on hover */}
-        <div className={styles.productActionButtons}>
-          <button
-            className={styles.wishlistBtn}
-            onClick={(e) => {
-              e.stopPropagation()
-              // Wishlist functionality can be added here
-            }}
-            title="Add to Wishlist"
-            aria-label="Add to Wishlist"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-            </svg>
-          </button>
-          
-          {onQuickView && (
+
+        {discountPercent > 0 && (
+          <div className={styles.discountTag}>-{discountPercent}%</div>
+        )}
+
+        <div className={styles.productImage}>
+          {imageError ? (
+            <div className={styles.placeholderImage}>
+              <svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
+              </svg>
+            </div>
+          ) : (
+            <img
+              src={primaryImageUrl}
+              alt={product.name}
+              className={styles.image}
+              onError={handleImageError}
+              loading="lazy"
+              decoding="async"
+            />
+          )}
+
+          {/* Action Buttons - Hidden by default, shown on hover */}
+          <div className={styles.productActionButtons}>
             <button
-              className={styles.quickViewBtn}
+              className={styles.wishlistBtn}
               onClick={(e) => {
+                e.preventDefault()
                 e.stopPropagation()
-                onQuickView(product)
+                // Wishlist functionality can be added here
               }}
-              title="Quick View"
-              aria-label="Quick View"
+              title="Add to Wishlist"
+              aria-label="Add to Wishlist"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
               </svg>
             </button>
-          )}
-        </div>
-      </div>
 
-      <div className={styles.productInfo}>
-        <h3 className={styles.productTitle}>{product.name}</h3>
-        
-        <div className={styles.productPricing}>
-          <div className={styles.priceSection}>
-            <div className={styles.productPrice}>
-              {currentPriceNum > 0 && (
-                <span className={styles.currentPrice}>{formatPrice(currentPriceNum)}</span>
-              )}
-              {originalPriceNum > 0 && originalPriceNum > currentPriceNum && (
-                <span className={styles.originalPrice}>{formatPrice(originalPriceNum)}</span>
-              )}
+            {onQuickView && (
+              <button
+                className={styles.quickViewBtn}
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  onQuickView(product)
+                }}
+                title="Quick View"
+                aria-label="Quick View"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className={styles.productInfo}>
+          <h2 className={styles.productTitle}>{product.name}</h2>
+
+          <div className={styles.productPricing}>
+            <div className={styles.priceSection}>
+              <div className={styles.productPrice}>
+                {currentPriceNum > 0 && (
+                  <span className={styles.currentPrice}>{formatPrice(currentPriceNum)}</span>
+                )}
+                {originalPriceNum > 0 && originalPriceNum > currentPriceNum && (
+                  <span className={styles.originalPrice}>{formatPrice(originalPriceNum)}</span>
+                )}
+              </div>
+            </div>
+            <div className={styles.addToCartSection}>
+              <button
+                className={styles.addToCartBtn}
+                onClick={handleAddToCart}
+                aria-label={`Add ${product.name} to cart`}
+              >
+                Add to Cart
+              </button>
             </div>
           </div>
-          <div className={styles.addToCartSection}>
-            <button 
-              className={styles.addToCartBtn}
-              onClick={handleAddToCart}
-            >
-              Add to Cart
-            </button>
-          </div>
         </div>
-      </div>
+      </Link>
     </div>
   )
 }

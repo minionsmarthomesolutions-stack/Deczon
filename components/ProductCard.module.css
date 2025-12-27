@@ -16,11 +16,21 @@
   animation: cardEntrance 0.6s ease-out forwards;
 }
 
+.linkWrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+
 @keyframes cardEntrance {
   0% {
     opacity: 0;
     transform: translateY(30px) scale(0.95);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -46,8 +56,15 @@
 }
 
 @keyframes badgePulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
 }
 
 /* Discount Tag - Ribbon Style */
@@ -76,8 +93,13 @@
 }
 
 @keyframes discountGlow {
-  0% { box-shadow: 0 0 5px rgba(255, 192, 0, 0.5); }
-  100% { box-shadow: 0 0 15px rgba(255, 192, 0, 0.8); }
+  0% {
+    box-shadow: 0 0 5px rgba(255, 192, 0, 0.5);
+  }
+
+  100% {
+    box-shadow: 0 0 15px rgba(255, 192, 0, 0.8);
+  }
 }
 
 .productCard:hover .discountTag {
@@ -102,7 +124,7 @@
   left: 0;
   right: 0;
   height: 25%;
-  background: linear-gradient(to top, rgba(0,0,0,0.08), transparent);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.08), transparent);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -221,6 +243,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
+  flex-grow: 1;
+  /* Ensure it takes available space */
 }
 
 .productTitle {
@@ -246,6 +270,8 @@
   position: relative;
   height: 50px;
   overflow: hidden;
+  margin-top: auto;
+  /* Push to bottom if flex column */
 }
 
 .priceSection {
@@ -325,7 +351,7 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
   transition: left 0.5s ease;
 }
 
@@ -364,8 +390,13 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Responsive Design */
@@ -515,4 +546,3 @@
     opacity: 1;
   }
 }
-

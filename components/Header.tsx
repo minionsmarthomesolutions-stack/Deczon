@@ -544,7 +544,7 @@ export default function Header() {
               </Link>
             </div>
             <div style={{ marginLeft: '16px' }}>
-              <LocationSelector />
+              <LocationSelector user={user} />
             </div>
           </div>
 

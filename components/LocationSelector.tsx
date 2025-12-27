@@ -1,13 +1,15 @@
 'use client'
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useLocation } from '@/hooks/useLocation';
 import LocationModal from './LocationModal';
 import '../styles/location-selector.css';
 
-export default function LocationSelector() {
+export default function LocationSelector({ user }: { user?: any }) {
     const [open, setOpen] = useState(false);
     const { location } = useLocation();
+    const router = useRouter();
 
     // Format display text
     const getDisplayText = () => {
@@ -21,11 +23,23 @@ export default function LocationSelector() {
         return 'Select Location';
     }
 
+    const handleClick = () => {
+        if (!user) {
+            if (typeof window !== 'undefined') {
+                const currentPath = window.location.pathname + window.location.search;
+                localStorage.setItem('redirectAfterLogin', currentPath);
+                router.push('/login');
+            }
+            return;
+        }
+        setOpen(true);
+    };
+
     return (
         <>
             <button
                 className="lg-loc-trigger-btn"
-                onClick={() => setOpen(true)}
+                onClick={handleClick}
                 aria-label="Change Location"
             >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

@@ -82,6 +82,8 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  text-decoration: none;
+  color: inherit;
 }
 
 .blogLeftImage {
@@ -142,6 +144,9 @@
   box-shadow: none;
   border: none;
   cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  display: block;
 }
 
 .blogFeaturedImage {
@@ -208,6 +213,9 @@
   padding: var(--spacing-md) 0;
   border-bottom: 1px solid var(--border-light);
   cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  display: block;
 }
 
 .blogRightItem:last-child {
@@ -298,7 +306,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .loading p {
@@ -425,4 +435,3 @@
     font-size: var(--font-size-xs);
   }
 }
-

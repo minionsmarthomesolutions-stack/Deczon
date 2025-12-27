@@ -38,8 +38,8 @@ interface ServicesSectionProps {
   showSeeAll?: boolean
 }
 
-export default function ServicesSection({ 
-  services: propServices, 
+export default function ServicesSection({
+  services: propServices,
   title = 'Our Services',
   subtitle = 'Professional solutions for your smart home delivered in 8 minutes',
   showSeeAll = true
@@ -70,7 +70,7 @@ export default function ServicesSection({
 
     try {
       let servicesData: Service[] = []
-      
+
       // Try with orderBy first
       try {
         const servicesQuery = query(collection(db, 'services'), orderBy('createdAt', 'desc'), limit(6))
@@ -88,7 +88,7 @@ export default function ServicesSection({
           ...doc.data()
         })).slice(0, 6) as Service[]
       }
-      
+
       setServices(servicesData)
       console.log(`Loaded ${servicesData.length} services`)
     } catch (error: any) {
@@ -177,7 +177,7 @@ export default function ServicesSection({
           <div className={styles.productsGrid} ref={scrollRef} id="services-grid">
             {services.map((service) => {
               const imageUrl = getServiceImageUrl(service, '/placeholder.svg?height=200&width=200&text=Service')
-              
+
               // Debug logging for troubleshooting - compare HTML vs Next.js
               if (service.name?.toLowerCase().includes('saloon')) {
                 console.debug('ServicesSection card', {
@@ -192,7 +192,7 @@ export default function ServicesSection({
                   }
                 })
               }
-              
+
               const startingPrice = getStartingPrice(service)
               const originalPrice = typeof service.originalPrice === 'number' ? service.originalPrice : null
               const discountPercent = originalPrice && startingPrice && originalPrice > startingPrice
@@ -204,6 +204,8 @@ export default function ServicesSection({
                   key={service.id}
                   href={`/services/${service.id}`}
                   className={styles.productCard}
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
                   <div className={styles.productImage}>
                     <img
@@ -245,13 +247,7 @@ export default function ServicesSection({
                         </div>
                       </div>
                       <div className={styles.addToCartSection}>
-                        <div
-                          className={styles.addToCartBtn}
-                          onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                          }}
-                        >
+                        <div className={styles.addToCartBtn}>
                           Book Now
                         </div>
                       </div>

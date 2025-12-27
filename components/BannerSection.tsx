@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import styles from './BannerSection.module.css'
 
 interface BannerImage {
@@ -36,26 +36,17 @@ interface BannerSectionProps {
 }
 
 export default function BannerSection({ mainCategory, banners }: BannerSectionProps) {
-    const router = useRouter()
     const [currentSlide, setCurrentSlide] = useState(0)
 
     // Filter banners to only show those matching this category relative to the passed prop
-    // Note: page.tsx typically passes banners pre-filtered or we filter here to be safe.
-    // The prop name is 'banners', usually containing all banners or relevant ones.
-    // Based on previous code, it filtered by categoryId.
     const categoryBanners = banners.filter(b => b.categoryId === mainCategory)
 
     // Don't render if no banners for this category
     if (categoryBanners.length === 0) return null
 
     // Determine the primary display mode based on the latest banner (banners[0])
-    // We assume banners are sorted by date desc as per page.tsx query
     const latestBanner = categoryBanners[0]
     const displayType = latestBanner.type
-
-    // Logic:
-    // 1. If latest is 'single', show Slider of available Single Banners
-    // 2. If latest is 'double', show ONLY the latest Double Banner instance (no stacking)
 
     const singleBanners = displayType === 'single' ? categoryBanners.filter(b => b.type === 'single') : []
     const activeDoubleBanner = displayType === 'double' ? latestBanner : null
@@ -71,50 +62,75 @@ export default function BannerSection({ mainCategory, banners }: BannerSectionPr
         return () => clearInterval(interval)
     }, [singleBanners.length])
 
-    const handleBannerClick = useCallback((bannerImage: BannerImage) => {
-        if (!bannerImage.linkType || !bannerImage.linkData) return
+    const getBannerLink = (bannerImage: BannerImage): string | null => {
+        if (!bannerImage.linkType || !bannerImage.linkData) return null
 
         const { linkType, linkData } = bannerImage
 
         if (linkType === 'product' && linkData.productId) {
-            router.push(`/product/${linkData.productId}`)
+            return `/product/${linkData.productId}`
         } else if (linkType === 'category') {
             const params = new URLSearchParams()
             if (linkData.main) params.set('main', linkData.main)
             if (linkData.sub) params.set('sub', linkData.sub)
             if (linkData.subSub) params.set('subSub', linkData.subSub)
-            router.push(`/products?${params.toString()}`)
+            return `/products?${params.toString()}`
         } else if (linkType === 'custom' && linkData.url) {
-            window.open(linkData.url, '_blank', 'noopener,noreferrer')
+            return linkData.url
         }
-    }, [router])
+        return null
+    }
 
     const renderBannerImage = (bannerImage: BannerImage, isSingle: boolean = false) => {
         if (!bannerImage || !bannerImage.url) return null
 
+        const href = getBannerLink(bannerImage)
+        const isExternal = bannerImage.linkType === 'custom'
+
+        const content = (
+            <div className={styles.bannerImageContainer}>
+                <Image
+                    src={bannerImage.url}
+                    alt={bannerImage.alt || 'Banner'}
+                    fill
+                    sizes={isSingle ? '100vw' : '50vw'}
+                    style={{ objectFit: 'cover' }}
+                    priority={isSingle}
+                    quality={90}
+                />
+            </div>
+        )
+
+        if (href) {
+            if (isExternal) {
+                return (
+                    <a
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={isSingle ? styles.singleBannerWrapper : styles.doubleBannerWrapper}
+                        aria-label={bannerImage.alt || 'Banner'}
+                    >
+                        {content}
+                    </a>
+                )
+            }
+            return (
+                <Link
+                    href={href}
+                    className={isSingle ? styles.singleBannerWrapper : styles.doubleBannerWrapper}
+                    aria-label={bannerImage.alt || 'Banner'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    {content}
+                </Link>
+            )
+        }
+
         return (
-            <div
-                className={isSingle ? styles.singleBannerWrapper : styles.doubleBannerWrapper}
-                onClick={() => handleBannerClick(bannerImage)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        handleBannerClick(bannerImage)
-                    }
-                }}
-            >
-                <div className={styles.bannerImageContainer}>
-                    <Image
-                        src={bannerImage.url}
-                        alt={bannerImage.alt || 'Banner'}
-                        fill
-                        sizes={isSingle ? '100vw' : '50vw'}
-                        style={{ objectFit: 'cover' }}
-                        priority={isSingle}
-                        quality={90}
-                    />
-                </div>
+            <div className={isSingle ? styles.singleBannerWrapper : styles.doubleBannerWrapper}>
+                {content}
             </div>
         )
     }

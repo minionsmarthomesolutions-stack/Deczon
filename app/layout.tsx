@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   title: 'DECZON - Smart Home Solutions',
   description: 'Discover smart home solutions with DECZON. Advanced automation, security, and comfort for modern living.',
   icons: {
-    icon: '/LOGO/favicon.ico',
+    icon: '/LOGO/Screenshot_2025-12-14_000134-removebg-preview.png',
   },
 }
 
