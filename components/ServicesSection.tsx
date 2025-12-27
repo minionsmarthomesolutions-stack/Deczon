@@ -214,7 +214,6 @@ export default function ServicesSection({
                       className={styles.lazyImage}
                       loading="lazy"
                       decoding="async"
-                      crossOrigin="anonymous"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement
                         // Only set placeholder if it's not already a placeholder

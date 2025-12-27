@@ -2629,7 +2629,7 @@ export default function ProductDetailPage() {
                               className={styles.lazyImage}
                               loading="lazy"
                               decoding="async"
-                              crossOrigin="anonymous"
+                              /* crossOrigin="anonymous" removed for CORS fix */
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement
                                 if (!target.src.includes('placeholder.svg')) {
