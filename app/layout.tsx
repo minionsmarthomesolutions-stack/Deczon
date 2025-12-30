@@ -3,6 +3,7 @@ import { Nunito, Jost } from 'next/font/google'
 import './globals.css'
 import ConditionalLayout from '@/components/ConditionalLayout'
 import { HMRErrorHandler } from './hmr-error-handler'
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const nunito = Nunito({
   subsets: ['latin'],
@@ -42,6 +43,7 @@ export default function RootLayout({
         <ConditionalLayout>
           {children}
         </ConditionalLayout>
+        <SpeedInsights />
       </body>
     </html>
   )
