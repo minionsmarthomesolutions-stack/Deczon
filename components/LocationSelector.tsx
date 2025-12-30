@@ -13,12 +13,19 @@ export default function LocationSelector({ user }: { user?: any }) {
 
     // Format display text
     const getDisplayText = () => {
-        if (!location) return 'Chennai 600040'; // Default placeholder as requested
+        if (!location) return 'Chennai';
 
-        // Prefer City + Pincode, fallback to State + Pincode, or just Pincode
-        if (location.city && location.pincode) return `${location.city} ${location.pincode}`;
-        if (location.area && location.pincode) return `${location.area} ${location.pincode}`;
-        if (location.pincode) return `India ${location.pincode}`;
+        // Show starting address parts: DoorNo, Street, Area
+        const parts = [location.doorNo, location.street, location.area].filter(Boolean);
+
+        if (parts.length > 0) {
+            const addr = parts.join(', ');
+            // Truncate if too long to maintain header layout
+            return addr.length > 25 ? addr.substring(0, 25) + '...' : addr;
+        }
+
+        // Fallback to city
+        if (location.city) return location.city;
 
         return 'Select Location';
     }

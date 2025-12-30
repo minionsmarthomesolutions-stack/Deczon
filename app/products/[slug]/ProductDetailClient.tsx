@@ -10,6 +10,7 @@ import { db } from '@/lib/firebase'
 import { doc, getDoc, collection, getDocs, query, where, limit, orderBy, addDoc, serverTimestamp, runTransaction } from 'firebase/firestore'
 import { getServiceImageUrl as getServiceImageUrlUtil } from '@/lib/serviceImageUtils'
 import styles from './product-detail.module.css'
+import { useWishlist } from '@/context/WishlistContext'
 
 interface Product {
   id: string
@@ -131,6 +132,7 @@ export default function ProductDetailPage() {
   const slug = params.slug as string
   // Retrieve ID from product state once loaded
 
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -922,41 +924,8 @@ export default function ProductDetailPage() {
     }
   }
 
-  const handleBuyNow = () => {
-    if (!product) return
 
-    if (typeof window !== 'undefined') {
-      try {
-        const price = selectedColor?.currentPrice || product.currentPrice || 0
-        const imageUrl = selectedColor?.imageUrl || product.primaryImageUrl || product.imageUrl || ''
-        const productName = selectedColor
-          ? `${product.name || product.productName} - ${selectedColor.name}`
-          : product.name || product.productName
 
-        const buyNowProduct = {
-          id: product.id,
-          name: productName,
-          price,
-          imageUrl,
-          quantity,
-          selectedColor: selectedColor?.name || null,
-          selectedModule: selectedModule?.gangType || selectedModule?.productName || null,
-          timestamp: new Date().toISOString(),
-        }
-
-        // Store buy now product in localStorage and sessionStorage (matching HTML)
-        localStorage.setItem('buyNowProduct', JSON.stringify(buyNowProduct))
-        sessionStorage.setItem('buyNowProduct', JSON.stringify(buyNowProduct))
-        sessionStorage.setItem('isBuyNowFlow', 'true')
-        localStorage.setItem('isBuyNowFlow', 'true')
-
-        // Navigate to checkout/cart
-        router.push('/cart')
-      } catch (error) {
-        alert('Error processing buy now')
-      }
-    }
-  }
 
   const handleWhatsAppEnquiry = () => {
     if (!product || typeof window === 'undefined') return
@@ -1458,6 +1427,36 @@ export default function ProductDetailPage() {
     }
   }
 
+  const handleBuyNow = () => {
+    if (!product) return
+
+    if (typeof window !== 'undefined') {
+      try {
+        const price = selectedColor?.currentPrice || product.currentPrice || 0
+        const imageUrl = selectedColor?.imageUrl || product.primaryImageUrl || product.imageUrl || ''
+        const productName = selectedColor
+          ? `${product.name || product.productName} - ${selectedColor.name}`
+          : product.name || product.productName
+
+        const cartItem = {
+          id: product.id,
+          name: productName,
+          price,
+          imageUrl,
+          quantity,
+          selectedColor: selectedColor?.name || null,
+          selectedModule: selectedModule?.gangType || selectedModule?.productName || null,
+          timestamp: new Date().toISOString(),
+        }
+
+        localStorage.setItem('buyNowItem', JSON.stringify([cartItem]))
+        router.push('/checkout?source=buyNow')
+      } catch (error) {
+        alert('Error processing buy now request')
+      }
+    }
+  }
+
   const switchMainImageOnHover = (imageUrl: string) => {
     if (!mainImageRef.current || typeof window === 'undefined') return
     try {
@@ -1919,7 +1918,7 @@ export default function ProductDetailPage() {
     return (
       <div className={styles.error}>
         <h2>Product Not Found</h2>
-        <p>The product you're looking for doesn't exist or has been removed.</p>
+        <p>The product you&apos;re looking for doesn&apos;t exist or has been removed.</p>
         <Link href="/products" className={styles.btnPrimary}>
           Browse All Products
         </Link>
@@ -1935,6 +1934,27 @@ export default function ProductDetailPage() {
     : 0
   const availableColors = getAvailableColors()
   const specifications = getSpecifications()
+
+  const isWishlisted = product ? isInWishlist(product.id) : false
+
+  const handleWishlistToggle = () => {
+    if (!product) return
+    if (isWishlisted) {
+      removeFromWishlist(product.id)
+    } else {
+      addToWishlist({
+        id: product.id,
+        name: product.name || product.productName || '',
+        imageUrl: images[0],
+        primaryImageUrl: images[0],
+        currentPrice: currentPrice,
+        originalPrice: originalPrice,
+        discountPercent: discountPercent,
+        slug: slug,
+        category: product.category || product.mainCategory
+      })
+    }
+  }
 
   // Extract bullet items from description (matching HTML implementation)
   const extractBulletItems = (descriptionHtmlOrText: string): string[] => {
@@ -2287,8 +2307,30 @@ export default function ProductDetailPage() {
                 <div className={styles.actionButtons}>
                   <div
                     className={styles.wishlistLink}
+                    onClick={handleWishlistToggle}
+                    style={{
+                      color: isWishlisted ? '#ff4747' : '#666',
+                      borderColor: isWishlisted ? '#ff4747' : '#ddd'
+                    }}
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill={isWishlisted ? "currentColor" : "none"}
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      style={{ marginRight: '8px' }}
+                    >
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                    </svg>
+                    <span>{isWishlisted ? 'Saved' : 'Add to Wishlist'}</span>
+                  </div>
+
+                  <div
+                    className={styles.wishlistLink}
                     onClick={addToCart}
-                    style={hasJustAdded ? { color: '#28a745' } : {}}
+                    style={hasJustAdded ? { color: '#28a745', borderColor: '#28a745' } : {}}
                   >
                     <svg
                       width="16"

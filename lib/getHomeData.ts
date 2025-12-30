@@ -160,7 +160,7 @@ export async function getHomePageData(): Promise<HomePageData> {
                 collection(db, 'services'),
                 where('status', '==', 'active'),
                 orderBy('createdAt', 'desc'),
-                limit(6)
+                limit(100)
             );
             const servicesSnapshot = await getDocs(servicesQuery);
             allServices = servicesSnapshot.docs.map(doc => ({
@@ -171,7 +171,7 @@ export async function getHomePageData(): Promise<HomePageData> {
             console.warn('Error loading services (formatted):', error);
             // Fallback
             try {
-                const servicesQuery = query(collection(db, 'services'), orderBy('createdAt', 'desc'), limit(6));
+                const servicesQuery = query(collection(db, 'services'), orderBy('createdAt', 'desc'), limit(100));
                 const servicesSnapshot = await getDocs(servicesQuery);
                 allServices = servicesSnapshot.docs.map(doc => ({
                     id: doc.id,
@@ -210,14 +210,44 @@ export async function getHomePageData(): Promise<HomePageData> {
 
         result.categories = categoriesList;
         result.mainCategorySections = mainCategorySections;
-        result.products = allProducts;
-        result.services = allServices;
-        result.categoryBanners = bannersMap;
-        result.blogs = allBlogs; // Add blogs to result
+        result.products = allProducts.map(serializeData);
+        result.services = allServices.map(serializeData);
+
+        // Serialize banners in the map
+        const serializedBanners: { [key: string]: any[] } = {};
+        Object.keys(bannersMap).forEach(key => {
+            serializedBanners[key] = bannersMap[key].map(serializeData);
+        });
+        result.categoryBanners = serializedBanners;
+
+        result.blogs = allBlogs.map(serializeData);
 
     } catch (error) {
         console.error('Critical error in getHomePageData:', error);
     }
 
     return result;
+}
+
+// Helper to sanitize Firestore data (timestamps) for Client Components
+function serializeData(item: any): any {
+    if (!item) return item;
+    const newItem = { ...item };
+
+    // Convert common timestamp fields
+    ['createdAt', 'updatedAt', 'publishedAt'].forEach(field => {
+        if (newItem[field] && typeof newItem[field] === 'object') {
+            // Check for Firestore Timestamp (seconds, nanoseconds)
+            if ('seconds' in newItem[field]) {
+                newItem[field] = new Date(newItem[field].seconds * 1000).toISOString();
+            } else if (newItem[field].toDate) {
+                // If it has a toDate method (SDK object)
+                newItem[field] = newItem[field].toDate().toISOString();
+            } else if (newItem[field] instanceof Date) {
+                newItem[field] = newItem[field].toISOString();
+            }
+        }
+    });
+
+    return newItem;
 }

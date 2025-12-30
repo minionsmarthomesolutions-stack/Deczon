@@ -42,12 +42,9 @@ export default function BannerSection({ mainCategory, banners }: BannerSectionPr
     // Filter banners to only show those matching this category relative to the passed prop
     const categoryBanners = banners.filter(b => b.categoryId === mainCategory)
 
-    // Don't render if no banners for this category
-    if (categoryBanners.length === 0) return null
-
     // Determine the primary display mode based on the latest banner (banners[0])
-    const latestBanner = categoryBanners[0]
-    const displayType = latestBanner.type
+    const latestBanner = categoryBanners.length > 0 ? categoryBanners[0] : null
+    const displayType = latestBanner?.type
 
     const singleBanners = displayType === 'single' ? categoryBanners.filter(b => b.type === 'single') : []
     const activeDoubleBanner = displayType === 'double' ? latestBanner : null
@@ -62,6 +59,8 @@ export default function BannerSection({ mainCategory, banners }: BannerSectionPr
 
         return () => clearInterval(interval)
     }, [singleBanners.length])
+
+    if (categoryBanners.length === 0) return null
 
     const getBannerLink = (bannerImage: BannerImage): string | null => {
         if (!bannerImage.linkType || !bannerImage.linkData) return null

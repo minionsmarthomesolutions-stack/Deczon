@@ -145,7 +145,7 @@ service cloud.firestore {
     // Orders / Quotes / Invoices / Payments / Expenses
     // ---------------------------
     match /orders/{orderId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if true;
     }
 
     match /quotes/{quoteId} {

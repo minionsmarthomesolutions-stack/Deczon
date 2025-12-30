@@ -273,9 +273,8 @@ export default function ServiceDetailPage() {
         return totalPrice
     }
 
-    const handleAddToCart = async (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!selectedPackage || !squareFeet) return
+    const addServiceToCart = () => {
+        if (!service || !selectedPackage || !squareFeet) return
 
         const pkg = getPackages().find(p => p.type === selectedPackage)
         if (!pkg) return
@@ -283,16 +282,61 @@ export default function ServiceDetailPage() {
         const calculatedPrice = calculatePrice(pkg)
         const advanceAmount = Math.round(calculatedPrice * 0.1) // 10% advance
 
-        // Add to cart logic here
-        console.log('Add to cart:', { serviceId: service?.id, package: selectedPackage, squareFeet, advanceAmount })
+        try {
+            const cart = JSON.parse(localStorage.getItem('cart') || '[]')
 
-        // Close modal
-        setAddToCartModalOpen(false)
+            const cartItem = {
+                id: `${service.id}-${selectedPackage}`,
+                name: `${service.name} - ${selectedPackage.charAt(0).toUpperCase() + selectedPackage.slice(1)} Package`,
+                price: advanceAmount,
+                originalPrice: calculatedPrice,
+                imageUrl: mainImage || service.primaryImageUrl || '/placeholder.svg',
+                quantity: 1,
+                type: 'service',
+                squareFeet: squareFeet,
+                packageType: selectedPackage,
+                serviceId: service.id
+            }
+
+            // Check if item already exists
+            const existingIndex = cart.findIndex((item: any) =>
+                item.serviceId === service.id &&
+                item.packageType === selectedPackage &&
+                item.squareFeet === squareFeet
+            )
+
+            if (existingIndex >= 0) {
+                // Update specific item? Or just overwrite?
+                // For services with different square feet, maybe treat as different items or update.
+                // Here we just replace or update.
+                cart[existingIndex] = cartItem
+            } else {
+                cart.push(cartItem)
+            }
+
+            localStorage.setItem('cart', JSON.stringify(cart))
+            window.dispatchEvent(new Event('cartUpdated'))
+            return true
+        } catch (error) {
+            console.error('Error adding to cart:', error)
+            alert('Failed to add to cart')
+            return false
+        }
+    }
+
+    const handleAddToCart = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (addServiceToCart()) {
+            setAddToCartModalOpen(false)
+            alert('Service added to cart successfully!')
+        }
     }
 
     const handleBuyNow = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!selectedPackage || !squareFeet) return
+
+        // Exact logic from addServiceToCart but saves to 'buyNowItem'
+        if (!service || !selectedPackage || !squareFeet) return
 
         const pkg = getPackages().find(p => p.type === selectedPackage)
         if (!pkg) return
@@ -300,8 +344,21 @@ export default function ServiceDetailPage() {
         const calculatedPrice = calculatePrice(pkg)
         const advanceAmount = Math.round(calculatedPrice * 0.1) // 10% advance
 
-        // Navigate to checkout
-        router.push(`/checkout?serviceId=${service?.id}&package=${selectedPackage}&squareFeet=${squareFeet}&amount=${advanceAmount}`)
+        const cartItem = {
+            id: `${service.id}-${selectedPackage}`,
+            name: `${service.name} - ${selectedPackage.charAt(0).toUpperCase() + selectedPackage.slice(1)} Package`,
+            price: advanceAmount,
+            originalPrice: calculatedPrice,
+            imageUrl: mainImage || service.primaryImageUrl || '/placeholder.svg',
+            quantity: 1,
+            type: 'service',
+            squareFeet: squareFeet,
+            packageType: selectedPackage,
+            serviceId: service.id
+        }
+
+        localStorage.setItem('buyNowItem', JSON.stringify([cartItem]))
+        router.push('/checkout?source=buyNow')
     }
 
     const handleEnquiry = async (e: React.FormEvent) => {
@@ -323,7 +380,7 @@ export default function ServiceDetailPage() {
         return (
             <div className={styles.error}>
                 <h2>Service Not Found</h2>
-                <p>The service you're looking for doesn't exist.</p>
+                <p>The service you&apos;re looking for doesn&apos;t exist.</p>
                 <Link href="/services" className={styles.btnPrimary}>
                     Back to Services
                 </Link>

@@ -273,25 +273,83 @@ function PackageDetailContent() {
     return pricePerSqFt * area
   }
 
-  const handleAddToCart = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!packageData || !squareFeet || squareFeet < 100) return
+  const addPackageToCart = () => {
+    if (!packageData || !squareFeet || squareFeet < 100) return false
 
     const calculatedPrice = calculatePrice(packageData)
     const advanceAmount = Math.round(calculatedPrice * 0.1)
 
-    console.log('Add to cart:', { serviceId, packageType, squareFeet, advanceAmount })
-    setAddToCartModalOpen(false)
+    try {
+      const cart = JSON.parse(localStorage.getItem('cart') || '[]')
+      const packageTitle = packageType ? packageType.charAt(0).toUpperCase() + packageType.slice(1) : 'Package'
+
+      const cartItem = {
+        id: `${serviceId}-${packageType}`,
+        name: `${service?.name || 'Service'} - ${packageTitle} Package`,
+        price: advanceAmount,
+        originalPrice: calculatedPrice,
+        imageUrl: mainImage || '/placeholder.svg',
+        quantity: 1,
+        type: 'package',
+        squareFeet: squareFeet,
+        packageType: packageType,
+        serviceId: serviceId
+      }
+
+      const existingIndex = cart.findIndex((item: any) =>
+        item.serviceId === serviceId &&
+        item.packageType === packageType &&
+        item.squareFeet === squareFeet
+      )
+
+      if (existingIndex >= 0) {
+        cart[existingIndex] = cartItem
+      } else {
+        cart.push(cartItem)
+      }
+
+      localStorage.setItem('cart', JSON.stringify(cart))
+      window.dispatchEvent(new Event('cartUpdated'))
+      return true
+    } catch (error) {
+      console.error('Error adding to cart:', error)
+      return false
+    }
+  }
+
+  const handleAddToCart = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (addPackageToCart()) {
+      setAddToCartModalOpen(false)
+      alert('Package added to cart successfully!')
+    }
   }
 
   const handleBuyNow = async (e: React.FormEvent) => {
     e.preventDefault()
+
     if (!packageData || !squareFeet || squareFeet < 100) return
 
     const calculatedPrice = calculatePrice(packageData)
     const advanceAmount = Math.round(calculatedPrice * 0.1)
 
-    router.push(`/checkout?serviceId=${serviceId}&package=${packageType}&squareFeet=${squareFeet}&amount=${advanceAmount}`)
+    const packageTitle = packageType ? packageType.charAt(0).toUpperCase() + packageType.slice(1) : 'Package'
+
+    const cartItem = {
+      id: `${serviceId}-${packageType}`,
+      name: `${service?.name || 'Service'} - ${packageTitle} Package`,
+      price: advanceAmount,
+      originalPrice: calculatedPrice,
+      imageUrl: mainImage || '/placeholder.svg',
+      quantity: 1,
+      type: 'package',
+      squareFeet: squareFeet,
+      packageType: packageType,
+      serviceId: serviceId
+    }
+
+    localStorage.setItem('buyNowItem', JSON.stringify([cartItem]))
+    router.push('/checkout?source=buyNow')
   }
 
   const handleEnquiry = async (e: React.FormEvent) => {
@@ -309,7 +367,7 @@ function PackageDetailContent() {
     return (
       <div className={styles.error}>
         <h2>Package Not Found</h2>
-        <p>The package you're looking for doesn't exist.</p>
+        <p>The package you&apos;re looking for doesn&apos;t exist.</p>
         <Link href="/services" className={styles.btnPrimary}>
           Back to Services
         </Link>
@@ -459,7 +517,7 @@ function PackageDetailContent() {
         <h2 className={styles.sectionTitle}>Package Features</h2>
         <div className={styles.featuresGrid}>
           <div className={`${styles.featureGroup} ${styles.includedFeatures}`}>
-            <h3 className={styles.featureGroupTitle}>What's Included</h3>
+            <h3 className={styles.featureGroupTitle}>What&apos;s Included</h3>
             <div className={styles.featureList}>
               {(packageData.includedFeatures || []).map((feature, index) => (
                 <div
@@ -484,7 +542,7 @@ function PackageDetailContent() {
           </div>
 
           <div className={`${styles.featureGroup} ${styles.excludedFeatures}`}>
-            <h3 className={styles.featureGroupTitle}>What's Not Included</h3>
+            <h3 className={styles.featureGroupTitle}>What&apos;s Not Included</h3>
             <div className={styles.featureList}>
               {(packageData.excludedFeatures || []).map((feature, index) => (
                 <div
@@ -575,7 +633,7 @@ function PackageDetailContent() {
           <div className={styles.detailSectionHeader}>
             <h3 className={styles.detailSectionTitle}>
               <i className="fas fa-check-circle"></i>
-              What's Included
+              What&apos;s Included
             </h3>
           </div>
           <div className={styles.detailItemsGrid}>
@@ -631,7 +689,7 @@ function PackageDetailContent() {
           <div className={styles.detailSectionHeader}>
             <h3 className={styles.detailSectionTitle}>
               <i className="fas fa-times-circle"></i>
-              What's Not Included
+              What&apos;s Not Included
             </h3>
           </div>
           <div className={styles.detailItemsGrid}>

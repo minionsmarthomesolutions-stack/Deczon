@@ -204,14 +204,16 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Let Us Help You */}
+          {/* Help & Policies */}
           <div className={styles.footerColumn}>
-            <h4 className={styles.footerHeading}>LET US HELP YOU</h4>
+            <h4 className={styles.footerHeading}>HELP & POLICIES</h4>
             <ul className={styles.footerLinks}>
               <li><Link href="/account">Your Account</Link></li>
-              <li><Link href="/#help-center">Help Center</Link></li>
-              <li><Link href="/#customer-service">Customer Service</Link></li>
-              <li><Link href="/#support">Support</Link></li>
+              <li><Link href="/contact-us">Contact Us</Link></li>
+              <li><Link href="/privacy-policy">Privacy Policy</Link></li>
+              <li><Link href="/terms-conditions">Terms & Conditions</Link></li>
+              <li><Link href="/refund-policy">Refund & Cancellation</Link></li>
+              <li><Link href="/shipping-policy">Shipping Policy</Link></li>
             </ul>
           </div>
 

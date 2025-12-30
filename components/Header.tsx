@@ -619,7 +619,7 @@ export default function Header() {
                     {searchResults.length === 0 && !isSearching ? (
                       <div className={styles.searchResultItem}>
                         <div className={styles.searchResultInfo}>
-                          <div className={styles.searchResultName}>No results found for "{searchQuery}"</div>
+                          <div className={styles.searchResultName}>No results found for &quot;{searchQuery}&quot;</div>
                           <div className={styles.searchResultCategory}>Try different keywords or use image search</div>
                         </div>
                       </div>

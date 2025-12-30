@@ -16,6 +16,8 @@ export interface LocationData {
     lat?: number
     lng?: number
     id?: string // For Firestore document ID if needed, though we usually store one per user
+    type?: string
+    isDefault?: boolean
 }
 
 const STORAGE_KEY = 'user_location_v2'
@@ -47,9 +49,14 @@ export const useLocation = () => {
             unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
                 setUser(currentUser)
                 if (currentUser && db) {
+                    // Use phone number as ID
+                    const phone = currentUser.phoneNumber?.replace('+91', '')
+                    if (!phone) return
+
                     // Fetch from Firestore
                     try {
-                        const docRef = doc(db, 'users', currentUser.uid, 'settings', 'location')
+                        // We store the "current selected location" in settings/location
+                        const docRef = doc(db, 'users', phone, 'settings', 'location')
                         const snap = await getDoc(docRef)
                         if (snap.exists()) {
                             const remoteLoc = snap.data() as LocationData

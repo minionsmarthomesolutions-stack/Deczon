@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Header from './Header'
 import Footer from './Footer'
+import { WishlistProvider } from '@/context/WishlistContext'
 
 export default function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -23,12 +24,20 @@ export default function ConditionalLayout({ children }: { children: React.ReactN
   }, [pathname])
 
   if (isLoginPage) {
-    return <>{children}</>
+    return (
+      <WishlistProvider>
+        {children}
+      </WishlistProvider>
+    )
   }
 
   // On initial home page load, render children only (loader will be shown)
   if (isInitialLoad && pathname === '/') {
-    return <>{children}</>
+    return (
+      <WishlistProvider>
+        {children}
+      </WishlistProvider>
+    )
   }
 
   const hideCategoryNav = (pathname?.startsWith('/products/') && pathname.split('/').length > 2) ||
@@ -41,13 +50,15 @@ export default function ConditionalLayout({ children }: { children: React.ReactN
   const headerHeight = hideCategoryNav ? 'var(--header-height)' : 'calc(var(--header-height) + var(--category-nav-height))'
 
   return (
-    <div className="page-wrapper" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <Header />
-      <main style={{ flex: 1, paddingTop: headerHeight }}>
-        {children}
-      </main>
-      <Footer />
-    </div>
+    <WishlistProvider>
+      <div className="page-wrapper" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        <Header />
+        <main style={{ flex: 1, paddingTop: headerHeight }}>
+          {children}
+        </main>
+        <Footer />
+      </div>
+    </WishlistProvider>
   )
 }
 

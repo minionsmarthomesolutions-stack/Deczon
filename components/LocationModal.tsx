@@ -2,6 +2,9 @@
 import React, { useState, useEffect } from 'react'
 import { useLocation, LocationData } from '@/hooks/useLocation'
 import styles from '@/styles/LocationModal.module.css'
+import { auth, db } from '@/lib/firebase'
+import { collection, getDocs, addDoc } from 'firebase/firestore'
+import { onAuthStateChanged } from 'firebase/auth'
 
 interface LocationModalProps {
     onClose: () => void
@@ -14,6 +17,9 @@ export default function LocationModal({ onClose, isOpen }: LocationModalProps) {
     const [view, setView] = useState<'initial' | 'manual' | 'confirm' | 'loading'>('initial')
     const [tempLocation, setTempLocation] = useState<LocationData | null>(null)
     const [errorMsg, setErrorMsg] = useState('')
+    const [savedAddresses, setSavedAddresses] = useState<LocationData[]>([])
+    const [userId, setUserId] = useState<string | null>(null)
+    const [saveToAccount, setSaveToAccount] = useState(true)
 
     // Manual Entry Form State
     const [formData, setFormData] = useState({
@@ -30,8 +36,36 @@ export default function LocationModal({ onClose, isOpen }: LocationModalProps) {
         if (isOpen) {
             setView('initial')
             setErrorMsg('')
+            // Check auth and load addresses
+            if (auth) {
+                const unsubscribe = onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        const phone = user.phoneNumber?.replace('+91', '')
+                        setUserId(phone || null)
+                        if (phone && db) {
+                            loadSavedAddresses(phone)
+                        }
+                    } else {
+                        setUserId(null)
+                        setSavedAddresses([])
+                    }
+                })
+                return () => unsubscribe()
+            }
         }
     }, [isOpen])
+
+    const loadSavedAddresses = async (phone: string) => {
+        if (!db) return
+        try {
+            const addrRef = collection(db, 'users', phone, 'addresses')
+            const snapshot = await getDocs(addrRef)
+            const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LocationData))
+            setSavedAddresses(list)
+        } catch (err) {
+            console.error("Error loading addresses", err)
+        }
+    }
 
     const handleDetect = async () => {
         setView('loading')
@@ -89,9 +123,38 @@ export default function LocationModal({ onClose, isOpen }: LocationModalProps) {
 
     const handleConfirm = async () => {
         if (tempLocation) {
+            // Save to current selection (hook logic handles local storage and 'settings/location' update)
             await saveLocation(tempLocation)
+
+            // If "Save to my addresses" is checked and we have a user ID and this is a new manual entry
+            // (checking view === 'confirm' isn't enough, we need to know if it came from manual or detect. 
+            // Ideally we save both if requested, but let's assume manual form has the checkbox).
+            // Actually, we can add it here if needed. 
+            if (saveToAccount && userId && db && view === 'confirm') {
+                try {
+                    // Check if not already saved? Na, just add it.
+                    // The user requested: "if they entered manually in that that one also has to store"
+                    // So we implicitly store it. 
+                    // But we should avoid duplicates if possible, simpler to just add for now.
+                    // IMPORTANT: We only have 'saveToAccount' checkbox in Manual view, 
+                    // but here we are in 'confirm' view. We need to carry that state.
+                    // Actually, let's just save it.
+                    const addrRef = collection(db, 'users', userId, 'addresses')
+                    // Filter out id from tempLocation if exists
+                    const { id, ...dataToSave } = tempLocation
+                    await addDoc(addrRef, { ...dataToSave, type: 'other', isDefault: false })
+                } catch (e) {
+                    console.error("Error saving new address to account", e)
+                }
+            }
+
             onClose()
         }
+    }
+
+    const selectSavedAddress = async (addr: LocationData) => {
+        await saveLocation(addr)
+        onClose()
     }
 
     if (!isOpen) return null
@@ -125,6 +188,42 @@ export default function LocationModal({ onClose, isOpen }: LocationModalProps) {
                                 </button>
                                 {errorMsg && <p style={{ color: 'red', fontSize: '12px', marginTop: '8px', textAlign: 'center' }}>{errorMsg}</p>}
                             </div>
+
+                            {savedAddresses.length > 0 && (
+                                <div className={styles.savedAddresses}>
+                                    <h4 style={{ fontSize: '14px', margin: '16px 0 8px', color: '#666' }}>Saved Addresses</h4>
+                                    <div style={{ maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        {savedAddresses.map((addr, idx) => (
+                                            <div
+                                                key={addr.id || idx}
+                                                onClick={() => selectSavedAddress(addr)}
+                                                style={{
+                                                    padding: '10px',
+                                                    border: '1px solid #eee',
+                                                    borderRadius: '8px',
+                                                    cursor: 'pointer',
+                                                    fontSize: '13px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '10px'
+                                                }}
+                                                className={styles.savedAddressItem}
+                                            >
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2">
+                                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                                                </svg>
+                                                <div>
+                                                    <div style={{ fontWeight: 500 }}>
+                                                        {[addr.doorNo, addr.street, addr.area, addr.city].filter(Boolean).join(', ')}
+                                                    </div>
+                                                    {addr.type && <div style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase' }}>{addr.type}</div>}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             <div className={styles.orDivider}>
                                 <span>OR</span>
@@ -222,6 +321,19 @@ export default function LocationModal({ onClose, isOpen }: LocationModalProps) {
                                     />
                                 </div>
                             </div>
+
+                            {userId && (
+                                <div style={{ margin: '10px 0' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: 'pointer' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={saveToAccount}
+                                            onChange={(e) => setSaveToAccount(e.target.checked)}
+                                        />
+                                        Save to my addresses
+                                    </label>
+                                </div>
+                            )}
 
                             {errorMsg && <p style={{ color: 'red', fontSize: '13px', marginBottom: '12px' }}>{errorMsg}</p>}
 

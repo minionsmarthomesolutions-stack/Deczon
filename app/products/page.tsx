@@ -446,21 +446,25 @@ export default function ProductsPage() {
                   : `/services/${item.id}`
 
                 return (
-                  <Link
+                  <div
                     key={item.id}
-                    href={href}
                     className={styles.mixedItem}
-                    target={item.itemType === 'product' ? "_blank" : undefined}
-                    rel={item.itemType === 'product' ? "noopener noreferrer" : undefined}
                   >
                     <div className={styles.mixedItemImage}>
-                      <Image
-                        src={imageUrl}
-                        alt={item.name || 'Product'}
-                        width={280}
-                        height={280}
-                        unoptimized
-                      />
+                      <Link
+                        href={href}
+                        target={item.itemType === 'product' ? "_blank" : undefined}
+                        rel={item.itemType === 'product' ? "noopener noreferrer" : undefined}
+                        style={{ display: 'block', width: '100%', height: '100%' }}
+                      >
+                        <Image
+                          src={imageUrl}
+                          alt={item.name || 'Product'}
+                          width={280}
+                          height={280}
+                          unoptimized
+                        />
+                      </Link>
                       {discountPercent > 0 && (
                         <div className={styles.discountTag}>
                           {discountPercent}% OFF
@@ -491,7 +495,14 @@ export default function ProductsPage() {
                     </div>
 
                     <div className={styles.mixedItemInfo}>
-                      <h3 className={styles.mixedItemName}>{item.name || item.productName}</h3>
+                      <Link
+                        href={href}
+                        target={item.itemType === 'product' ? "_blank" : undefined}
+                        rel={item.itemType === 'product' ? "noopener noreferrer" : undefined}
+                        style={{ textDecoration: 'none', color: 'inherit' }}
+                      >
+                        <h3 className={styles.mixedItemName}>{item.name || item.productName}</h3>
+                      </Link>
                       <div className={styles.mixedItemPrice}>
                         <div className={styles.priceSection}>
                           <span className={styles.currentPrice}>₹{currentPrice.toLocaleString('en-IN')}</span>
@@ -507,7 +518,7 @@ export default function ProductsPage() {
                         </button>
                       </div>
                     </div>
-                  </Link>
+                  </div>
                 )
               })}
             </div>

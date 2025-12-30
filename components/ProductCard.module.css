@@ -546,3 +546,11 @@
     opacity: 1;
   }
 }
+.wishlistBtn.active {
+  color: #ef4444;
+  background: rgba(255, 255, 255, 1);
+}
+.wishlistBtn.active svg {
+  stroke: #ef4444;
+  fill: #ef4444;
+}

@@ -487,10 +487,24 @@
   box-sizing: border-box;
   z-index: 100;
   border-radius: 0 0 var(--radius-md) var(--radius-md);
-  overflow: hidden;
+  overflow: visible;
+  /* Changed from hidden to allow pseudo-element bridge */
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+/* Hover Bridge */
+.mainNavbarDropdown::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  /* Extend upwards to bridge the gap from nav items */
+  left: 0;
+  width: 100%;
+  height: 20px;
+  background: transparent;
+  z-index: 10;
 }
 
 .mainNavbarItem:hover .mainNavbarDropdown {

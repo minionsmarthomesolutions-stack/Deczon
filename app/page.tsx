@@ -85,7 +85,7 @@ export default async function Home() {
       '@type': 'BlogPosting',
       'headline': blog.title,
       'image': blog.primaryImage || blog.imageUrl,
-      'datePublished': blog.createdAt?.toDate ? blog.createdAt.toDate().toISOString() : new Date().toISOString(),
+      'datePublished': typeof blog.createdAt === 'string' ? blog.createdAt : (blog.createdAt?.toDate ? blog.createdAt.toDate().toISOString() : new Date().toISOString()),
       'author': {
         '@type': 'Person',
         'name': blog.author || 'Deczon Team'
@@ -118,31 +118,47 @@ export default async function Home() {
               (p: any) => p.mainCategory === mainCategory || p.category === mainCategory
             ).slice(0, 10)
 
-            const hasProducts = categoryProducts.length > 0
+            // Filter services for this category
+            const categoryServices = services.filter(
+              (s: any) => s.mainCategory === mainCategory || s.category === mainCategory
+            ).slice(0, 10)
 
-            // Skip category entirely if it has NO PRODUCTS
-            if (!hasProducts) return null
+            const hasProducts = categoryProducts.length > 0
+            const hasServices = categoryServices.length > 0
+
+            // Skip category entirely if it has NO PRODUCTS AND NO SERVICES
+            if (!hasProducts && !hasServices) return null
 
             // Get banners for this category
             const banners = categoryBanners[mainCategory] || []
 
-            const bannerElement = banners.length > 0 ? (
-              <BannerSection
-                mainCategory={mainCategory}
-                banners={banners}
-              />
-            ) : null
-
             return (
               <div key={mainCategory} style={{ marginTop: '3rem', clear: 'both', scrollMarginTop: '100px' }} id={`category-${mainCategory.replace(/\s+/g, '-').toLowerCase()}`}>
 
-                {/* Products Section with embedded Banner */}
+                {/* Products Section */}
                 {hasProducts && (
                   <ProductsSection
                     categoryName={mainCategory}
                     productsList={categoryProducts}
                     showSeeAll={true}
-                    banner={bannerElement}
+                  />
+                )}
+
+                {/* Services Section */}
+                {hasServices && (
+                  <ServicesSection
+                    services={categoryServices}
+                    title={`${mainCategory} Services`} // Dynamic title
+                    subtitle={`Professional ${mainCategory} solutions`}
+                    showSeeAll={true}
+                  />
+                )}
+
+                {/* Banner Section - Now comes LAST */}
+                {banners.length > 0 && (
+                  <BannerSection
+                    mainCategory={mainCategory}
+                    banners={banners}
                   />
                 )}
               </div>
@@ -151,8 +167,8 @@ export default async function Home() {
         </div>
       )}
 
-      {/* Services Section */}
-      <ServicesSection services={services} />
+      {/* Global Services Section Removed to avoid duplication, as they are now shown per category */}
+
 
       {/* Blog Section */}
       <BlogSection blogs={blogs} />

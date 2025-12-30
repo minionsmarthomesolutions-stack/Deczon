@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import styles from './cart.module.css'
 import { db } from '@/lib/firebase'
@@ -23,6 +24,7 @@ interface CartItem {
 }
 
 export default function CartPage() {
+    const router = useRouter()
     const [cartItems, setCartItems] = useState<CartItem[]>([])
     const [relatedProducts, setRelatedProducts] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(true)
@@ -169,22 +171,8 @@ export default function CartPage() {
     }
 
     const handleCheckout = () => {
-        // Logic from cart.html: check login, then customer details, then payment
-        // For Next.js app, we should check if we have a user in Firebase Auth or local storage logic
-        // existing Header handles login via /login
-
-        // We can redirect to checkout or login
-        const isLoggedIn = localStorage.getItem('isLoggedIn') // This mimics the legacy logic
-        // In the new app, we should probably check Firebase auth state if available, but for now let's stick to the requested "same like this" logic or better:
-        // use simple redirect to a placeholder checkout or existing one.
-        // The user wants "cart page same like this". 
-
-        // Let's mimic the redirect logic but adapted to Next.js routes if they exist.
-        // The reference goes to customer-details.html -> payment.html
-        // I don't see those pages in the file list. I see 'package-details', 'products', 'login', 'services'.
-        // I'll just alert for now or redirect to likely pages.
-
-        window.location.href = '/checkout' // Assuming checkout page handles the rest, or just alert as placeholder if not exists
+        // Navigate to checkout, where auth check happens
+        router.push('/checkout')
     }
 
     if (isLoading) {
