@@ -3,14 +3,6 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ---------------------------
-    // BANNERS - ADDED FOR FRONTEND ACCESS
-    // ---------------------------
-    match /banners/{bannerId} {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-
-    // ---------------------------
     // Public UI / structure doc
     // ---------------------------
     match /categories/structure {
@@ -90,6 +82,13 @@ service cloud.firestore {
       // announcements require auth in first rule; kept auth requirement
       allow read: if request.auth != null;
     }
+    // BANNERS - UPDATED TO ALLOW UNAUTHENTICATED WRITE ACCESS
+    match /banners/{bannerId} {
+      allow read, write: if true;
+      // For production, use proper authentication:
+      // allow read: if true;
+      // allow write: if request.auth != null;
+    }
 
     // ---------------------------
     // Staff & HR
@@ -124,6 +123,11 @@ service cloud.firestore {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
+    // Orders Management (Public for Admin Panel)
+    // ---------------------------
+    match /orders/{orderId} {
+      allow read, write: if true;
+    }
 
     // ---------------------------
     // Leads / LeadOrder / Lead Subcollections
@@ -145,7 +149,7 @@ service cloud.firestore {
     // Orders / Quotes / Invoices / Payments / Expenses
     // ---------------------------
     match /orders/{orderId} {
-      allow read, write: if true;
+      allow read, write: if request.auth != null;
     }
 
     match /quotes/{quoteId} {
