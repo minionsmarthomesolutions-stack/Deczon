@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -28,7 +28,7 @@ interface Category {
     subcategories: Record<string, { items?: string[] }>
 }
 
-export default function ServicesPage() {
+function ServicesContent() {
     const searchParams = useSearchParams()
     const [allServices, setAllServices] = useState<Service[]>([])
     const [filteredServices, setFilteredServices] = useState<Service[]>([])
@@ -454,5 +454,20 @@ export default function ServicesPage() {
                 </div>
             )}
         </div>
+    )
+}
+
+export default function ServicesPage() {
+    return (
+        <Suspense fallback={
+            <div className={styles.loading}>
+                <div className={styles.loadingSpinner}>
+                    <div className={styles.spinner}></div>
+                    <p>Loading services...</p>
+                </div>
+            </div>
+        }>
+            <ServicesContent />
+        </Suspense>
     )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -33,7 +33,7 @@ interface Category {
   subcategories: Record<string, { items?: string[] }>
 }
 
-export default function ProductsPage() {
+function ProductsContent() {
   const searchParams = useSearchParams()
   const [allItems, setAllItems] = useState<Product[]>([])
   const [filteredItems, setFilteredItems] = useState<Product[]>([])
@@ -731,6 +731,21 @@ export default function ProductsPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={
+      <div className={styles.loading}>
+        <div className={styles.loadingSpinner}>
+          <div className={styles.spinner}></div>
+          <p>Loading products...</p>
+        </div>
+      </div>
+    }>
+      <ProductsContent />
+    </Suspense>
   )
 }
 
