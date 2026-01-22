@@ -1,0 +1,248 @@
+/* --- sticky-safety overrides (INSERT AT TOP) --- */
+/* Keep horizontal overflow hidden but allow vertical scroll and avoid stacking contexts */
+html, body, #__next, main {
+  overflow-x: hidden !important;   /* keep horizontal hide */
+  overflow-y: visible !important;  /* ensure vertical scrolling root is visible for sticky */
+  transform: none !important;
+  -webkit-transform: none !important;
+  perspective: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  will-change: auto !important;
+}
+
+/* Common header/layout selectors — avoid stacking contexts on ancestors */
+header, .header, .site-header, .layout-wrapper, .page-wrapper {
+  transform: none !important;
+  -webkit-transform: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Root Variables - Vela Inspired Color Scheme */
+:root {
+  --primary-color: #2c2c2c;
+  --primary-dark: #1a1a1a;
+  --primary-light: #404040;
+  --secondary-color: #f8f8f8;
+  --secondary-dark: #e8e8e8;
+  --accent-color: #ffc000;
+  --accent-dark: #ffc800;
+
+  --text-primary: #2c2c2c;
+  --text-secondary: #666666;
+  --text-muted: #999999;
+  --text-light: #ffffff;
+
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f8f8;
+  --bg-tertiary: #f0f0f0;
+  --bg-dark: #2c2c2c;
+
+  --border-color: #e0e0e0;
+  --border-light: #f0f0f0;
+
+  --success-color: #28A745;
+  --warning-color: #FFC107;
+  --error-color: #DC3545;
+
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  --spacing-3xl: 64px;
+
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-base: 15px;
+  --font-size-lg: 17px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 32px;
+  --font-size-4xl: 48px;
+
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+
+  --container-max-width: 1200px;
+  --container-max-width-large: 2200px;
+  --header-height: 80px;
+  --header-height-products: 72px;
+  --category-nav-height: 56px;
+
+  --font-nunito: var(--font-nunito);
+  --font-jost: var(--font-jost);
+}
+
+/* Global Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-nunito), 'Nunito', sans-serif;
+  line-height: 1.6;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  font-size: var(--font-size-base);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent horizontal scroll on mobile */
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-nunito), 'Nunito', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.container {
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+  width: 100%;
+}
+
+@media (max-width: 1200px) {
+  .container {
+    padding: 0 var(--spacing-md);
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 var(--spacing-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 var(--spacing-xs);
+  }
+}
+
+/* Utility Classes */
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+/* Animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Custom cursor - soft comet trail */
+.custom-cursor {
+  position: fixed;
+  width: 26px;
+  height: 26px;
+  margin-top: -13px;
+  margin-left: -13px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 192, 0, 0.85);
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: multiply;
+  transition:
+    left 0.08s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    top 0.08s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    opacity 0.2s ease-out,
+    border-color 0.2s ease-out,
+    background-color 0.2s ease-out,
+    transform 0.2s ease-out;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9) 0, rgba(255, 192, 0, 0.6) 45%, rgba(255, 192, 0, 0.1) 80%);
+  box-shadow:
+    0 0 0 2px rgba(255, 192, 0, 0.12),
+    0 10px 22px rgba(0, 0, 0, 0.18);
+  will-change: left, top;
+}
+
+@media (max-width: 768px) {
+  .custom-cursor {
+    display: none;
+  }
+}
+
+/* Global stop-sticky fallback for product detail */
+.stop-sticky {
+  position: static !important;
+}
+
+/* Debug visual when sticky-mode active (temporary) */
+[data-sticky-debug="true"] {
+  outline: 2px dashed rgba(255, 170, 0, 0.6);
+  outline-offset: 6px;
+}
+
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+

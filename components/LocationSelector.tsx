@@ -1,0 +1,67 @@
+'use client'
+
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useLocation } from '@/hooks/useLocation';
+import LocationModal from './LocationModal';
+import '../styles/location-selector.css';
+
+export default function LocationSelector({ user }: { user?: any }) {
+    const [open, setOpen] = useState(false);
+    const { location } = useLocation();
+    const router = useRouter();
+
+    // Format display text
+    const getDisplayText = () => {
+        if (!location) return 'Chennai';
+
+        // Show starting address parts: DoorNo, Street, Area
+        const parts = [location.doorNo, location.street, location.area].filter(Boolean);
+
+        if (parts.length > 0) {
+            const addr = parts.join(', ');
+            // Truncate if too long to maintain header layout
+            return addr.length > 25 ? addr.substring(0, 25) + '...' : addr;
+        }
+
+        // Fallback to city
+        if (location.city) return location.city;
+
+        return 'Select Location';
+    }
+
+    const handleClick = () => {
+        if (!user) {
+            if (typeof window !== 'undefined') {
+                const currentPath = window.location.pathname + window.location.search;
+                localStorage.setItem('redirectAfterLogin', currentPath);
+                router.push('/login');
+            }
+            return;
+        }
+        setOpen(true);
+    };
+
+    return (
+        <>
+            <button
+                className="lg-loc-trigger-btn"
+                onClick={handleClick}
+                aria-label="Change Location"
+            >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                <div className="lg-loc-trigger-text">
+                    <span className="lg-loc-trigger-label">Delivering to</span>
+                    <span className="lg-loc-trigger-value">
+                        {getDisplayText()}
+                    </span>
+                </div>
+            </button>
+
+            <LocationModal isOpen={open} onClose={() => setOpen(false)} />
+        </>
+    );
+}
