@@ -551,24 +551,12 @@ export default function Header() {
           {/* Center Section: Search Bar */}
           <div className={styles.headerSearch}>
             <div className={styles.searchInputGroup} ref={searchResultsRef}>
-              <button type="button" className={styles.searchIconLeft} onClick={() => document.getElementById('searchInput')?.focus()}>
-                {isSearching ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={styles.spinning}>
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="m21 21-4.35-4.35" />
-                  </svg>
-                ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <path d="m21 21-4.35-4.35"></path>
-                  </svg>
-                )}
-              </button>
+
               <form onSubmit={handleSearch} className={styles.searchForm}>
                 <input
                   id="searchInput"
                   type="text"
-                  placeholder="Search smart home products, services, or upload an image..."
+                  placeholder="Search products..."
                   value={searchQuery}
                   onChange={(e) => handleSearchInput(e.target.value)}
                   onFocus={handleSearchFocus}
@@ -601,6 +589,17 @@ export default function Header() {
                   </svg>
                 </button>
               </div>
+              <button
+                type="button"
+                className={styles.searchBtnRight}
+                onClick={handleSearch}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <span>Search</span>
+              </button>
 
               {/* Search Results Dropdown */}
               {showSearchResults && (

@@ -199,6 +199,7 @@ export default function ProductDetailPage() {
     location: '',
     message: ''
   })
+  const [enquirySuccess, setEnquirySuccess] = useState(false)
 
   const mainImageRef = useRef<HTMLImageElement>(null)
   const zoomContainerRef = useRef<HTMLDivElement>(null)
@@ -1251,11 +1252,9 @@ export default function ProductDetailPage() {
       const createdLead = await createLeadFromEnquiry(enquiryData)
 
       // Show success message
-      alert(`✅ Thank you for your enquiry!\n\nLead Number: ${createdLead.leadId}\nProduct: ${productName}\n\nOur team will contact you within 24 hours.\nPlease save your lead number for reference.`)
-
-      // Reset form and close modal
+      // Show success message
+      setEnquirySuccess(true)
       setEnquiryForm({ name: '', email: '', phone: '', location: '', message: '' })
-      setEnquiryModalOpen(false)
     } catch (error: any) {
       console.error('Error creating lead:', error)
       alert(`❌ Error: ${error.message || 'Failed to create lead'}\n\nPlease try again or contact us directly.`)
@@ -2139,12 +2138,12 @@ export default function ProductDetailPage() {
                         switchMainImage(img, idx)
                       }}
                     >
-                      <Image
+                      <img
                         src={img}
                         alt={`Thumbnail ${idx + 1}`}
-                        width={80}
-                        height={80}
-                        unoptimized
+                        className={styles.thumbnailImg}
+                        loading="lazy"
+                        decoding="async"
                         onError={(e) => {
                           try {
                             const target = e.target as HTMLImageElement
@@ -2776,79 +2775,104 @@ export default function ProductDetailPage() {
 
       {/* Enquiry Modal */}
       {enquiryModalOpen && (
-        <div className={styles.modalOverlay} onClick={() => setEnquiryModalOpen(false)}>
+        <div className={styles.modalOverlay} onClick={() => { setEnquiryModalOpen(false); setEnquirySuccess(false); }}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <button className={styles.closeModal} onClick={() => setEnquiryModalOpen(false)}>
+            <button className={styles.closeModal} onClick={() => { setEnquiryModalOpen(false); setEnquirySuccess(false); }}>
               ×
             </button>
-            <h2>Product Enquiry</h2>
-            <form onSubmit={handleEnquirySubmit}>
-              <div className={styles.formSection}>
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>Your Name <span style={{ color: 'red' }}>*</span></label>
-                  <input
-                    type="text"
-                    className={styles.formControl}
-                    required
-                    value={enquiryForm.name}
-                    onChange={(e) => setEnquiryForm({ ...enquiryForm, name: e.target.value })}
-                    placeholder="Enter your full name"
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>Phone Number <span style={{ color: 'red' }}>*</span></label>
-                  <input
-                    type="tel"
-                    className={styles.formControl}
-                    required
-                    value={enquiryForm.phone}
-                    onChange={(e) => setEnquiryForm({ ...enquiryForm, phone: e.target.value })}
-                    placeholder="Enter your phone number"
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>Location <span style={{ color: 'red' }}>*</span></label>
-                  <input
-                    type="text"
-                    className={styles.formControl}
-                    required
-                    value={enquiryForm.location}
-                    onChange={(e) => setEnquiryForm({ ...enquiryForm, location: e.target.value })}
-                    placeholder="Enter your city/area"
-                  />
-                </div>
-              </div>
-              <div className={styles.formSection}>
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>Requirements</label>
-                  <textarea
-                    className={styles.formControl}
-                    value={enquiryForm.message}
-                    onChange={(e) => setEnquiryForm({ ...enquiryForm, message: e.target.value })}
-                    rows={4}
-                    placeholder="Tell us about your requirements, budget, timeline, etc."
-                  />
-                </div>
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Email Address</label>
-                <input
-                  type="email"
-                  className={styles.formControl}
-                  value={enquiryForm.email}
-                  onChange={(e) => setEnquiryForm({ ...enquiryForm, email: e.target.value })}
-                  placeholder="Enter your email (optional)"
-                />
-              </div>
-              <div className={styles.formActions}>
-                <button type="button" className={styles.btnCancel} onClick={() => setEnquiryModalOpen(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className={styles.btnSubmit}>
-                  📩 Submit Enquiry
+
+            {enquirySuccess ? (
+              <div className={styles.enquirySuccess}>
+                <span className={styles.enquirySuccessIcon}>
+                  <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                </span>
+                <h3 className={styles.enquirySuccessTitle}>Enquiry Sent!</h3>
+                <p className={styles.enquirySuccessMessage}>
+                  Thank you for your interest.<br />
+                  Our team will contact you within 24 hours.
+                </p>
+                <button
+                  className={styles.enquirySuccessCloseBtn}
+                  onClick={() => { setEnquiryModalOpen(false); setEnquirySuccess(false); }}
+                >
+                  Close
                 </button>
               </div>
-            </form>
+            ) : (
+              <>
+                <h2>Product Enquiry</h2>
+                <form onSubmit={handleEnquirySubmit}>
+                  <div className={styles.formSection}>
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>Your Name <span style={{ color: 'red' }}>*</span></label>
+                      <input
+                        type="text"
+                        className={styles.formControl}
+                        required
+                        value={enquiryForm.name}
+                        onChange={(e) => setEnquiryForm({ ...enquiryForm, name: e.target.value })}
+                        placeholder="Enter your full name"
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>Phone Number <span style={{ color: 'red' }}>*</span></label>
+                      <input
+                        type="tel"
+                        className={styles.formControl}
+                        required
+                        value={enquiryForm.phone}
+                        onChange={(e) => setEnquiryForm({ ...enquiryForm, phone: e.target.value })}
+                        placeholder="Enter your phone number"
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>Location <span style={{ color: 'red' }}>*</span></label>
+                      <input
+                        type="text"
+                        className={styles.formControl}
+                        required
+                        value={enquiryForm.location}
+                        onChange={(e) => setEnquiryForm({ ...enquiryForm, location: e.target.value })}
+                        placeholder="Enter your city/area"
+                      />
+                    </div>
+                  </div>
+                  <div className={styles.formSection}>
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>Requirements</label>
+                      <textarea
+                        className={styles.formControl}
+                        value={enquiryForm.message}
+                        onChange={(e) => setEnquiryForm({ ...enquiryForm, message: e.target.value })}
+                        rows={4}
+                        placeholder="Tell us about your requirements, budget, timeline, etc."
+                      />
+                    </div>
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Email Address</label>
+                    <input
+                      type="email"
+                      className={styles.formControl}
+                      value={enquiryForm.email}
+                      onChange={(e) => setEnquiryForm({ ...enquiryForm, email: e.target.value })}
+                      placeholder="Enter your email (optional)"
+                    />
+                  </div>
+                  <div className={styles.formActions}>
+                    <button type="button" className={styles.btnCancel} onClick={() => setEnquiryModalOpen(false)}>
+                      Cancel
+                    </button>
+                    <button type="submit" className={styles.btnSubmit}>
+                      📩 Submit Enquiry
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
           </div>
         </div>
       )}

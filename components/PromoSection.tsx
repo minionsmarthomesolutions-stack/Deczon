@@ -56,15 +56,15 @@ function getCategoryInfo(mainCategory: string) {
 // Helper function to get top subcategories with logos
 function getTopSubcategories(category: Category, limit: number = 3): Array<{ name: string; logo?: string }> {
   if (!category.subcategories) return []
-  
+
   const subcategories = category.subcategories
   const allItems: Array<{ name: string; logo?: string }> = []
-  
+
   // Extract items from subcategories with logos (matching index.html logic)
   Object.keys(subcategories).forEach((subName) => {
     const sub = subcategories[subName]
     const itemLogos = (sub && typeof sub === 'object' && 'itemLogos' in sub) ? sub.itemLogos : {}
-    
+
     if (Array.isArray(sub)) {
       sub.slice(0, limit).forEach((itemName: string) => {
         allItems.push({
@@ -89,7 +89,7 @@ function getTopSubcategories(category: Category, limit: number = 3): Array<{ nam
       })
     }
   })
-  
+
   return allItems.slice(0, limit)
 }
 
@@ -103,7 +103,7 @@ export default function PromoSection({ categories }: PromoSectionProps) {
   const promoCards = categories.slice(0, 6).map(category => {
     const categoryInfo = getCategoryInfo(category.name)
     const topSubcategories = getTopSubcategories(category, 3)
-    
+
     return {
       id: category.id || category.name,
       name: category.name,
@@ -141,7 +141,7 @@ export default function PromoSection({ categories }: PromoSectionProps) {
           const container = scrollRef.current
           const currentScroll = container.scrollLeft
           const maxScroll = container.scrollWidth - container.clientWidth
-          
+
           // Check if we're near the end (within one card width)
           if (currentScroll >= maxScroll - cardWidth) {
             // Reset to the beginning of the middle set without animation
@@ -193,7 +193,7 @@ export default function PromoSection({ categories }: PromoSectionProps) {
     if (scrollRef.current && !isScrollingRef.current) {
       const container = scrollRef.current
       const currentScroll = container.scrollLeft
-      
+
       if (currentScroll <= cardWidth) {
         // Reset to the end of the middle set
         isScrollingRef.current = true
@@ -213,7 +213,7 @@ export default function PromoSection({ categories }: PromoSectionProps) {
       const container = scrollRef.current
       const currentScroll = container.scrollLeft
       const maxScroll = container.scrollWidth - container.clientWidth
-      
+
       if (currentScroll >= maxScroll - cardWidth) {
         // Reset to the beginning of the middle set
         isScrollingRef.current = true
@@ -239,7 +239,7 @@ export default function PromoSection({ categories }: PromoSectionProps) {
           <h2>Smart Home Categories</h2>
           <p className={styles.sectionSubtitle}>Explore our most popular product categories</p>
         </div>
-        
+
         <div className={styles.promoSlider}>
           <button
             className={`${styles.sliderBtn} ${styles.prev}`}
@@ -253,10 +253,10 @@ export default function PromoSection({ categories }: PromoSectionProps) {
 
           <div className={styles.promoGrid} ref={scrollRef}>
             {duplicatedCards.map((card, index) => (
-              <div 
-                key={`${card.id}-${index}`} 
+              <div
+                key={`${card.id}-${index}`}
                 className={`${styles.promoCard} ${mounted ? styles.promoCardAnimate : ''}`}
-                style={mounted ? { 
+                style={mounted ? {
                   animationDelay: `${(index % promoCards.length) * 0.1}s`
                 } : {}}
               >
@@ -277,8 +277,8 @@ export default function PromoSection({ categories }: PromoSectionProps) {
                         className={styles.dealItem}
                       >
                         {subcat.logo ? (
-                          <img 
-                            src={subcat.logo} 
+                          <img
+                            src={subcat.logo}
                             alt={subcat.name}
                             className={styles.dealItemLogo}
                             onError={(e) => {
@@ -287,7 +287,7 @@ export default function PromoSection({ categories }: PromoSectionProps) {
                             }}
                           />
                         ) : (
-                          <img 
+                          <img
                             src={`/placeholder.svg?height=32&width=32&text=${encodeURIComponent(subcat.name.substring(0, 1))}`}
                             alt={subcat.name}
                             className={styles.dealItemLogo}

@@ -75,6 +75,7 @@ export default function ServiceDetailPage() {
         message: '',
         email: ''
     })
+    const [enquirySuccess, setEnquirySuccess] = useState(false)
 
     // Gallery state
     const [mainImage, setMainImage] = useState<string>('')
@@ -367,8 +368,8 @@ export default function ServiceDetailPage() {
         // Submit enquiry logic here
         console.log('Enquiry submitted:', enquiryForm)
 
-        // Close modal and reset form
-        setEnquiryModalOpen(false)
+        // Show success message
+        setEnquirySuccess(true)
         setEnquiryForm({ name: '', phone: '', location: '', message: '', email: '' })
     }
 
@@ -959,82 +960,114 @@ export default function ServiceDetailPage() {
 
             {/* Enquiry Modal */}
             {enquiryModalOpen && (
-                <div className={`${styles.modalOverlay} ${styles.active}`} onClick={() => setEnquiryModalOpen(false)}>
+                <div className={`${styles.modalOverlay} ${styles.active}`} onClick={() => { setEnquiryModalOpen(false); setEnquirySuccess(false); }}>
                     <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-                        <div className={styles.modalHeader}>
-                            <h3 className={styles.modalTitle}>Service Enquiry</h3>
-                            <button
-                                className={styles.closeModal}
-                                onClick={() => setEnquiryModalOpen(false)}
-                            >
-                                &times;
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleEnquiry}>
-                            <div className={styles.formGroup}>
-                                <label className={styles.formLabel}>Name</label>
-                                <input
-                                    type="text"
-                                    className={styles.formControl}
-                                    required
-                                    value={enquiryForm.name}
-                                    onChange={e => setEnquiryForm({ ...enquiryForm, name: e.target.value })}
-                                    placeholder="Your Name"
-                                />
-                            </div>
-
-                            <div className={styles.formGroup}>
-                                <label className={styles.formLabel}>Phone Number</label>
-                                <input
-                                    type="tel"
-                                    className={styles.formControl}
-                                    required
-                                    value={enquiryForm.phone}
-                                    onChange={e => setEnquiryForm({ ...enquiryForm, phone: e.target.value })}
-                                    placeholder="Your Phone Number"
-                                />
-                            </div>
-
-                            <div className={styles.formGroup}>
-                                <label className={styles.formLabel}>Location</label>
-                                <input
-                                    type="text"
-                                    className={styles.formControl}
-                                    required
-                                    value={enquiryForm.location}
-                                    onChange={e => setEnquiryForm({ ...enquiryForm, location: e.target.value })}
-                                    placeholder="City / Area"
-                                />
-                            </div>
-
-                            <div className={styles.formGroup}>
-                                <label className={styles.formLabel}>Message (Optional)</label>
-                                <textarea
-                                    className={styles.formControl}
-                                    rows={4}
-                                    value={enquiryForm.message}
-                                    onChange={e => setEnquiryForm({ ...enquiryForm, message: e.target.value })}
-                                    placeholder="Describe your requirements..."
-                                />
-                            </div>
-
-                            <div className={styles.formActions}>
+                        {enquirySuccess ? (
+                            <div className={styles.enquirySuccess}>
                                 <button
-                                    type="button"
-                                    className={styles.btnCancel}
-                                    onClick={() => setEnquiryModalOpen(false)}
+                                    className={styles.closeModal}
+                                    style={{ position: 'absolute', right: '15px', top: '15px' }}
+                                    onClick={() => { setEnquiryModalOpen(false); setEnquirySuccess(false); }}
                                 >
-                                    Cancel
+                                    &times;
                                 </button>
+                                <span className={styles.enquirySuccessIcon}>
+                                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                    </svg>
+                                </span>
+                                <h3 className={styles.enquirySuccessTitle}>Enquiry Sent!</h3>
+                                <p className={styles.enquirySuccessMessage}>
+                                    Thank you for your enquiry.<br />
+                                    Our team will contact you within 24 hours.
+                                </p>
                                 <button
-                                    type="submit"
-                                    className={styles.btnSubmit}
+                                    className={styles.enquirySuccessCloseBtn}
+                                    onClick={() => { setEnquiryModalOpen(false); setEnquirySuccess(false); }}
                                 >
-                                    Send Enquiry
+                                    Close
                                 </button>
                             </div>
-                        </form>
+                        ) : (
+                            <>
+                                <div className={styles.modalHeader}>
+                                    <h3 className={styles.modalTitle}>Service Enquiry</h3>
+                                    <button
+                                        className={styles.closeModal}
+                                        onClick={() => setEnquiryModalOpen(false)}
+                                    >
+                                        &times;
+                                    </button>
+                                </div>
+
+                                <form onSubmit={handleEnquiry}>
+
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>Name</label>
+                                        <input
+                                            type="text"
+                                            className={styles.formControl}
+                                            required
+                                            value={enquiryForm.name}
+                                            onChange={e => setEnquiryForm({ ...enquiryForm, name: e.target.value })}
+                                            placeholder="Your Name"
+                                        />
+                                    </div>
+
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>Phone Number</label>
+                                        <input
+                                            type="tel"
+                                            className={styles.formControl}
+                                            required
+                                            value={enquiryForm.phone}
+                                            onChange={e => setEnquiryForm({ ...enquiryForm, phone: e.target.value })}
+                                            placeholder="Your Phone Number"
+                                        />
+                                    </div>
+
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>Location</label>
+                                        <input
+                                            type="text"
+                                            className={styles.formControl}
+                                            required
+                                            value={enquiryForm.location}
+                                            onChange={e => setEnquiryForm({ ...enquiryForm, location: e.target.value })}
+                                            placeholder="City / Area"
+                                        />
+                                    </div>
+
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>Message (Optional)</label>
+                                        <textarea
+                                            className={styles.formControl}
+                                            rows={4}
+                                            value={enquiryForm.message}
+                                            onChange={e => setEnquiryForm({ ...enquiryForm, message: e.target.value })}
+                                            placeholder="Describe your requirements..."
+                                        />
+                                    </div>
+
+                                    <div className={styles.formActions}>
+                                        <button
+                                            type="button"
+                                            className={styles.btnCancel}
+                                            onClick={() => setEnquiryModalOpen(false)}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            className={styles.btnSubmit}
+                                        >
+                                            Send Enquiry
+                                        </button>
+                                    </div>
+                                </form>
+                            </>
+                        )}
                     </div>
                 </div>
             )}

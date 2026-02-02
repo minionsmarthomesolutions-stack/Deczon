@@ -61,8 +61,13 @@ main:has(.productDetailPage) {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .error h2 {
@@ -116,6 +121,7 @@ main:has(.productDetailPage) {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -141,7 +147,7 @@ main:has(.productDetailPage) {
 }
 
 /* Ensure perfect grid alignment */
-.productDetailMain > * {
+.productDetailMain>* {
   margin: 0;
   padding: 0;
 }
@@ -273,7 +279,7 @@ main:has(.productDetailPage) {
   .zoomResult {
     display: none !important;
   }
-  
+
   .zoomLens {
     display: none !important;
   }
@@ -387,6 +393,22 @@ main:has(.productDetailPage) {
   transform: scale(1.05);
 }
 
+/* Specific styling for thumbnail images (using regular img tag for Firebase URLs) */
+.thumbnailImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform var(--transition-fast);
+  display: block;
+}
+
+.thumbnail:hover .thumbnailImg {
+  transform: scale(1.05);
+}
+
+
 .productInfo {
   display: flex;
   flex-direction: column;
@@ -408,7 +430,7 @@ main:has(.productDetailPage) {
 /* Sticky mode styles removed */
 
 /* Ensure all sections align to the same left edge */
-.productInfo > * {
+.productInfo>* {
   margin-left: 0 !important;
   margin-right: 0 !important;
   padding-left: var(--spacing-xs) !important;
@@ -550,6 +572,7 @@ main:has(.productDetailPage) {
 }
 
 @keyframes bounce {
+
   0%,
   20%,
   50%,
@@ -557,9 +580,11 @@ main:has(.productDetailPage) {
   100% {
     transform: translateY(0);
   }
+
   40% {
     transform: translateY(-2px);
   }
+
   60% {
     transform: translateY(-1px);
   }
@@ -1045,8 +1070,10 @@ main:has(.productDetailPage) {
 /* Button Container */
 .actionButtons .buttonContainer {
   display: flex;
-  flex-direction: row;   /* keep in a row */
-  gap: 20px;             /* space between buttons */
+  flex-direction: row;
+  /* keep in a row */
+  gap: 20px;
+  /* space between buttons */
 }
 
 /* Add to Cart Link Styling */
@@ -1113,10 +1140,14 @@ main:has(.productDetailPage) {
 
 .enquireNowBtn,
 .buyNowBtn {
-  flex: 1;               /* each button takes equal width */
-  min-width: 200px;      /* ensures buttons don't shrink too much */
-  padding: 18px 36px;    /* bigger button size */
-  font-size: var(--font-size-lg);       /* larger text */
+  flex: 1;
+  /* each button takes equal width */
+  min-width: 200px;
+  /* ensures buttons don't shrink too much */
+  padding: 18px 36px;
+  /* bigger button size */
+  font-size: var(--font-size-lg);
+  /* larger text */
   width: calc(50% - var(--spacing-md) / 2);
   border: none;
   border-radius: 1px;
@@ -1387,7 +1418,7 @@ main:has(.productDetailPage) {
   cursor: pointer;
   border: 1px solid #ffffff;
   background: white;
-  
+
   position: relative;
   overflow: hidden;
   width: 100%;
@@ -1966,11 +1997,11 @@ main:has(.productDetailPage) {
   .warrantyModalBody {
     grid-template-columns: 1fr;
   }
-  
+
   .fbtContent {
     flex-wrap: wrap;
   }
-  
+
   .fbtSummary {
     width: 100%;
     margin-top: var(--spacing-lg);
@@ -2254,7 +2285,7 @@ main:has(.productDetailPage) {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
   transition: left 0.5s ease;
 }
 
@@ -2277,12 +2308,12 @@ main:has(.productDetailPage) {
   .availableServicesSection .productsSlider {
     gap: var(--spacing-sm);
   }
-  
+
   .sliderBtn {
     width: 40px;
     height: 40px;
   }
-  
+
   .availableServicesSection .productCard {
     min-width: 240px;
   }
@@ -2363,8 +2394,13 @@ main:has(.productDetailPage) {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .tabContentInner h4 {
@@ -2465,6 +2501,7 @@ main:has(.productDetailPage) {
     opacity: 0;
     transform: translateY(50px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -2579,6 +2616,7 @@ main:has(.productDetailPage) {
 .btnSubmit:hover {
   background: var(--primary-dark);
   transform: translateY(-2px);
+  color: #ffffff;
 }
 
 .btnCancel {
@@ -2821,6 +2859,7 @@ main:has(.productDetailPage) {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -2872,3 +2911,55 @@ main:has(.productDetailPage) {
   }
 }
 
+
+/* Enquiry Success Styles */
+.enquirySuccess {
+  text-align: center;
+  padding: 40px 20px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.enquirySuccessIcon {
+  font-size: 0;
+  color: #28a745;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.enquirySuccessTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 15px;
+  font-family: 'Nunito', sans-serif;
+}
+
+.enquirySuccessMessage {
+  font-size: 16px;
+  color: #555555;
+  margin-bottom: 30px;
+  line-height: 1.6;
+}
+
+.enquirySuccessCloseBtn {
+  background: var(--accent-color);
+  color: var(--text-primary);
+  border: none;
+  padding: 12px 30px;
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 150px;
+  text-transform: uppercase;
+  margin-top: 10px;
+}
+
+.enquirySuccessCloseBtn:hover {
+  background: var(--primary-dark);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}

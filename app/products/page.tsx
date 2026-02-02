@@ -7,6 +7,7 @@ import Image from 'next/image'
 import { db } from '@/lib/firebase'
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore'
 import { getServiceImageUrl } from '@/lib/serviceImageUtils'
+import ProductDetailPopup from '@/components/ProductDetailPopup'
 import styles from './products.module.css'
 
 interface Product {
@@ -117,11 +118,15 @@ function ProductsContent() {
 
   const loadAllData = async () => {
     try {
-      await Promise.all([
+      const [products, services] = await Promise.all([
         loadAllProducts(),
         loadAllServices(),
         loadCategories()
       ])
+
+      if (products || services) {
+        setAllItems([...(products || []), ...(services || [])])
+      }
     } catch (error) {
       console.error('Error loading data:', error)
     } finally {
@@ -129,8 +134,8 @@ function ProductsContent() {
     }
   }
 
-  const loadAllProducts = async () => {
-    if (!db) return
+  const loadAllProducts = async (): Promise<Product[] | undefined> => {
+    if (!db) return []
     try {
       const snapshot = await getDocs(collection(db, 'products'))
       const products: Product[] = snapshot.docs.map(doc => ({
@@ -138,14 +143,15 @@ function ProductsContent() {
         itemType: 'product',
         ...doc.data()
       } as Product))
-      setAllItems(prev => [...prev, ...products])
+      return products
     } catch (error) {
       console.error('Error loading products:', error)
+      return []
     }
   }
 
-  const loadAllServices = async () => {
-    if (!db) return
+  const loadAllServices = async (): Promise<Product[] | undefined> => {
+    if (!db) return []
     try {
       const snapshot = await getDocs(collection(db, 'services'))
       const services: Product[] = snapshot.docs.map(doc => {
@@ -162,9 +168,10 @@ function ProductsContent() {
           ...data
         } as Product
       })
-      setAllItems(prev => [...prev, ...services])
+      return services
     } catch (error) {
       console.error('Error loading services:', error)
+      return []
     }
   }
 
@@ -408,6 +415,17 @@ function ProductsContent() {
     }
   }
 
+  const handlePopupAddToCart = (product: any) => {
+    // Adapter for ProductDetailPopup to use the local addToCart
+    if (product.itemType === 'service') {
+      enquireService(product.id)
+      return
+    }
+
+    // Create a mock event or just call logic directly
+    addToCart(product as Product, { stopPropagation: () => { } } as React.MouseEvent)
+  }
+
   const enquireService = (itemId: string) => {
     // Navigate to service detail or show enquiry modal
     if (typeof window !== 'undefined') {
@@ -430,6 +448,15 @@ function ProductsContent() {
     // Remove extra whitespace
     text = text.replace(/\s+/g, ' ').trim()
     return text
+  }
+
+  const formatCategoryName = (name: string): string => {
+    // Split by common separators like &, -, or space
+    return name.toLowerCase().split(' ').map(word => {
+      // Handle special characters like &
+      if (word === '&') return '&'
+      return word.charAt(0).toUpperCase() + word.slice(1)
+    }).join(' ')
   }
 
   if (loading) {
@@ -483,7 +510,7 @@ function ProductsContent() {
                       className={`${styles.mainCategoryHeader} ${selectedCategory === mainCategory ? styles.active : ''}`}
                       onClick={() => toggleMainCategory(mainCategory)}
                     >
-                      <span>{mainCategory}</span>
+                      <span>{formatCategoryName(mainCategory)}</span>
                       <span className={styles.categoryArrow}>▼</span>
                     </div>
                     <div className={styles.mainCategoryContent}>
@@ -554,7 +581,7 @@ function ProductsContent() {
 
                 return (
                   <div
-                    key={item.id}
+                    key={`${item.itemType}-${item.id}`}
                     className={styles.mixedItem}
                   >
                     <div className={styles.mixedItemImage}>
@@ -634,90 +661,18 @@ function ProductsContent() {
       </div>
 
       {/* Quick View Modal */}
-      {quickViewItem && (
-        <div className={styles.quickViewModal} onClick={closeQuickView}>
-          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <button className={styles.modalCloseBtn} onClick={closeQuickView}>×</button>
-
-            <div className={styles.modalMain}>
-              <div className={styles.modalImageSection}>
-                <div className={styles.modalMainImage}>
-                  <Image
-                    src={[
-                      quickViewItem.primaryImageUrl || quickViewItem.imageUrl,
-                      ...(quickViewItem.images || [])
-                    ].filter(Boolean)[currentModalImageIndex] || '/placeholder.svg'}
-                    alt={quickViewItem.name || 'Product'}
-                    width={400}
-                    height={400}
-                    unoptimized
-                  />
-                </div>
-                <div className={styles.modalThumbnails}>
-                  {[
-                    quickViewItem.primaryImageUrl || quickViewItem.imageUrl,
-                    ...(quickViewItem.images || [])
-                  ].filter(Boolean).map((img, idx) => (
-                    <div
-                      key={idx}
-                      className={`${styles.modalThumbnail} ${idx === currentModalImageIndex ? styles.active : ''}`}
-                      onClick={() => setCurrentModalImageIndex(idx)}
-                    >
-                      <Image src={img || '/placeholder.svg'} alt={`Thumbnail ${idx + 1}`} width={60} height={60} unoptimized />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className={styles.modalInfoSection}>
-                <h2 id="modal-product-title">{quickViewItem.name || quickViewItem.productName}</h2>
-                <div className={styles.modalPricing}>
-                  <span className={styles.modalCurrentPrice} id="modal-current-price">
-                    ₹{(quickViewItem.currentPrice || quickViewItem.price || 0).toLocaleString('en-IN')}
-                  </span>
-                  {quickViewItem.originalPrice && quickViewItem.originalPrice > (quickViewItem.currentPrice || 0) && (
-                    <>
-                      <span className={styles.modalOriginalPrice} id="modal-original-price">
-                        ₹{quickViewItem.originalPrice.toLocaleString('en-IN')}
-                      </span>
-                      <span className={styles.modalDiscountBadge} id="modal-discount-badge">
-                        {Math.round((1 - (quickViewItem.currentPrice || 0) / quickViewItem.originalPrice) * 100)}% OFF
-                      </span>
-                    </>
-                  )}
-                </div>
-                <div
-                  className={styles.modalDescription}
-                  id="modal-description-text"
-                >
-                  {stripHtmlTags(quickViewItem.description || 'Product description not available.')}
-                </div>
-                <div className={styles.modalDetailsContainer} id="modal-details-container">
-                  {quickViewItem.productDetails?.map((detail, idx) => (
-                    <div key={idx} className={styles.modalDetailItem}>
-                      <span className={styles.modalDetailLabel}>{detail.name}</span>
-                      <span className={styles.modalDetailValue}>{detail.value}</span>
-                    </div>
-                  ))}
-                </div>
-                <button
-                  className={styles.modalAddToCartBtn}
-                  onClick={() => {
-                    if (quickViewItem.itemType === 'product') {
-                      addToCart(quickViewItem, {} as React.MouseEvent)
-                    } else {
-                      enquireService(quickViewItem.id)
-                    }
-                    closeQuickView()
-                  }}
-                >
-                  {quickViewItem.itemType === 'product' ? 'Add to Cart' : 'Enquire Now'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Quick View Modal - Replaced with shared component */}
+      <ProductDetailPopup
+        product={quickViewItem ? {
+          ...quickViewItem,
+          name: quickViewItem.name || quickViewItem.productName || 'Product',
+          currentPrice: quickViewItem.currentPrice || quickViewItem.price,
+          originalPrice: quickViewItem.originalPrice
+        } : null}
+        isOpen={!!quickViewItem}
+        onClose={closeQuickView}
+        onAddToCart={handlePopupAddToCart}
+      />
 
       {/* Mobile Filter Overlay */}
       {mobileFiltersOpen && (
