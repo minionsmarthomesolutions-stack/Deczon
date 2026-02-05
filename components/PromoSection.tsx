@@ -116,8 +116,8 @@ export default function PromoSection({ categories }: PromoSectionProps) {
   // Duplicate cards for infinite loop
   const duplicatedCards = [...promoCards, ...promoCards, ...promoCards]
 
-  // Card width including margin (300px + 16px = 316px)
-  const cardWidth = 316
+  // Card width including margin (275px + 16px = 291px)
+  const cardWidth = 291
 
   useEffect(() => {
     // Trigger animation after component mounts

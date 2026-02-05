@@ -42,7 +42,8 @@
   -ms-overflow-style: none;
   padding: 0;
   scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
+  /* For smooth scrolling on iOS */
   scroll-snap-type: x mandatory;
   width: 100%;
   max-width: 100%;
@@ -57,9 +58,9 @@
   background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
   border-radius: var(--radius-lg);
   padding: var(--spacing-xl);
-  width: 300px;
-  min-width: 300px;
-  flex: 0 0 300px;
+  width: 275px;
+  min-width: 275px;
+  flex: 0 0 275px;
   color: var(--text-light);
   position: relative;
   overflow: hidden;
@@ -87,6 +88,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -223,9 +225,9 @@
 
 @media (max-width: 1200px) {
   .promoCard {
-    width: 280px;
-    min-width: 280px;
-    flex: 0 0 280px;
+    width: 275px;
+    min-width: 275px;
+    flex: 0 0 275px;
   }
 }
 
@@ -313,4 +315,3 @@
     padding: 3px 6px;
   }
 }
-

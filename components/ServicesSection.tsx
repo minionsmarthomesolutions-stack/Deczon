@@ -29,6 +29,13 @@ interface Service {
   price?: number
   originalPrice?: number
   currentPrice?: number
+  packages?: {
+    [key: string]: {
+      price?: number
+      priceFrom?: number
+      // ...
+    }
+  }
   [key: string]: any // Allow additional fields from Firebase
 }
 
@@ -122,8 +129,12 @@ export default function ServicesSection({
     }
   }
 
-
   const getStartingPrice = (service: Service): number | null => {
+    // Priority: Basic Package Price
+    if (service.packages?.basic?.price) return service.packages.basic.price
+    if (service.packages?.basic?.priceFrom) return service.packages.basic.priceFrom
+
+    // Fallbacks
     if (typeof service.startingPrice === 'number') return service.startingPrice
     if (typeof service.basePrice === 'number') return service.basePrice
     if (typeof service.priceFrom === 'number') return service.priceFrom
@@ -132,11 +143,6 @@ export default function ServicesSection({
     if (typeof service.price === 'number') return service.price
     if (typeof service.currentPrice === 'number') return service.currentPrice
     return null
-  }
-
-  const handleBookService = (e: React.MouseEvent, serviceId: string) => {
-    e.stopPropagation()
-    // Navigation will be handled by Link component
   }
 
   if (loading) {

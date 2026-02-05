@@ -119,7 +119,8 @@ function CheckoutContent() {
                 // router.push(`/login?redirect=${encodeURIComponent('/checkout')}`)
                 // For now, simple redirect
                 if (typeof window !== 'undefined') {
-                    localStorage.setItem('redirectAfterLogin', '/checkout');
+                    const returnUrl = window.location.pathname + window.location.search;
+                    localStorage.setItem('redirectAfterLogin', returnUrl);
                     router.push('/login');
                 }
             }
