@@ -6,7 +6,8 @@ import Link from 'next/link'
 import styles from './BannerSection.module.css'
 
 interface BannerImage {
-    url: string
+    url?: string
+    image?: string
     alt?: string
     cta?: string
     linkType: 'product' | 'category' | 'custom'
@@ -25,6 +26,7 @@ interface Banner {
     id: string
     type: 'single' | 'double'
     categoryId: string
+    isActive?: boolean
     banners: {
         a: BannerImage
         b?: BannerImage
@@ -39,8 +41,8 @@ interface BannerSectionProps {
 export default function BannerSection({ mainCategory, banners }: BannerSectionProps) {
     const [currentSlide, setCurrentSlide] = useState(0)
 
-    // Filter banners to only show those matching this category relative to the passed prop
-    const categoryBanners = banners.filter(b => b.categoryId === mainCategory)
+    // Filter banners to only show active ones (isActive !== false)
+    const categoryBanners = banners.filter(b => b.isActive !== false)
 
     // Determine the primary display mode based on the latest banner (banners[0])
     const latestBanner = categoryBanners.length > 0 ? categoryBanners[0] : null
@@ -82,7 +84,8 @@ export default function BannerSection({ mainCategory, banners }: BannerSectionPr
     }
 
     const renderBannerImage = (bannerImage: BannerImage, isSingle: boolean = false) => {
-        if (!bannerImage || !bannerImage.url) return null
+        const imageUrl = bannerImage.image || bannerImage.url
+        if (!bannerImage || !imageUrl) return null
 
         const href = getBannerLink(bannerImage)
         const isExternal = bannerImage.linkType === 'custom'
@@ -90,7 +93,7 @@ export default function BannerSection({ mainCategory, banners }: BannerSectionPr
         const content = (
             <div className={styles.bannerImageContainer}>
                 <Image
-                    src={bannerImage.url}
+                    src={imageUrl}
                     alt={bannerImage.alt || 'Banner'}
                     fill
                     sizes={isSingle ? '100vw' : '50vw'}

@@ -7,8 +7,7 @@ import Image from 'next/image'
 
 import ServicesSection from '@/components/ServicesSection'
 import BlogSection from '@/components/BlogSection'
-import { db } from '@/lib/firebase'
-import { doc, getDoc, collection, getDocs, query, where, limit, orderBy } from 'firebase/firestore'
+import { supabase } from '@/lib/supabase'
 import { getServiceImageUrl, extractAllImages } from '@/lib/serviceImageUtils'
 import styles from './service-detail.module.css'
 
@@ -100,7 +99,7 @@ export default function ServiceDetailPage() {
 
 
     const loadServiceDetail = async () => {
-        if (!slug || !db) {
+        if (!slug) {
             setError(true)
             setLoading(false)
             return
@@ -111,12 +110,9 @@ export default function ServiceDetailPage() {
 
             // Try fetching by slug first
             try {
-                const q = query(collection(db, 'services'), where('slug', '==', slug), limit(1));
-                const querySnapshot = await getDocs(q);
-
-                if (!querySnapshot.empty) {
-                    const doc = querySnapshot.docs[0];
-                    serviceData = { id: doc.id, ...doc.data() } as Service;
+                const { data: bySlug } = await supabase.from('services').select('*').eq('document->>slug', slug).limit(1).maybeSingle();
+                if (bySlug && bySlug.document) {
+                    serviceData = { id: bySlug.id, ...bySlug.document } as Service;
                 }
             } catch (err) {
                 console.error('Error fetching by slug:', err);
@@ -125,9 +121,9 @@ export default function ServiceDetailPage() {
             // Fallback: Try identifying as ID if slug fetch failed or returned empty
             if (!serviceData) {
                 try {
-                    const serviceDoc = await getDoc(doc(db, 'services', slug));
-                    if (serviceDoc.exists()) {
-                        serviceData = { id: serviceDoc.id, ...serviceDoc.data() } as Service;
+                    const { data: byId } = await supabase.from('services').select('*').eq('id', slug).maybeSingle();
+                    if (byId && byId.document) {
+                        serviceData = { id: byId.id, ...byId.document } as Service;
                     }
                 } catch (err) {
                     console.error('Error fetching by ID:', err);
@@ -190,39 +186,39 @@ export default function ServiceDetailPage() {
     }
 
     const loadRelatedItems = async (currentService: Service) => {
-        if (!db) return
-
         try {
             // Load related services (same category, exclude current)
             if (currentService.category) {
-                const servicesQuery = query(
-                    collection(db, 'services'),
-                    where('category', '==', currentService.category),
-                    where('status', '==', 'active'),
-                    limit(4)
-                )
-                const servicesSnapshot = await getDocs(servicesQuery)
-                const services = servicesSnapshot.docs
-                    .map(doc => ({ id: doc.id, ...doc.data() } as Service))
-                    .filter(s => s.id !== currentService.id)
-                setRelatedServices(services.slice(0, 4))
+                const { data: servicesSnapshot } = await supabase.from('services')
+                    .select('*')
+                    .eq('document->>category', currentService.category)
+                    .eq('document->>status', 'active')
+                    .limit(4)
+
+                if (servicesSnapshot) {
+                    const services = servicesSnapshot
+                        .map((doc: any) => ({ id: doc.id, ...(doc.document || {}) } as Service))
+                        .filter((s: any) => s.id !== currentService.id)
+                    setRelatedServices(services.slice(0, 4))
+                }
             }
 
             // Load related products (same category)
             if (currentService.category) {
                 try {
-                    const productsQuery = query(
-                        collection(db, 'products'),
-                        where('category', '==', currentService.category),
-                        limit(4)
-                    )
-                    const productsSnapshot = await getDocs(productsQuery)
-                    const products = productsSnapshot.docs.map(doc => ({
-                        id: doc.id,
-                        ...doc.data()
-                    }))
-                    console.log('Related products loaded:', products.length)
-                    setRelatedProducts(products.slice(0, 4))
+                    const { data: productsSnapshot } = await supabase.from('products')
+                        .select('*')
+                        .eq('document->>category', currentService.category)
+                        .limit(4)
+
+                    if (productsSnapshot) {
+                        const products = productsSnapshot.map((doc: any) => ({
+                            id: doc.id,
+                            ...(doc.document || {})
+                        }))
+                        console.log('Related products loaded:', products.length)
+                        setRelatedProducts(products.slice(0, 4))
+                    }
                 } catch (productError) {
                     console.error('Error loading related products:', productError)
                     setRelatedProducts([])

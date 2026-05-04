@@ -4,8 +4,6 @@ import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { db } from '@/lib/firebase'
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore'
 import { getServiceImageUrl } from '@/lib/serviceImageUtils'
 import ProductDetailPopup from '@/components/ProductDetailPopup'
 import styles from './products.module.css'
@@ -135,15 +133,11 @@ function ProductsContent() {
   }
 
   const loadAllProducts = async (): Promise<Product[] | undefined> => {
-    if (!db) return []
     try {
-      const snapshot = await getDocs(collection(db, 'products'))
-      const products: Product[] = snapshot.docs.map(doc => ({
-        id: doc.id,
-        itemType: 'product',
-        ...doc.data()
-      } as Product))
-      return products
+      const res = await fetch('/api/products')
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data: any[] = await res.json()
+      return data.map((doc: any) => ({ ...doc, id: doc.id, itemType: 'product' as const }))
     } catch (error) {
       console.error('Error loading products:', error)
       return []
@@ -151,24 +145,22 @@ function ProductsContent() {
   }
 
   const loadAllServices = async (): Promise<Product[] | undefined> => {
-    if (!db) return []
     try {
-      const snapshot = await getDocs(collection(db, 'services'))
-      const services: Product[] = snapshot.docs.map(doc => {
-        const data = doc.data()
-        // Use comprehensive image extraction utility
-        const imageUrl = getServiceImageUrl(data)
+      const res = await fetch('/api/services')
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data: any[] = await res.json()
+      return data.map((doc: any) => {
+        const imageUrl = getServiceImageUrl(doc)
         return {
+          ...doc,
           id: doc.id,
-          itemType: 'service',
-          name: data.name || data.title,
+          itemType: 'service' as const,
+          name: doc.name || doc.title,
           primaryImageUrl: imageUrl,
-          imageUrl: imageUrl, // Also set imageUrl for consistency
-          currentPrice: getServiceMinPrice(data),
-          ...data
+          imageUrl: imageUrl,
+          currentPrice: getServiceMinPrice(doc),
         } as Product
       })
-      return services
     } catch (error) {
       console.error('Error loading services:', error)
       return []
@@ -186,51 +178,23 @@ function ProductsContent() {
   }
 
   const loadCategories = async () => {
-    if (!db) return
     try {
-      const snapshot = await getDocs(collection(db, 'categories'))
-      const categoriesData: Record<string, Category> = {}
+      const res = await fetch('/api/categories')
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const navCategories: any[] = await res.json()
 
-      snapshot.forEach(docSnapshot => {
-        const data = docSnapshot.data()
-        const mainCategory = docSnapshot.id
-        if (data.subcategories) {
-          categoriesData[mainCategory] = {
-            name: mainCategory,
-            subcategories: {}
-          }
-          Object.keys(data.subcategories).forEach(subCatName => {
-            const subCatData = data.subcategories[subCatName]
-            categoriesData[mainCategory].subcategories[subCatName] = {
-              items: subCatData.items || []
-            }
-          })
+      const categoriesData: Record<string, Category> = {}
+      navCategories.forEach((cat: any) => {
+        categoriesData[cat.name] = {
+          name: cat.name,
+          subcategories: Object.fromEntries(
+            Object.entries(cat.subcategories || {}).map(([k, v]: [string, any]) => [
+              k,
+              { items: [...(v.items || []), ...Object.keys(v.children || {})] }
+            ])
+          )
         }
       })
-
-      // Try structure document if no categories found
-      if (Object.keys(categoriesData).length === 0) {
-        const structureDoc = await getDoc(doc(db, 'categories', 'structure'))
-        if (structureDoc.exists()) {
-          const raw = structureDoc.data().categories || {}
-          Object.keys(raw).forEach(mainCategory => {
-            const mainCatData = raw[mainCategory]
-            categoriesData[mainCategory] = {
-              name: mainCategory,
-              subcategories: {}
-            }
-            if (mainCatData.subcategories) {
-              Object.keys(mainCatData.subcategories).forEach(subCatName => {
-                const subCatData = mainCatData.subcategories[subCatName]
-                categoriesData[mainCategory].subcategories[subCatName] = {
-                  items: subCatData.items || []
-                }
-              })
-            }
-          })
-        }
-      }
-
       setCategories(categoriesData)
     } catch (error) {
       console.error('Error loading categories:', error)

@@ -2,9 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import { useLocation, LocationData } from '@/hooks/useLocation'
 import styles from '@/styles/LocationModal.module.css'
-import { auth, db } from '@/lib/firebase'
-import { collection, getDocs, addDoc } from 'firebase/firestore'
-import { onAuthStateChanged } from 'firebase/auth'
+import { supabase } from '@/lib/supabase'
 
 interface LocationModalProps {
     onClose: () => void
@@ -37,31 +35,29 @@ export default function LocationModal({ onClose, isOpen }: LocationModalProps) {
             setView('initial')
             setErrorMsg('')
             // Check auth and load addresses
-            if (auth) {
-                const unsubscribe = onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        const phone = user.phoneNumber?.replace('+91', '')
-                        setUserId(phone || null)
-                        if (phone && db) {
-                            loadSavedAddresses(phone)
-                        }
-                    } else {
-                        setUserId(null)
-                        setSavedAddresses([])
+            const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+                const user = session?.user
+                if (user) {
+                    const phone = user.phone?.replace('+91', '') || user.user_metadata?.phone || user.id
+                    setUserId(phone)
+                    if (phone) {
+                        loadSavedAddresses(phone)
                     }
-                })
-                return () => unsubscribe()
-            }
+                } else {
+                    setUserId(null)
+                    setSavedAddresses([])
+                }
+            })
+            return () => subscription.unsubscribe()
         }
     }, [isOpen])
 
     const loadSavedAddresses = async (phone: string) => {
-        if (!db) return
         try {
-            const addrRef = collection(db, 'users', phone, 'addresses')
-            const snapshot = await getDocs(addrRef)
-            const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LocationData))
-            setSavedAddresses(list)
+            const { data: userDoc } = await supabase.from('users').select('*').eq('id', phone).maybeSingle()
+            if (userDoc?.document?.addresses) {
+                setSavedAddresses(userDoc.document.addresses)
+            }
         } catch (err) {
             console.error("Error loading addresses", err)
         }
@@ -130,19 +126,16 @@ export default function LocationModal({ onClose, isOpen }: LocationModalProps) {
             // (checking view === 'confirm' isn't enough, we need to know if it came from manual or detect. 
             // Ideally we save both if requested, but let's assume manual form has the checkbox).
             // Actually, we can add it here if needed. 
-            if (saveToAccount && userId && db && view === 'confirm') {
+            if (saveToAccount && userId && view === 'confirm') {
                 try {
-                    // Check if not already saved? Na, just add it.
-                    // The user requested: "if they entered manually in that that one also has to store"
-                    // So we implicitly store it. 
-                    // But we should avoid duplicates if possible, simpler to just add for now.
-                    // IMPORTANT: We only have 'saveToAccount' checkbox in Manual view, 
-                    // but here we are in 'confirm' view. We need to carry that state.
-                    // Actually, let's just save it.
-                    const addrRef = collection(db, 'users', userId, 'addresses')
-                    // Filter out id from tempLocation if exists
+                    const { data: userDoc } = await supabase.from('users').select('*').eq('id', userId).maybeSingle()
+                    const document = userDoc?.document || {}
+                    const addresses = document.addresses || []
+                    
                     const { id, ...dataToSave } = tempLocation
-                    await addDoc(addrRef, { ...dataToSave, type: 'other', isDefault: false })
+                    addresses.push({ ...dataToSave, type: 'other', isDefault: false, id: Date.now().toString() })
+                    
+                    await supabase.from('users').upsert({ id: userId, document: { ...document, addresses } })
                 } catch (e) {
                     console.error("Error saving new address to account", e)
                 }

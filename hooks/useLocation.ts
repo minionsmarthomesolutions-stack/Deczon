@@ -1,9 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { auth, db } from '@/lib/firebase'
-import { doc, setDoc, getDoc } from 'firebase/firestore'
-import { onAuthStateChanged, User } from 'firebase/auth'
+import { supabase } from '@/lib/supabase'
+import { User } from '@supabase/supabase-js'
 
 export interface LocationData {
     doorNo?: string
@@ -45,32 +44,31 @@ export const useLocation = () => {
         // 2. Listen for Auth State
         let unsubscribeAuth = () => { }
 
-        if (auth && db) {
-            unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
-                setUser(currentUser)
-                if (currentUser && db) {
-                    // Use phone number as ID
-                    const phone = currentUser.phoneNumber?.replace('+91', '')
-                    if (!phone) return
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            const currentUser = session?.user
+            setUser(currentUser as any)
+            if (currentUser) {
+                // Use phone number as ID
+                const phone = currentUser.phone?.replace('+91', '') || currentUser.user_metadata?.phone || ''
+                if (!phone) return
 
-                    // Fetch from Firestore
-                    try {
-                        // We store the "current selected location" in settings/location
-                        const docRef = doc(db, 'users', phone, 'settings', 'location')
-                        const snap = await getDoc(docRef)
-                        if (snap.exists()) {
-                            const remoteLoc = snap.data() as LocationData
-                            setLocation(remoteLoc)
-                            // Update local storage to match
-                            localStorage.setItem(STORAGE_KEY, JSON.stringify(remoteLoc))
-                            window.dispatchEvent(new Event('locationUpdated'))
-                        }
-                    } catch (err) {
-                        console.warn('Failed to fetch location from Firestore', err)
+                // Fetch from Supabase
+                try {
+                    const { data: userDoc } = await supabase.from('users').select('*').eq('id', phone).maybeSingle()
+                    if (userDoc && userDoc.document && userDoc.document.currentLocation) {
+                        const remoteLoc = userDoc.document.currentLocation as LocationData
+                        setLocation(remoteLoc)
+                        // Update local storage to match
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(remoteLoc))
+                        window.dispatchEvent(new Event('locationUpdated'))
                     }
+                } catch (err) {
+                    console.warn('Failed to fetch location from Supabase', err)
                 }
-            })
-        }
+            }
+        })
+        
+        unsubscribeAuth = () => subscription.unsubscribe()
 
         // 3. Listen for Storage/Event Updates (Cross-component sync)
         const handleLocationUpdate = () => {
@@ -103,10 +101,12 @@ export const useLocation = () => {
                 window.dispatchEvent(new Event('locationUpdated')) // Keep compatibility with existing event structure if possible
             }
 
-            // 3. Update Firestore if logged in
-            if (user && db) {
-                const docRef = doc(db, 'users', user.uid, 'settings', 'location')
-                await setDoc(docRef, newLocation, { merge: true })
+            // 3. Update Supabase if logged in
+            if (user) {
+                const phone = user.phone?.replace('+91', '') || user.user_metadata?.phone || user.id
+                const { data: userDoc } = await supabase.from('users').select('*').eq('id', phone).maybeSingle()
+                const document = userDoc?.document || {}
+                await supabase.from('users').upsert({ id: phone, document: { ...document, currentLocation: newLocation } })
             }
         } catch (err: any) {
             console.error('Error saving location', err)

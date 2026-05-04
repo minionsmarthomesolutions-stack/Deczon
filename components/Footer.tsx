@@ -4,8 +4,6 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import styles from './Footer.module.css'
-import { db } from '@/lib/firebase'
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore'
 
 export default function Footer() {
   const [services, setServices] = useState<string[]>([])
@@ -16,47 +14,12 @@ export default function Footer() {
   }, [])
 
   const loadDynamicCategories = async () => {
-    if (!db) {
-      // Fallback static services
-      setServices(['Smart Home', 'Lighting', 'Security', 'Audio', 'Climate Control'])
-      setLoadingServices(false)
-      return
-    }
-
     try {
-      // Try loading from categories collection
-      const categoriesSnapshot = await getDocs(collection(db, 'categories'))
-      let categoriesData: any = null
-
-      if (!categoriesSnapshot.empty) {
-        const transformed: any = {}
-        categoriesSnapshot.forEach((docSnapshot) => {
-          const d = docSnapshot.data() || {}
-          const main = docSnapshot.id
-          if (d && d.subcategories) {
-            transformed[main] = { subcategories: {} }
-            Object.keys(d.subcategories).forEach((sub) => {
-              transformed[main].subcategories[sub] = d.subcategories[sub]
-            })
-          }
-        })
-        if (Object.keys(transformed).length > 0) {
-          categoriesData = normalizeCategories(transformed)
-        }
-      }
-
-      // If no categories from collection, try structure doc
-      if (!categoriesData) {
-        const categoriesDoc = await getDoc(doc(db, 'categories', 'structure'))
-        if (categoriesDoc.exists()) {
-          const raw = categoriesDoc.data().categories || {}
-          categoriesData = normalizeCategories(raw)
-        }
-      }
-
-      if (categoriesData && Object.keys(categoriesData).length > 0) {
-        const mainCategories = Object.keys(categoriesData).slice(0, 5)
-        setServices(mainCategories)
+      const res = await fetch('/api/categories')
+      if (res.ok) {
+        const data: any[] = await res.json()
+        const names = data.map((c: any) => c.name).slice(0, 5)
+        setServices(names.length > 0 ? names : ['Smart Home', 'Lighting', 'Security', 'Audio', 'Climate Control'])
       } else {
         setServices(['Smart Home', 'Lighting', 'Security', 'Audio', 'Climate Control'])
       }
@@ -66,21 +29,6 @@ export default function Footer() {
     } finally {
       setLoadingServices(false)
     }
-  }
-
-  const normalizeCategories = (source: any) => {
-    const out: any = {}
-    Object.keys(source || {}).forEach((main) => {
-      const mainData = source[main] || {}
-      const subs = mainData.subcategories || {}
-      out[main] = {}
-      Object.keys(subs).forEach((sub) => {
-        const subData = subs[sub] || {}
-        const items = Array.isArray(subData.items) ? subData.items : (Array.isArray(subData) ? subData : [])
-        out[main][sub] = items
-      })
-    })
-    return out
   }
 
   const handleNewsletter = () => {

@@ -5,8 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import styles from './cart.module.css'
-import { db } from '@/lib/firebase'
-import { collection, query, limit, getDocs } from 'firebase/firestore'
+import { supabase } from '@/lib/supabase'
 
 interface CartItem {
     id?: string
@@ -61,13 +60,13 @@ export default function CartPage() {
     }
 
     const fetchRelatedProducts = async () => {
-        if (!db) return
         try {
-            const q = query(collection(db, 'products'), limit(4))
-            const snapshot = await getDocs(q)
-            const products = snapshot.docs.map(doc => ({
+            const { data: snapshot, error } = await supabase.from('products').select('*').limit(4)
+            if (error) throw error;
+            
+            const products = snapshot.map((doc: any) => ({
                 id: doc.id,
-                ...doc.data()
+                ...(doc.document || {})
             }))
             setRelatedProducts(products)
         } catch (error) {

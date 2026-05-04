@@ -5,10 +5,10 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import styles from './Header.module.css'
-import { auth, db } from '@/lib/firebase'
+import { supabase } from '@/lib/supabase'
+import { getAuthInstance } from '@/lib/firebase'
+import { onAuthStateChanged, signOut } from 'firebase/auth'
 import LocationSelector from './LocationSelector'
-import { onAuthStateChanged } from 'firebase/auth'
-import { doc, getDoc, collection, getDocs } from 'firebase/firestore'
 
 
 interface Category {
@@ -106,42 +106,34 @@ export default function Header() {
     // Load products for search
     loadProducts()
 
-    // Auth state listener
-    if (!auth || !db) {
-      return
-    }
-
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    const auth = getAuthInstance()
+    const unsubscribe = auth ? onAuthStateChanged(auth, async (currentUser: any) => {
       setUser(currentUser)
       if (currentUser) {
         try {
-          const userPhone = currentUser.phoneNumber?.replace('+91', '') ||
+          // Firebase phone numbers usually have +91 in them
+          const userPhone = currentUser.phoneNumber?.replace('+91', '') || 
             (typeof window !== 'undefined' ? localStorage.getItem('userPhone') : null)
-          if (userPhone && db) {
-            const userDoc = await getDoc(doc(db, 'users', userPhone))
-            if (userDoc.exists()) {
-              const userData = userDoc.data()
+          if (userPhone) {
+            const { data: userDoc } = await supabase.from('users').select('*').eq('id', userPhone).maybeSingle()
+            if (userDoc && userDoc.document) {
+              const userData = userDoc.document
               setUserLabel(userData.name || 'My Account')
             } else {
-              setUserLabel(currentUser.displayName || 'My Account')
+              setUserLabel('My Account')
             }
           } else {
-            setUserLabel(currentUser.displayName || 'My Account')
+            setUserLabel('My Account')
           }
         } catch (error: any) {
-          // Handle permission errors gracefully
-          if (error?.code === 'permission-denied' || error?.code === 'missing-or-insufficient-permissions') {
-            console.warn('Firebase permission denied. Using default user label.')
-          } else {
-            console.warn('Error loading user data:', error?.message || error)
-          }
-          setUserLabel(currentUser.displayName || 'My Account')
+          console.warn('Error loading user data:', error?.message || error)
+          setUserLabel('My Account')
         }
       } else {
-        setUserLabel(userLabel === 'Login' ? 'Login' : userLabel) // Conserve existing label if not auth related change? No, logic above sets it. Keep simple.
+        setUserLabel(userLabel === 'Login' ? 'Login' : userLabel)
         if (!currentUser) setUserLabel('Login')
       }
-    })
+    }) : () => {}
 
     // Close dropdown when clicking outside
     const handleClickOutside = (event: MouseEvent) => {
@@ -165,82 +157,17 @@ export default function Header() {
   }, [dropdownOpen, showSearchResults])
 
   const loadCategories = async () => {
-    if (!db) {
-      // Fallback static categories
-      setCategories([
-        { name: 'Automation Solutions', subcategories: {} },
-        { name: 'Ceiling Design & Ambient Lighting', subcategories: {} },
-        { name: 'Textured Flooring & Surface Designs', subcategories: {} },
-        { name: 'Interior Service', subcategories: {} },
-        { name: 'Designer Walls & Claddings', subcategories: {} },
-        { name: 'Exterior Services', subcategories: {} },
-      ])
-      return
-    }
-
     try {
-      // Try loading from categories collection
-      const categoriesSnapshot = await getDocs(collection(db, 'categories'))
-      if (!categoriesSnapshot.empty) {
-        const cats: Category[] = []
-        categoriesSnapshot.forEach((doc) => {
-          const data = doc.data()
-          if (data.subcategories) {
-            // Normalize subcategories structure
-            const normalizedSubs: Record<string, any> = {}
-            Object.keys(data.subcategories).forEach(subKey => {
-              const subValue = data.subcategories[subKey]
-              if (Array.isArray(subValue)) {
-                normalizedSubs[subKey] = subValue
-              } else if (subValue && typeof subValue === 'object' && subValue.items) {
-                normalizedSubs[subKey] = subValue.items
-              } else if (subValue && typeof subValue === 'object') {
-                normalizedSubs[subKey] = Object.keys(subValue)
-              } else {
-                normalizedSubs[subKey] = []
-              }
-            })
-            cats.push({
-              name: doc.id,
-              subcategories: normalizedSubs
-            })
-          }
-        })
-        if (cats.length > 0) {
-          setCategories(cats)
-          return
-        }
-      }
-
-      // Try loading from structure document
-      const structureDoc = await getDoc(doc(db, 'categories', 'structure'))
-      if (structureDoc.exists()) {
-        const data = structureDoc.data()
-        const catsData = data.categories || {}
-        const cats: Category[] = Object.keys(catsData).map(name => {
-          const mainData = catsData[name] || {}
-          const subs = mainData.subcategories || {}
-          // Normalize subcategories structure
-          const normalizedSubs: Record<string, any> = {}
-          Object.keys(subs).forEach(subKey => {
-            const subValue = subs[subKey]
-            if (Array.isArray(subValue)) {
-              normalizedSubs[subKey] = subValue
-            } else if (subValue && typeof subValue === 'object' && subValue.items) {
-              normalizedSubs[subKey] = subValue.items
-            } else if (subValue && typeof subValue === 'object') {
-              normalizedSubs[subKey] = Object.keys(subValue)
-            } else {
-              normalizedSubs[subKey] = []
-            }
-          })
-          return {
-            name,
-            subcategories: normalizedSubs
-          }
-        })
-        if (cats.length > 0) {
-          setCategories(cats)
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 3000)
+      
+      const res = await fetch('/api/categories', { signal: controller.signal })
+      clearTimeout(timeoutId)
+      
+      if (res.ok) {
+        const data = await res.json()
+        if (data && data.length > 0) {
+          setCategories(data)
           return
         }
       }
@@ -262,13 +189,10 @@ export default function Header() {
   // Load products for search
   const loadProducts = async () => {
     try {
-      if (db) {
-        const snapshot = await getDocs(collection(db, 'products'))
-        const productsData: Product[] = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as Product))
-        setProducts(productsData)
+      const res = await fetch('/api/products')
+      if (res.ok) {
+        const data = await res.json()
+        setProducts(data)
       }
     } catch (error) {
       console.error('Error loading products:', error)
@@ -543,7 +467,7 @@ export default function Header() {
                 />
               </Link>
             </div>
-            <div style={{ marginLeft: '16px' }}>
+            <div className={styles.locationWrapper}>
               <LocationSelector user={user} />
             </div>
           </div>
@@ -696,8 +620,8 @@ export default function Header() {
                   <Link href="/wishlist">Wishlist</Link>
                   <Link href="/orders">Orders</Link>
                   <Link href="/account">Account</Link>
-                  {user && auth && (
-                    <a href="#" onClick={(e) => { e.preventDefault(); auth?.signOut(); }}>Logout</a>
+                  {user && (
+                    <a href="#" onClick={async (e) => { e.preventDefault(); const auth = getAuthInstance(); if (auth) await signOut(auth); }}>Logout</a>
                   )}
                 </div>
               )}
@@ -750,16 +674,30 @@ export default function Header() {
                     <div className={styles.mainNavbarDropdown}>
                       <div className={styles.dropdownContent}>
                         <div className={styles.dropdownCategories}>
-                          {Object.keys(category.subcategories).slice(0, 6).map((subcategory) => {
-                            const subcategoryItems = category.subcategories[subcategory]
-                            // Handle both array and object formats
-                            const items = Array.isArray(subcategoryItems)
-                              ? subcategoryItems
-                              : (subcategoryItems?.items && Array.isArray(subcategoryItems.items))
-                                ? subcategoryItems.items
-                                : typeof subcategoryItems === 'object' && subcategoryItems !== null
-                                  ? Object.keys(subcategoryItems)
-                                  : []
+                          {(() => {
+                            // Dynamic Trending Algorithm: Sort subcategories by popularity (number of items)
+                            // and limit to exactly 5 subcategories.
+                            const keys = Object.keys(category.subcategories)
+                            const sortedKeys = keys.sort((a, b) => {
+                              const getCount = (val: any) => {
+                                if (Array.isArray(val)) return val.length
+                                if (val?.items && Array.isArray(val.items)) return val.items.length
+                                if (typeof val === 'object' && val !== null) return Object.keys(val).length
+                                return 0
+                              }
+                              return getCount(category.subcategories[b]) - getCount(category.subcategories[a])
+                            }).slice(0, 5) // Only five sub categories
+
+                            return sortedKeys.map((subcategory) => {
+                              const subcategoryItems = category.subcategories[subcategory]
+                              // Handle both array and object formats
+                              const items = Array.isArray(subcategoryItems)
+                                ? subcategoryItems
+                                : (subcategoryItems?.items && Array.isArray(subcategoryItems.items))
+                                  ? subcategoryItems.items
+                                  : typeof subcategoryItems === 'object' && subcategoryItems !== null
+                                    ? Object.keys(subcategoryItems)
+                                    : []
 
                             return (
                               <div key={subcategory} className={styles.dropdownCategoryColumn}>
@@ -775,7 +713,7 @@ export default function Header() {
                                 </ul>
                               </div>
                             )
-                          })}
+                          })})()}
                         </div>
                       </div>
                     </div>

@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { db } from '@/lib/firebase'
-import { collection, getDocs, query, orderBy, limit, where } from 'firebase/firestore'
+import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import styles from './BlogSection.module.css'
 
@@ -38,24 +37,18 @@ export default function BlogSection({ blogs: propBlogs }: BlogSectionProps) {
   }, [propBlogs])
 
   const loadBlogs = async () => {
-    if (!db) {
-      // Fallback data
-      // ... (keep fallback data from before if beneficial, or just minimal)
-      setLoading(false)
-      return
-    }
-
     try {
-      // ... (Existing fetching logic kept for fallback/standalone usage)
-      // For brevity in this diff, I will assume we can rely on props mostly, but I'll implement a simplified fetch for completeness if needed.
-      // Actually, to keep it robust, I'll copy the logic briefly.
-
       let fetchedBlogs: any[] = []
       try {
-        const usersRef = collection(db, "blogs")
-        const q = query(usersRef, orderBy("createdAt", "desc"), limit(8)) // Get enough for layout
-        const querySnapshot = await getDocs(q)
-        fetchedBlogs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+        const { data, error } = await supabase
+          .from('blogs')
+          .select('*')
+          .order('document->>createdAt', { ascending: false })
+          .limit(8)
+        
+        if (!error && data) {
+          fetchedBlogs = data.map((doc: any) => ({ id: doc.id, ...doc.document }))
+        }
       } catch (e) { console.warn(e) }
 
       if (fetchedBlogs.length > 0) {

@@ -1,40 +1,27 @@
 import { Metadata } from 'next'
 import ServiceDetailClient from './ServiceDetailClient'
-import { getDb } from '@/lib/firebase'
-import { doc, getDoc } from 'firebase/firestore'
-import { getServiceImageUrl } from '@/lib/serviceImageUtils'
-
-import { collection, query, where, limit, getDocs } from 'firebase/firestore'
+import { supabase } from '@/lib/supabase'
 
 interface Props {
   params: { slug: string }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const db = getDb()
   const slug = params.slug
 
-  if (!db) {
-    return {
-      title: 'Service Details | Deczon'
-    }
-  }
-
   try {
-    // Try to find service by slug
-    const servicesRef = collection(db, 'services')
-    const q = query(servicesRef, where('slug', '==', slug), limit(1))
-    const querySnapshot = await getDocs(q)
-
     let service: any = null
 
-    if (!querySnapshot.empty) {
-      service = querySnapshot.docs[0].data()
+    // Try to find service by slug
+    const { data: bySlug } = await supabase.from('services').select('*').eq('document->>slug', slug).limit(1).maybeSingle();
+
+    if (bySlug && bySlug.document) {
+      service = bySlug.document
     } else {
-      // Fallback: Try to fetch by ID (in case the slug is actually an ID)
-      const serviceDoc = await getDoc(doc(db, 'services', slug))
-      if (serviceDoc.exists()) {
-        service = serviceDoc.data()
+      // Fallback: Try to fetch by ID
+      const { data: byId } = await supabase.from('services').select('*').eq('id', slug).maybeSingle();
+      if (byId && byId.document) {
+        service = byId.document
       }
     }
 

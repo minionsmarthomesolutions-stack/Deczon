@@ -4,8 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { db } from '@/lib/firebase'
-import { collection, getDocs } from 'firebase/firestore'
+import { supabase } from '@/lib/supabase'
 import { getServiceImageUrl } from '@/lib/serviceImageUtils'
 import styles from '../products/products.module.css'
 
@@ -130,19 +129,19 @@ function ServicesContent() {
     }
 
     const loadAllServices = async () => {
-        if (!db) return
         try {
-            const snapshot = await getDocs(collection(db, 'services'))
-            const services: Service[] = snapshot.docs.map(doc => {
-                const data = doc.data()
-                const imageUrl = getServiceImageUrl(data)
+            const res = await fetch('/api/services')
+            if (!res.ok) throw new Error(`HTTP ${res.status}`)
+            const data: any[] = await res.json()
+            const services: Service[] = data.map((doc: any) => {
+                const imageUrl = getServiceImageUrl(doc)
                 return {
+                    ...doc,
                     id: doc.id,
-                    name: data.name || data.title,
+                    name: doc.name || doc.title,
                     primaryImageUrl: imageUrl,
                     imageUrl: imageUrl,
-                    startingPrice: getServiceMinPrice(data),
-                    ...data
+                    startingPrice: getServiceMinPrice(doc)
                 } as Service
             })
             setAllServices(services)
@@ -162,28 +161,23 @@ function ServicesContent() {
     }
 
     const loadCategories = async () => {
-        if (!db) return
         try {
-            const snapshot = await getDocs(collection(db, 'categories'))
-            const categoriesData: Record<string, Category> = {}
+            const res = await fetch('/api/categories')
+            if (!res.ok) throw new Error(`HTTP ${res.status}`)
+            const navCategories: any[] = await res.json()
 
-            snapshot.forEach(docSnapshot => {
-                const data = docSnapshot.data()
-                const mainCategory = docSnapshot.id
-                if (data.subcategories) {
-                    categoriesData[mainCategory] = {
-                        name: mainCategory,
-                        subcategories: {}
-                    }
-                    Object.keys(data.subcategories).forEach(subCatName => {
-                        const subCatData = data.subcategories[subCatName]
-                        categoriesData[mainCategory].subcategories[subCatName] = {
-                            items: subCatData.items || []
-                        }
-                    })
+            const categoriesData: Record<string, Category> = {}
+            navCategories.forEach((cat: any) => {
+                categoriesData[cat.name] = {
+                    name: cat.name,
+                    subcategories: Object.fromEntries(
+                        Object.entries(cat.subcategories || {}).map(([k, v]: [string, any]) => [
+                            k,
+                            { items: [...(v.items || []), ...Object.keys(v.children || {})] }
+                        ])
+                    )
                 }
             })
-
             setCategories(categoriesData)
         } catch (error) {
             console.error('Error loading categories:', error)
@@ -265,6 +259,77 @@ function ServicesContent() {
         }
     }
 
+    const renderFilters = () => (
+        <>
+            <h3>Categories</h3>
+
+            <div className={styles.categoryTree} id="category-tree">
+                <div className={styles.mainCategoryGroup}>
+                    <div
+                        className={`${styles.mainCategoryHeader} ${!selectedCategory ? styles.active : ''}`}
+                        onClick={selectAllServices}
+                    >
+                        <span>All Services</span>
+                    </div>
+                </div>
+
+                {Object.keys(categories).map(mainCategory => (
+                    <div
+                        key={mainCategory}
+                        className={`${styles.mainCategoryGroup} ${expandedCategories.has(mainCategory) ? styles.expanded : ''}`}
+                    >
+                        <div
+                            className={`${styles.mainCategoryHeader} ${selectedCategory === mainCategory ? styles.active : ''}`}
+                            onClick={() => toggleMainCategory(mainCategory)}
+                        >
+                            <span>{mainCategory}</span>
+                            <span className={styles.categoryArrow}>▼</span>
+                        </div>
+                        <div className={styles.mainCategoryContent}>
+                            {Object.keys(categories[mainCategory].subcategories).map(subcategoryName => {
+                                const subcategoryItems = categories[mainCategory].subcategories[subcategoryName]
+                                const items = Array.isArray(subcategoryItems)
+                                    ? subcategoryItems
+                                    : (subcategoryItems?.items && Array.isArray(subcategoryItems.items))
+                                        ? subcategoryItems.items
+                                        : typeof subcategoryItems === 'object' && subcategoryItems !== null
+                                            ? Object.keys(subcategoryItems).filter(key => key !== 'items')
+                                            : []
+
+                                return (
+                                    <div key={subcategoryName} className={`${styles.categoryGroup} ${expandedSubcategories.has(subcategoryName) ? styles.expanded : ''}`}>
+                                        <div
+                                            className={`${styles.categoryHeader} ${expandedSubcategories.has(subcategoryName) ? styles.active : ''}`}
+                                            onClick={() => toggleSubcategory(subcategoryName)}
+                                        >
+                                            {subcategoryName}
+                                            <span className={styles.categoryArrow}>▼</span>
+                                        </div>
+                                        <div className={`${styles.subcategories} ${expandedSubcategories.has(subcategoryName) ? styles.expanded : ''}`}>
+                                            {items.slice(0, 6).map((item: string, idx: number) => (
+                                                <div
+                                                    key={idx}
+                                                    className={`${styles.subcategoryItem} ${selectedItem === item ? styles.active : ''}`}
+                                                    onClick={() => selectCategory(mainCategory, subcategoryName, item)}
+                                                >
+                                                    {item}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <button className={styles.clearFiltersBtn} onClick={selectAllServices}>
+                Clear All Filters
+            </button>
+        </>
+    )
+
     if (loading) {
         return (
             <div className={styles.loading}>
@@ -295,77 +360,7 @@ function ServicesContent() {
                         </button>
 
                         <div className={styles.filtersContent}>
-                            <h3>Categories</h3>
-
-                            <div className={styles.categoryTree} id="category-tree">
-                                <div className={styles.mainCategoryGroup}>
-                                    <div
-                                        className={`${styles.mainCategoryHeader} ${!selectedCategory ? styles.active : ''}`}
-                                        onClick={selectAllServices}
-                                    >
-                                        <span>All Services</span>
-                                    </div>
-                                </div>
-
-                                {Object.keys(categories).map(mainCategory => (
-                                    <div
-                                        key={mainCategory}
-                                        className={`${styles.mainCategoryGroup} ${expandedCategories.has(mainCategory) ? styles.expanded : ''}`}
-                                    >
-                                        <div
-                                            className={`${styles.mainCategoryHeader} ${selectedCategory === mainCategory ? styles.active : ''}`}
-                                            onClick={() => toggleMainCategory(mainCategory)}
-                                        >
-                                            <span>{mainCategory}</span>
-                                            <span className={styles.categoryArrow}>▼</span>
-                                        </div>
-                                        <div className={styles.mainCategoryContent}>
-                                            {Object.keys(categories[mainCategory].subcategories).map(subcategoryName => {
-                                                const subcategoryItems = categories[mainCategory].subcategories[subcategoryName]
-                                                const items = Array.isArray(subcategoryItems)
-                                                    ? subcategoryItems
-                                                    : (subcategoryItems?.items && Array.isArray(subcategoryItems.items))
-                                                        ? subcategoryItems.items
-                                                        : typeof subcategoryItems === 'object' && subcategoryItems !== null
-                                                            ? Object.keys(subcategoryItems).filter(key => key !== 'items')
-                                                            : []
-
-                                                // Debug logging
-                                                if (items.length > 0) {
-                                                    console.log(`Subcategory "${subcategoryName}" has ${items.length} items:`, items)
-                                                }
-
-                                                return (
-                                                    <div key={subcategoryName} className={`${styles.categoryGroup} ${expandedSubcategories.has(subcategoryName) ? styles.expanded : ''}`}>
-                                                        <div
-                                                            className={`${styles.categoryHeader} ${expandedSubcategories.has(subcategoryName) ? styles.active : ''}`}
-                                                            onClick={() => toggleSubcategory(subcategoryName)}
-                                                        >
-                                                            {subcategoryName}
-                                                            <span className={styles.categoryArrow}>▼</span>
-                                                        </div>
-                                                        <div className={`${styles.subcategories} ${expandedSubcategories.has(subcategoryName) ? styles.expanded : ''}`}>
-                                                            {items.slice(0, 6).map((item: string, idx: number) => (
-                                                                <div
-                                                                    key={idx}
-                                                                    className={`${styles.subcategoryItem} ${selectedItem === item ? styles.active : ''}`}
-                                                                    onClick={() => selectCategory(mainCategory, subcategoryName, item)}
-                                                                >
-                                                                    {item}
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )
-                                            })}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <button className={styles.clearFiltersBtn} onClick={selectAllServices}>
-                                Clear All Filters
-                            </button>
+                            {renderFilters()}
                         </div>
                     </div>
 
@@ -419,7 +414,7 @@ function ServicesContent() {
                                             >
                                                 <h3 className={styles.mixedItemName}>{service.name}</h3>
                                             </Link>
-                                            <div className={styles.mixedItemPrice}>
+                                            <div className={`${styles.mixedItemPrice} ${styles.servicesItemPrice}`}>
                                                 <div className={styles.priceSection}>
                                                     <span className={styles.currentPrice}>
                                                         {startingPrice > 0 ? `Starting from ₹${startingPrice.toLocaleString('en-IN')}` : 'Contact for Price'}
@@ -428,7 +423,6 @@ function ServicesContent() {
                                                 <Link
                                                     href={`/services/${service.id}`}
                                                     className={styles.slideAddToCart}
-                                                    style={{ position: 'static', opacity: 1, visibility: 'visible', transform: 'none' }}
                                                 >
                                                     View Details
                                                 </Link>
@@ -448,7 +442,7 @@ function ServicesContent() {
                     <div className={styles.mobileFilterSidebar} onClick={(e) => e.stopPropagation()}>
                         <button className={styles.mobileFilterClose} onClick={() => setMobileFiltersOpen(false)}>×</button>
                         <div className={styles.filtersContent}>
-                            {/* Same filter content as desktop */}
+                            {renderFilters()}
                         </div>
                     </div>
                 </div>

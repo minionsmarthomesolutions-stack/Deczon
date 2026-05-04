@@ -1,34 +1,46 @@
 import { Metadata } from 'next'
 import ProductClient from './ProductDetailClient'
-import { getDb } from '@/lib/firebase'
-import { doc, getDoc, collection, query, where, limit, getDocs } from 'firebase/firestore'
+import { supabase } from '@/lib/supabase'
 
 interface Props {
     params: { slug: string }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-    const db = getDb()
     const slug = params.slug
 
-    if (!db) {
-        return {
-            title: 'Product Details | Deczon'
-        }
-    }
-
     try {
-        const productsRef = collection(db, 'products')
-        const q = query(productsRef, where('slug', '==', slug), limit(1))
-        const querySnapshot = await getDocs(q)
+        let product: any = null
 
-        if (querySnapshot.empty) {
+        // Try to fetch by slug from JSONB document
+        const { data: bySlug, error: slugError } = await supabase
+            .from('products')
+            .select('*')
+            .eq('document->>slug', slug)
+            .limit(1)
+            .maybeSingle()
+
+        if (bySlug && bySlug.document) {
+            product = bySlug.document
+        } else {
+            // Fallback: try by ID
+            const { data: byId } = await supabase
+                .from('products')
+                .select('*')
+                .eq('id', slug)
+                .maybeSingle()
+            
+            if (byId && byId.document) {
+                product = byId.document
+            }
+        }
+
+        if (!product) {
             return {
                 title: 'Product Not Found | Deczon'
             }
         }
 
-        const product = querySnapshot.docs[0].data()
         const name = product.name || 'Product'
         const brand = product.brand ? ` | ${product.brand}` : ''
 

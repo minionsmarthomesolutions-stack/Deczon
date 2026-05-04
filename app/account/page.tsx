@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { auth, db } from '@/lib/firebase'
-import { doc, getDoc, updateDoc, collection, getDocs, setDoc, addDoc, deleteDoc, serverTimestamp } from 'firebase/firestore'
+import { supabase } from '@/lib/supabase'
+import { getAuthInstance } from '@/lib/firebase'
 import { onAuthStateChanged } from 'firebase/auth'
 import styles from './account.module.css'
 
@@ -49,25 +49,24 @@ export default function AccountPage() {
     })
 
     useEffect(() => {
-        if (!auth) return
-
-        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+        const auth = getAuthInstance()
+        const unsubscribe = auth ? onAuthStateChanged(auth, async (currentUser: any) => {
             if (currentUser) {
                 setUser(currentUser)
 
                 // Determine User ID (Phone Number)
-                const phone = currentUser.phoneNumber?.replace('+91', '') || ''
+                const phone = currentUser.phoneNumber?.replace('+91', '') || 
+                    (typeof window !== 'undefined' ? localStorage.getItem('userPhone') : '')
                 setUserId(phone)
-                setProfile(prev => ({ ...prev, phone: currentUser.phoneNumber || '' }))
+                setProfile(prev => ({ ...prev, phone: phone || '' }))
 
-                if (phone && db) {
-                    // Fetch User Data
+                if (phone) {
+                    // Fetch User Data from Supabase
                     try {
-                        const userDocRef = doc(db, 'users', phone)
-                        const userDoc = await getDoc(userDocRef)
+                        const { data: userDoc } = await supabase.from('users').select('*').eq('id', phone).maybeSingle()
 
-                        if (userDoc.exists()) {
-                            const data = userDoc.data()
+                        if (userDoc && userDoc.document) {
+                            const data = userDoc.document
                             setProfile(prev => ({
                                 ...prev,
                                 name: data.name || currentUser.displayName || '',
@@ -92,18 +91,19 @@ export default function AccountPage() {
                 router.push('/login')
             }
             setLoading(false)
-        })
+        }) : () => {}
 
         return () => unsubscribe()
     }, [router])
 
     const fetchAddresses = async (phone: string) => {
-        if (!db) return
         try {
-            const addrRef = collection(db, 'users', phone, 'addresses')
-            const snapshot = await getDocs(addrRef)
-            const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LocationData))
-            setAddresses(list)
+            const { data: userDoc } = await supabase.from('users').select('*').eq('id', phone).maybeSingle()
+            if (userDoc && userDoc.document && Array.isArray(userDoc.document.addresses)) {
+                setAddresses(userDoc.document.addresses)
+            } else {
+                setAddresses([])
+            }
         } catch (err) {
             console.error("Error fetching addresses", err)
         }
@@ -111,17 +111,23 @@ export default function AccountPage() {
 
     const handleProfileUpdate = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!userId || !db) return
+        if (!userId) return
 
         setSavingProfile(true)
         try {
-            const userRef = doc(db, 'users', userId)
-            await setDoc(userRef, {
-                name: profile.name,
-                email: profile.email,
-                phone: profile.phone, // Ensure phone is stored
-                updatedAt: serverTimestamp()
-            }, { merge: true })
+            const { data: userDoc } = await supabase.from('users').select('*').eq('id', userId).maybeSingle()
+            const currentDoc = userDoc?.document || {}
+            
+            await supabase.from('users').upsert({
+                id: userId,
+                document: {
+                    ...currentDoc,
+                    name: profile.name,
+                    email: profile.email,
+                    phone: profile.phone,
+                    updatedAt: new Date().toISOString()
+                }
+            })
             alert('Profile updated successfully!')
         } catch (err) {
             console.error("Error updating profile", err)
@@ -133,21 +139,29 @@ export default function AccountPage() {
 
     const handleAddressSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!userId || !db) return
+        if (!userId) return
 
         try {
             const addrData = { ...addressForm }
             const { id, ...dataToSave } = addrData as any
 
-            const addrRef = collection(db, 'users', userId, 'addresses')
+            const { data: userDoc } = await supabase.from('users').select('*').eq('id', userId).maybeSingle()
+            const currentDoc = userDoc?.document || {}
+            let currentAddresses: any[] = currentDoc.addresses || []
 
             if (editingAddress?.id) {
                 // Update
-                await updateDoc(doc(db, 'users', userId, 'addresses', editingAddress.id), dataToSave)
+                currentAddresses = currentAddresses.map(addr => addr.id === editingAddress.id ? { id: editingAddress.id, ...dataToSave } : addr)
             } else {
                 // Create
-                await addDoc(addrRef, dataToSave)
+                const newId = Date.now().toString()
+                currentAddresses.push({ id: newId, ...dataToSave })
             }
+
+            await supabase.from('users').upsert({
+                id: userId,
+                document: { ...currentDoc, addresses: currentAddresses }
+            })
 
             setAddressForm({
                 doorNo: '', street: '', area: '', city: '', state: '', pincode: '', type: 'home', isDefault: false
@@ -162,9 +176,17 @@ export default function AccountPage() {
     }
 
     const handleDeleteAddress = async (id: string) => {
-        if (!userId || !db || !confirm('Are you sure you want to delete this address?')) return
+        if (!userId || !confirm('Are you sure you want to delete this address?')) return
         try {
-            await deleteDoc(doc(db, 'users', userId, 'addresses', id))
+            const { data: userDoc } = await supabase.from('users').select('*').eq('id', userId).maybeSingle()
+            const currentDoc = userDoc?.document || {}
+            let currentAddresses: any[] = currentDoc.addresses || []
+            currentAddresses = currentAddresses.filter(addr => addr.id !== id)
+
+            await supabase.from('users').upsert({
+                id: userId,
+                document: { ...currentDoc, addresses: currentAddresses }
+            })
             fetchAddresses(userId)
         } catch (err) {
             console.error("Failed to delete", err)
@@ -172,20 +194,26 @@ export default function AccountPage() {
     }
 
     const handleSetDefault = async (id: string) => {
-        if (!userId || !db) return;
-        const firestore = db;
-        // 1. Unset all
-        const batchUpdates = addresses.map(async (addr) => {
-            if (!addr.id) return
-            if (addr.id === id) {
-                await updateDoc(doc(firestore, 'users', userId, 'addresses', addr.id), { isDefault: true })
-            } else if (addr.isDefault) {
-                await updateDoc(doc(firestore, 'users', userId, 'addresses', addr.id), { isDefault: false })
-            }
-        })
+        if (!userId) return;
+        
+        try {
+            const { data: userDoc } = await supabase.from('users').select('*').eq('id', userId).maybeSingle()
+            const currentDoc = userDoc?.document || {}
+            let currentAddresses: any[] = currentDoc.addresses || []
+            
+            currentAddresses = currentAddresses.map(addr => ({
+                ...addr,
+                isDefault: addr.id === id
+            }))
 
-        await Promise.all(batchUpdates)
-        fetchAddresses(userId)
+            await supabase.from('users').upsert({
+                id: userId,
+                document: { ...currentDoc, addresses: currentAddresses }
+            })
+            fetchAddresses(userId)
+        } catch (err) {
+            console.error("Failed to set default", err)
+        }
     }
 
     const editAddr = (addr: LocationData) => {

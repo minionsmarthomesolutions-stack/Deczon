@@ -7,8 +7,7 @@ import Image from 'next/image'
 
 import ServicesSection from '@/components/ServicesSection'
 import BlogSection from '@/components/BlogSection'
-import { db } from '@/lib/firebase'
-import { doc, getDoc, collection, getDocs, query, where, limit } from 'firebase/firestore'
+import { supabase } from '@/lib/supabase'
 import styles from './package-detail.module.css'
 
 interface Service {
@@ -98,21 +97,21 @@ function PackageDetailContent() {
   }, [serviceId, packageType])
 
   const loadPackageDetails = async () => {
-    if (!serviceId || !packageType || !db) {
+    if (!serviceId || !packageType) {
       setError(true)
       setLoading(false)
       return
     }
 
     try {
-      const serviceDoc = await getDoc(doc(db, 'services', serviceId))
+      const { data: serviceDoc } = await supabase.from('services').select('*').eq('id', serviceId).maybeSingle()
 
-      if (!serviceDoc.exists()) {
+      if (!serviceDoc || !serviceDoc.document) {
         router.push('/services')
         return
       }
 
-      const serviceData = { id: serviceDoc.id, ...serviceDoc.data() } as Service
+      const serviceData = { id: serviceDoc.id, ...serviceDoc.document } as Service
       const pkgData = serviceData.packages?.[packageType]
 
       if (!pkgData) {
@@ -203,38 +202,40 @@ function PackageDetailContent() {
   }
 
   const loadRelatedItems = async (currentService: Service) => {
-    if (!db) return
-
     try {
       // Load related services
       if (currentService.category || currentService.mainCategory) {
         const category = currentService.mainCategory || currentService.category
-        const servicesQuery = query(
-          collection(db, 'services'),
-          where('mainCategory', '==', category),
-          where('status', '==', 'active'),
-          limit(6)
-        )
-        const servicesSnapshot = await getDocs(servicesQuery)
-        const services = servicesSnapshot.docs
-          .map(doc => ({ id: doc.id, ...doc.data() } as Service))
-          .filter(s => s.id !== currentService.id)
+        const { data: servicesSnapshot } = await supabase.from('services')
+          .select('*')
+          .eq('document->>mainCategory', category)
+          .eq('document->>status', 'active')
+          .limit(6)
+        
+        let services: Service[] = []
+        if (servicesSnapshot) {
+          services = servicesSnapshot
+            .map(doc => ({ id: doc.id, ...(doc.document || {}) } as Service))
+            .filter(s => s.id !== currentService.id)
+        }
         setRelatedServices(services.slice(0, 6))
       }
 
       // Load related products
       if (currentService.category || currentService.mainCategory) {
         const category = currentService.mainCategory || currentService.category
-        const productsQuery = query(
-          collection(db, 'products'),
-          where('mainCategory', '==', category),
-          limit(6)
-        )
-        const productsSnapshot = await getDocs(productsQuery)
-        const products = productsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }))
+        const { data: productsSnapshot } = await supabase.from('products')
+          .select('*')
+          .eq('document->>mainCategory', category)
+          .limit(6)
+        
+        let products: any[] = []
+        if (productsSnapshot) {
+          products = productsSnapshot.map(doc => ({
+            id: doc.id,
+            ...(doc.document || {})
+          }))
+        }
         setRelatedProducts(products.slice(0, 6))
       }
     } catch (error) {

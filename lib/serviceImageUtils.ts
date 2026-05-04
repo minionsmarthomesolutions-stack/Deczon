@@ -17,25 +17,6 @@ export interface ServiceImageData {
 }
 
 /**
- * Format Firebase Storage URL to include alt=media parameter
- */
-function formatFirebaseUrl(url: string): string {
-  if (!url || !url.includes('firebasestorage.googleapis.com')) {
-    return url
-  }
-
-  if (!url.includes('?')) {
-    return `${url}?alt=media`
-  }
-
-  if (!url.includes('alt=media')) {
-    return `${url}&alt=media`
-  }
-
-  return url
-}
-
-/**
  * Extract all images from service data (matching HTML version)
  * Collects all possible images into a flat string array (no duplicates)
  */
@@ -45,7 +26,7 @@ export function extractAllImages(service: ServiceImageData): string[] {
   // Helper to add image if it's a valid string
   const addImage = (img: any) => {
     if (typeof img === 'string' && img.trim()) {
-      images.push(formatFirebaseUrl(img.trim()))
+      images.push(img.trim())
     }
   }
 
@@ -206,7 +187,7 @@ export function getServiceImageUrl(service: ServiceImageData, placeholder: strin
     return placeholder
   }
 
-  // Format Firebase Storage URLs (add ?alt=media or &alt=media)
-  return formatFirebaseUrl(url)
+  // Return the URL directly without Firebase formatting
+  return url
 }
 

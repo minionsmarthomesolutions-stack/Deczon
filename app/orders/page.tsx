@@ -3,9 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { auth, db } from '@/lib/firebase'
-import { onAuthStateChanged } from 'firebase/auth'
-import { collection, query, where, getDocs, orderBy, Timestamp } from 'firebase/firestore'
+import { supabase } from '@/lib/supabase'
 import styles from './orders.module.css'
 
 interface OrderItem {
@@ -35,12 +33,11 @@ export default function OrdersPage() {
     const [expandedTracking, setExpandedTracking] = useState<string | null>(null)
 
     useEffect(() => {
-        if (!auth) return
-
-        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            const currentUser = session?.user
             if (currentUser) {
                 setUser(currentUser)
-                await fetchOrders(currentUser.uid)
+                await fetchOrders(currentUser.id)
             } else {
                 if (typeof window !== 'undefined') {
                     localStorage.setItem('redirectAfterLogin', '/orders')
@@ -50,40 +47,29 @@ export default function OrdersPage() {
             setLoading(false)
         })
 
-        return () => unsubscribe()
+        return () => subscription.unsubscribe()
     }, [router])
 
     const fetchOrders = async (userId: string) => {
-        if (!db) return
         try {
-            const ordersRef = collection(db, 'orders')
-            let q = query(ordersRef, where('userId', '==', userId), orderBy('createdAt', 'desc'))
+            const { data: snapshot, error } = await supabase.from('orders')
+                .select('*')
+                .eq('document->>userId', userId)
 
-            try {
-                const snapshot = await getDocs(q)
-                const ordersList = snapshot.docs.map(doc => ({
+            if (error) throw error;
+
+            if (snapshot) {
+                let ordersList = snapshot.map((doc: any) => ({
                     id: doc.id,
-                    ...doc.data()
+                    ...(doc.document || {})
                 })) as Order[]
-                setOrders(ordersList)
-            } catch (err: any) {
-                if (err.code === 'failed-precondition') {
-                    const simpleQ = query(ordersRef, where('userId', '==', userId))
-                    const snapshot = await getDocs(simpleQ)
-                    const ordersList = snapshot.docs.map(doc => ({
-                        id: doc.id,
-                        ...doc.data()
-                    })) as Order[]
 
-                    ordersList.sort((a, b) => {
-                        const timeA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0
-                        const timeB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0
-                        return timeB - timeA
-                    })
-                    setOrders(ordersList)
-                } else {
-                    throw err
-                }
+                ordersList.sort((a, b) => {
+                    const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+                    const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+                    return timeB - timeA
+                })
+                setOrders(ordersList)
             }
         } catch (error) {
             console.error("Error fetching orders:", error)
@@ -92,7 +78,8 @@ export default function OrdersPage() {
 
     const formatDate = (timestamp: any) => {
         if (!timestamp) return ''
-        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
+        let date = new Date(timestamp)
+        if (timestamp.toDate) date = timestamp.toDate()
         return new Intl.DateTimeFormat('en-IN', {
             day: 'numeric', month: 'long', year: 'numeric'
         }).format(date)

@@ -6,8 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 
 import BlogSection from '@/components/BlogSection'
-import { db } from '@/lib/firebase'
-import { doc, getDoc, collection, getDocs, query, where, limit, orderBy, addDoc, serverTimestamp, runTransaction } from 'firebase/firestore'
+import { supabase } from '@/lib/supabase'
 import { getServiceImageUrl as getServiceImageUrlUtil } from '@/lib/serviceImageUtils'
 import styles from './product-detail.module.css'
 import { useWishlist } from '@/context/WishlistContext'
@@ -380,33 +379,20 @@ export default function ProductDetailPage() {
     }
 
     try {
-      if (!db) {
-        setError(true)
-        setLoading(false)
-        return
-      }
-
       let productData: Product | null = null
 
       // First try to query by slug
-      const slugQuery = query(collection(db, 'products'), where('slug', '==', slug), limit(1))
-      const slugSnapshot = await getDocs(slugQuery)
-
-      if (!slugSnapshot.empty) {
-        const doc = slugSnapshot.docs[0]
-        productData = { id: doc.id, ...doc.data() } as Product
+      const { data: bySlug } = await supabase.from('products').select('*').eq('document->>slug', slug).limit(1).maybeSingle();
+      if (bySlug && bySlug.document) {
+        productData = { id: bySlug.id, ...bySlug.document } as Product
       } else {
-        // Fallback: try to fetch by ID (legacy support for URLs using ID)
+        // Fallback: try to fetch by ID
         try {
-          // Verify if the slug looks like an ID (optional check, but good for skipping invalid IDs)
-          // Simple check: if it has no hyphens or is 20 chars
-          const productDoc = await getDoc(doc(db, 'products', slug))
-          if (productDoc.exists()) {
-            productData = { id: productDoc.id, ...productDoc.data() } as Product
+          const { data: byId } = await supabase.from('products').select('*').eq('id', slug).maybeSingle();
+          if (byId && byId.document) {
+            productData = { id: byId.id, ...byId.document } as Product
           }
-        } catch (e) {
-          // Error fetching by ID, so it was probably a slug that wasn't found
-        }
+        } catch (e) {}
       }
 
       if (!productData) {
@@ -465,7 +451,7 @@ export default function ProductDetailPage() {
   }
 
   const loadColorVariants = async (product: Product) => {
-    if (!product.productGroupId || !db) {
+    if (!product.productGroupId) {
       // Even without group, initialize availableColors from current product
       if (product.currentColorName || product.colorVariant || product.name) {
         const currentColorName = product.colorVariant?.colorName ||
@@ -496,33 +482,31 @@ export default function ProductDetailPage() {
     }
 
     try {
-      const groupQuery = query(
-        collection(db, 'products'),
-        where('productGroupId', '==', product.productGroupId)
-      )
-      const groupSnapshot = await getDocs(groupQuery)
+      const { data: groupSnapshot } = await supabase.from('products').select('*').eq('document->>productGroupId', product.productGroupId)
 
       const groupProducts: Product[] = []
-      groupSnapshot.forEach(doc => {
-        if (doc.id !== product.id) {
-          const variantData = doc.data()
-          // Extract colorName exactly like HTML
-          const colorName = variantData.colorVariant?.colorName ||
-            variantData.colorName ||
-            variantData.currentColorName ||
-            extractColorFromName(variantData.name || '')
+      if (groupSnapshot) {
+        groupSnapshot.forEach((doc: any) => {
+          if (doc.id !== product.id) {
+            const variantData = doc.document || {}
+            // Extract colorName exactly like HTML
+            const colorName = variantData.colorVariant?.colorName ||
+              variantData.colorName ||
+              variantData.currentColorName ||
+              extractColorFromName(variantData.name || '')
 
-          groupProducts.push({
-            id: doc.id,
-            ...variantData,
-            slug: variantData.slug,
-            colorName: colorName, // Use extracted color name
-            material: variantData.material || variantData.colorVariant?.material || '',
-            imageUrl: variantData.primaryImageUrl || variantData.imageUrl || '',
-            description: variantData.description || ''
-          } as Product)
-        }
-      })
+            groupProducts.push({
+              id: doc.id,
+              ...variantData,
+              slug: variantData.slug,
+              colorName: colorName, // Use extracted color name
+              material: variantData.material || variantData.colorVariant?.material || '',
+              imageUrl: variantData.primaryImageUrl || variantData.imageUrl || '',
+              description: variantData.description || ''
+            } as Product)
+          }
+        })
+      }
 
       // Build colorVariants array exactly like HTML
       const colorVariants = groupProducts.length > 0 ? groupProducts.map((p) => ({
@@ -625,7 +609,7 @@ export default function ProductDetailPage() {
     }
   }
 
-  const extractColorFromName = (fullName: string): string => {
+  function extractColorFromName(fullName: string): string {
     if (!fullName) return 'Default'
 
     const patterns = [
@@ -649,25 +633,22 @@ export default function ProductDetailPage() {
   }
 
   const loadRelatedProducts = async (category: string) => {
-    if (!db || !category) return
+    if (!category) return
 
     try {
-      const relatedQuery = query(
-        collection(db, 'products'),
-        where('category', '==', category),
-        limit(6)
-      )
-      const relatedSnapshot = await getDocs(relatedQuery)
+      const { data: relatedSnapshot } = await supabase.from('products').select('*').eq('document->>category', category).limit(6)
 
       const related: Product[] = []
-      relatedSnapshot.forEach(doc => {
-        if (doc.id !== product?.id) {
-          related.push({
-            id: doc.id,
-            ...doc.data()
-          } as Product)
-        }
-      })
+      if (relatedSnapshot) {
+        relatedSnapshot.forEach((doc: any) => {
+          if (doc.id !== product?.id) {
+            related.push({
+              id: doc.id,
+              ...(doc.document || {})
+            } as Product)
+          }
+        })
+      }
 
       setRelatedProducts(related)
     } catch (error) {
@@ -1012,75 +993,35 @@ export default function ProductDetailPage() {
   }
 
   const generateLeadId = async (): Promise<string> => {
-    if (!db) {
-      // Fallback: use timestamp-based ID
-      const now = new Date()
-      const year = now.getFullYear().toString().slice(-2)
-      const month = (now.getMonth() + 1).toString().padStart(2, '0')
-      const timestamp = Date.now().toString().slice(-4)
-      return `LEAD M/${year}-${(parseInt(year) + 1).toString().padStart(2, '0')}/${timestamp}`
-    }
-
     try {
       const now = new Date()
       const currentYear = now.getFullYear()
       const currentMonth = now.getMonth()
-
-      // Financial year: April (month 3) to March (month 2)
       const financialYearStart = currentMonth >= 3 ? currentYear : currentYear - 1
       const yearShort = financialYearStart.toString().slice(-2)
       const nextYearShort = (financialYearStart + 1).toString().slice(-2)
 
-      const counterRef = doc(db, 'leadCounters', `FY-${yearShort}-${nextYearShort}`)
+      const yearPattern = `LEAD M/${yearShort}-${nextYearShort}/`
+      const { data: leads } = await supabase.from('leads').select('document->>leadId')
 
-      return await runTransaction(db, async (transaction) => {
-        const counterDoc = await transaction.get(counterRef)
-        let currentCounter = 1
-
-        if (counterDoc.exists()) {
-          const existingCounter = counterDoc.data().counter || 0
-          currentCounter = existingCounter + 1
-        } else {
-          // Find max from existing leads
-          const yearPattern = `LEAD M/${yearShort}-${nextYearShort}/`
-          if (!db) {
-            currentCounter = 1
-          } else {
-            const leadsSnapshot = await getDocs(collection(db, 'leads'))
-
-            let maxNumberFromLeads = 0
-            leadsSnapshot.forEach((doc) => {
-              const leadData = doc.data()
-              const leadId = leadData.leadId || ''
-
-              if (leadId.startsWith(yearPattern)) {
-                const match = leadId.match(/^LEAD M\/\d{2}-\d{2}\/(\d+)/)
-                if (match) {
-                  const number = parseInt(match[1], 10)
-                  if (number > maxNumberFromLeads) {
-                    maxNumberFromLeads = number
-                  }
-                }
-              }
-            })
-
-            currentCounter = maxNumberFromLeads > 0 ? maxNumberFromLeads + 1 : 1
+      let maxNumber = 0
+      if (leads) {
+        leads.forEach(l => {
+          const id = l.leadId
+          if (id && id.startsWith(yearPattern)) {
+            const match = id.match(new RegExp(`^LEAD M\\/\\d{2}-\\d{2}\\/(\\d+)`))
+            if (match) {
+              const number = parseInt(match[1], 10)
+              if (number > maxNumber) maxNumber = number
+            }
           }
-        }
-
-        // Update counter
-        transaction.set(counterRef, {
-          counter: currentCounter,
-          financialYear: `${yearShort}-${nextYearShort}`,
-          lastUpdated: serverTimestamp()
-        }, { merge: true })
-
-        const paddedNumber = currentCounter.toString().padStart(4, '0')
-        return `LEAD M/${yearShort}-${nextYearShort}/${paddedNumber}`
-      })
+        })
+      }
+      const currentCounter = maxNumber + 1
+      const paddedNumber = currentCounter.toString().padStart(4, '0')
+      return `LEAD M/${yearShort}-${nextYearShort}/${paddedNumber}`
     } catch (error) {
       console.error('Error generating Lead ID:', error)
-      // Fallback
       const now = new Date()
       const year = now.getFullYear().toString().slice(-2)
       const timestamp = Date.now().toString().slice(-4)
@@ -1089,12 +1030,9 @@ export default function ProductDetailPage() {
   }
 
   const leadIdExists = async (leadId: string): Promise<boolean> => {
-    if (!db) return false
     try {
-      const snapshot = await getDocs(
-        query(collection(db, 'leads'), where('leadId', '==', leadId), limit(1))
-      )
-      return !snapshot.empty
+      const { data } = await supabase.from('leads').select('id').eq('document->>leadId', leadId).limit(1)
+      return data !== null && data.length > 0
     } catch (error) {
       return false
     }
@@ -1163,7 +1101,7 @@ export default function ProductDetailPage() {
     const leadRecord = {
       leadId: finalLeadId,
       leadType: 'Product',
-      createdAt: serverTimestamp(),
+      createdAt: createdAtISO,
       createdAtTime: timeStr,
       datetimeISO: createdAtISO,
       date: dateStr,
@@ -1189,21 +1127,21 @@ export default function ProductDetailPage() {
       createdBy: 'Product Detail Page',
       productId: enquiryData.productId || '',
       productName: enquiryData.productName || '',
-      updatedAt: serverTimestamp()
+      updatedAt: createdAtISO
     }
 
-    // Save to Firebase
-    if (db) {
-      const docRef = await addDoc(collection(db, 'leads'), leadRecord)
-      return { ...leadRecord, firestoreDocId: docRef.id, leadId: finalLeadId }
-    } else {
-      // Fallback to localStorage
-      const leads = JSON.parse(localStorage.getItem('leads') || '[]')
-      leads.push(leadRecord)
-      localStorage.setItem('leads', JSON.stringify(leads))
-      console.warn('Firebase not available, saved to localStorage')
-      return { ...leadRecord, leadId: finalLeadId }
+    // Save to Supabase
+    const { data: inserted, error } = await supabase.from('leads').insert({
+      id: finalLeadId,
+      document: leadRecord
+    }).select().single()
+
+    if (error || !inserted) {
+      console.error("Error saving lead to Supabase:", error);
+      throw new Error("Failed to submit enquiry. Please try again later.");
     }
+    
+    return { ...leadRecord, firestoreDocId: inserted.id, leadId: finalLeadId }
   }
 
   const handleEnquirySubmit = async (e: React.FormEvent) => {
@@ -1581,15 +1519,15 @@ export default function ProductDetailPage() {
   }
 
   const loadProductCombinations = async (product: Product) => {
-    if (!db || !product.id) return
+    if (!product.id) return
 
     try {
       let combinations: any[] = []
 
       // Try to get productCombinations from the product document
-      const productDoc = await getDoc(doc(db, 'products', product.id))
-      if (productDoc.exists()) {
-        const productData = productDoc.data()
+      const { data: productDoc } = await supabase.from('products').select('*').eq('id', product.id).maybeSingle()
+      if (productDoc && productDoc.document) {
+        const productData = productDoc.document
 
         if (productData?.productCombinations && Array.isArray(productData.productCombinations)) {
           // Process each combination
@@ -1737,8 +1675,6 @@ export default function ProductDetailPage() {
   }
 
   const loadAvailableServices = async (product: Product) => {
-    if (!db) return
-
     setServicesLoading(true)
     try {
       let services: any[] = []
@@ -1762,35 +1698,29 @@ export default function ProductDetailPage() {
       } else {
         // Load services based on product category
         try {
-          let q = query(collection(db, 'services'), where('status', '==', 'active'))
+          let sQuery = supabase.from('services').select('*').eq('document->>status', 'active').limit(6)
 
           if (product.mainCategory) {
-            q = query(q, where('mainCategory', '==', product.mainCategory))
+            sQuery = sQuery.eq('document->>mainCategory', product.mainCategory)
           } else if (product.category) {
-            q = query(q, where('category', '==', product.category))
+            sQuery = sQuery.eq('document->>category', product.category)
           }
 
-          const snapshot = await getDocs(query(q, limit(6)))
+          const { data: snapshot } = await sQuery
 
-          if (!snapshot.empty) {
-            services = snapshot.docs.map(doc => ({
+          if (snapshot && snapshot.length > 0) {
+            services = snapshot.map((doc: any) => ({
               id: doc.id,
-              ...doc.data()
+              ...(doc.document || {})
             }))
           } else {
             // Try general services
-            const generalSnapshot = await getDocs(
-              query(
-                collection(db, 'services'),
-                where('status', '==', 'active'),
-                limit(4)
-              )
-            )
+            const { data: generalSnapshot } = await supabase.from('services').select('*').eq('document->>status', 'active').limit(4)
 
-            if (!generalSnapshot.empty) {
-              services = generalSnapshot.docs.map(doc => ({
+            if (generalSnapshot && generalSnapshot.length > 0) {
+              services = generalSnapshot.map((doc: any) => ({
                 id: doc.id,
-                ...doc.data()
+                ...(doc.document || {})
               }))
             }
           }
@@ -1799,47 +1729,7 @@ export default function ProductDetailPage() {
         }
       }
 
-      // Fallback to sample services if none found
-      if (services.length === 0) {
-        services = [
-          {
-            id: 'sample-1',
-            name: 'Smart Home Consultation',
-            category: 'General Service',
-            imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&h=200&fit=crop',
-            startingPrice: 999,
-            originalPrice: 1499,
-            description: 'Expert consultation for your smart home setup'
-          },
-          {
-            id: 'sample-2',
-            name: 'Professional Installation',
-            category: 'General Service',
-            imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&h=200&fit=crop',
-            startingPrice: 2499,
-            originalPrice: 3499,
-            description: 'Skilled technicians for perfect installation'
-          },
-          {
-            id: 'sample-3',
-            name: 'System Integration',
-            category: 'General Service',
-            imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&h=200&fit=crop',
-            startingPrice: 3999,
-            originalPrice: 5999,
-            description: 'Seamless integration of all smart devices'
-          },
-          {
-            id: 'sample-4',
-            name: 'Maintenance & Support',
-            category: 'General Service',
-            imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&h=200&fit=crop',
-            startingPrice: 799,
-            originalPrice: 1199,
-            description: 'Regular maintenance and 24/7 support'
-          }
-        ]
-      }
+
 
       setAvailableServices(services)
     } catch (error) {
@@ -1916,7 +1806,7 @@ export default function ProductDetailPage() {
   if (error || !product) {
     return (
       <div className={styles.error}>
-        <h2>Product Not Found</h2>
+        <h2>Product not found</h2>
         <p>The product you&apos;re looking for doesn&apos;t exist or has been removed.</p>
         <Link href="/products" className={styles.btnPrimary}>
           Browse All Products

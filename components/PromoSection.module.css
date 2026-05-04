@@ -125,6 +125,56 @@
   font-weight: 600;
 }
 
+/* Mobile Responsive for PromoSection */
+@media (max-width: 768px) {
+  .promoSection {
+    padding: var(--spacing-2xl) 0;
+  }
+
+  .promoCard {
+    width: 240px;
+    min-width: 240px;
+    flex: 0 0 240px;
+    padding: var(--spacing-lg);
+  }
+
+  .promoContent h2 {
+    font-size: var(--font-size-lg);
+  }
+
+  .discountText {
+    font-size: var(--font-size-xs);
+  }
+}
+
+@media (max-width: 480px) {
+  .promoSection {
+    padding: var(--spacing-xl) 0;
+  }
+
+  .sectionHeader h2 {
+    font-size: var(--font-size-2xl);
+  }
+
+  .promoCard {
+    width: 200px;
+    min-width: 200px;
+    flex: 0 0 200px;
+    padding: var(--spacing-md);
+    margin-right: 12px;
+  }
+
+  .promoContent h2 {
+    font-size: var(--font-size-base);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .discountText {
+    font-size: var(--font-size-xs);
+    margin-bottom: var(--spacing-sm);
+  }
+}
+
 .brandName {
   font-size: var(--font-size-xs);
   color: var(--accent-color);

@@ -1,47 +1,16 @@
 import { Metadata } from 'next'
 import BlogDetailClient from './BlogDetailClient'
-import { getDb } from '@/lib/firebase'
-import { doc, getDoc } from 'firebase/firestore'
+import { supabase } from '@/lib/supabase'
 
 interface Props {
     params: { id: string }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-    const db = getDb()
     const id = params.id
-
-    if (!db) {
-        return {
-            title: 'Blog Post | Deczon'
-        }
-    }
-
     try {
-        const blogDoc = await getDoc(doc(db, 'blogs', id))
-        let blog = blogDoc.exists() ? { id: blogDoc.id, ...blogDoc.data() } : null
-
-        // Fallback to static sample data for IDs 1, 2, 3 if not in DB (matching client logic)
-        if (!blog && ['1', '2', '3'].includes(id)) {
-            const samples: Record<string, any> = {
-                '1': {
-                    title: 'Revolutionary Smart Home Security System Launched',
-                    excerpt: 'Discover the latest AI-powered security system that revolutionizes home protection...',
-                    primaryImage: null
-                },
-                '2': {
-                    title: 'Top Interior Design Trends to Refresh Your Home in 2025',
-                    excerpt: 'From sustainable materials to bold colors, here are the top trends shaping homes in 2025.',
-                    primaryImage: null
-                },
-                '3': {
-                    title: 'Smart Lighting Solutions for Modern Homes',
-                    excerpt: 'Control your ambiance with a tap. Smart lighting is more than just bulbs; it is a lifestyle.',
-                    primaryImage: null
-                }
-            }
-            blog = samples[id]
-        }
+        const { data: blogDoc } = await supabase.from('blogs').select('*').eq('id', id).maybeSingle()
+        let blog = blogDoc ? { id: blogDoc.id, ...blogDoc.document } : null
 
         if (!blog) {
             return {

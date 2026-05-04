@@ -13,8 +13,8 @@ export const metadata: Metadata = {
   keywords: 'smart home, home automation, lighting, interior design, deczon, smart tech, flooring, cooling',
 }
 
-// Data revalidation - ISR (3600 seconds = 1 hour)
-export const revalidate = 3600
+// Data revalidation - completely disabled to ensure fresh data from Supabase
+export const revalidate = 0
 
 export default async function Home() {
   // Fetch data on the server

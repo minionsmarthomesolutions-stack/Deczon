@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, orderBy, query, Timestamp } from 'firebase/firestore';
+import { supabase } from '@/lib/supabase';
 import styles from './show-all-blogs.module.css';
 import Link from 'next/link';
 
@@ -13,8 +12,8 @@ interface Blog {
     excerpt?: string;
     category?: string;
     author?: string;
-    createdAt?: Timestamp | Date | string;
-    publishedAt?: Timestamp | Date | string;
+    createdAt?: Date | string;
+    publishedAt?: Date | string;
     likes?: number;
     views?: number;
     readingTime?: number;
@@ -56,34 +55,24 @@ export default function ShowAllBlogs() {
         try {
             let blogs: Blog[] = [];
 
-            // Try loading from Firebase
-            if (db) {
-                try {
-                    const q = query(collection(db, 'blogs'), orderBy('createdAt', 'desc'));
-                    const snapshot = await getDocs(q);
-                    const firebaseBlogs: Blog[] = [];
-                    snapshot.forEach((doc) => {
-                        firebaseBlogs.push({ id: doc.id, ...doc.data() } as Blog);
-                    });
-                    if (firebaseBlogs.length > 0) {
-                        blogs = firebaseBlogs;
+            // Try loading from Database
+            try {
+                const { data, error } = await supabase
+                    .from('blogs')
+                    .select('*')
+                    .order('document->>createdAt', { ascending: false });
+                
+                if (!error && data) {
+                    const dbBlogs: Blog[] = data.map((doc: any) => ({
+                        id: doc.id,
+                        ...doc.document
+                    } as Blog));
+                    if (dbBlogs.length > 0) {
+                        blogs = dbBlogs;
                     }
-                } catch (error) {
-                    console.error("Error loading specific blogs from Firebase:", error);
                 }
-            }
-
-            // Fallback to localStorage
-            if (blogs.length === 0 && typeof window !== 'undefined') {
-                const localBlogs = JSON.parse(localStorage.getItem('minion-blogs') || '[]');
-                if (localBlogs.length > 0) {
-                    blogs = localBlogs;
-                }
-            }
-
-            // Sample data fallback
-            if (blogs.length === 0) {
-                blogs = createSampleBlogs();
+            } catch (error) {
+                console.error("Error loading specific blogs:", error);
             }
 
             setAllBlogs(blogs);
@@ -94,49 +83,7 @@ export default function ShowAllBlogs() {
         }
     };
 
-    const createSampleBlogs = (): Blog[] => {
-        return [
-            {
-                id: "sample-1",
-                title: "Smart Home Automation: The Future is Here",
-                content: "Discover how smart home automation is revolutionizing the way we live...",
-                excerpt: "Learn about the latest trends in smart home automation and how they can improve your daily life.",
-                category: "Smart Home",
-                author: "Tech Expert",
-                createdAt: new Date("2024-01-15"),
-                likes: 45,
-                views: 1250,
-                readingTime: 5,
-                primaryImage: "/placeholder.svg?height=200&width=350&text=Smart+Home",
-            },
-            {
-                id: "sample-2",
-                title: "Home Security Systems: Protecting What Matters Most",
-                content: "A comprehensive guide to modern home security solutions...",
-                excerpt: "Everything you need to know about choosing the right security system for your home.",
-                category: "Security",
-                author: "Security Specialist",
-                createdAt: new Date("2024-01-10"),
-                likes: 32,
-                views: 890,
-                readingTime: 7,
-                primaryImage: "/placeholder.svg?height=200&width=350&text=Security",
-            },
-            {
-                id: "sample-3",
-                title: "Energy Efficient Smart Lighting Solutions",
-                content: "How smart lighting can reduce your energy bills while improving comfort...",
-                excerpt: "Explore the benefits of smart lighting systems and their impact on energy consumption.",
-                category: "Lighting",
-                author: "Energy Consultant",
-                createdAt: new Date("2024-01-05"),
-                likes: 28,
-                views: 675,
-                readingTime: 4,
-                primaryImage: "/placeholder.svg?height=200&width=350&text=Smart+Lighting",
-            },
-        ];
-    };
+
 
     const applyFilterAndSort = () => {
         let result = [...allBlogs];
@@ -213,9 +160,9 @@ export default function ShowAllBlogs() {
     const getDate = (blog: Blog): Date => {
         const dateInput = blog.createdAt || blog.publishedAt;
         if (!dateInput) return new Date(0);
-        if (dateInput instanceof Timestamp) return dateInput.toDate();
         if (typeof dateInput === 'string') return new Date(dateInput);
         if (dateInput instanceof Date) return dateInput;
+        if ((dateInput as any).toDate && typeof (dateInput as any).toDate === 'function') return (dateInput as any).toDate();
         return new Date(0);
     };
 

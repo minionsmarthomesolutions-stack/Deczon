@@ -3,9 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { auth, db } from '@/lib/firebase'
-import { onAuthStateChanged } from 'firebase/auth'
-import { doc, getDoc, collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore'
+import { supabase } from '@/lib/supabase'
 import styles from './checkout.module.css'
 
 interface CartItem {
@@ -72,52 +70,46 @@ function CheckoutContent() {
 
     // Auth & User Data
     useEffect(() => {
-        if (!auth) return
-        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            const currentUser = session?.user
             if (currentUser) {
                 setUser(currentUser)
-                const phone = currentUser.phoneNumber?.replace('+91', '') || ''
+                const phone = currentUser.phone?.replace('+91', '') || currentUser.user_metadata?.phone || ''
 
                 // Pre-fill contact info
                 setContactInfo({
-                    name: currentUser.displayName || '',
+                    name: currentUser.user_metadata?.full_name || '',
                     email: currentUser.email || '',
-                    phone: currentUser.phoneNumber || ''
+                    phone: currentUser.phone || ''
                 })
 
-                if (phone && db) {
+                if (phone) {
                     try {
-                        // 1. Get Profile extension if exists
-                        const userDoc = await getDoc(doc(db, 'users', phone))
-                        if (userDoc.exists()) {
-                            const data = userDoc.data()
+                        const { data: userDoc } = await supabase.from('users').select('*').eq('id', phone).maybeSingle()
+                        if (userDoc && userDoc.document) {
+                            const data = userDoc.document
                             setContactInfo(prev => ({
                                 ...prev,
                                 name: data.name || prev.name,
                                 email: data.email || prev.email
                             }))
+
+                            // Addresses
+                            if (data.addresses && Array.isArray(data.addresses)) {
+                                setSavedAddresses(data.addresses)
+
+                                // Select default if exists
+                                const defaultAddr = data.addresses.find((a: any) => a.isDefault)
+                                if (defaultAddr) setSelectedAddressId(defaultAddr.id || null)
+                                else if (data.addresses.length > 0) setSelectedAddressId(data.addresses[0].id || null)
+                            }
                         }
-
-                        // 2. Get Addresses
-                        const addrRef = collection(db, 'users', phone, 'addresses')
-                        const snapshot = await getDocs(addrRef)
-                        const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Address))
-                        setSavedAddresses(list)
-
-                        // Select default if exists
-                        const defaultAddr = list.find(a => a.isDefault)
-                        if (defaultAddr) setSelectedAddressId(defaultAddr.id || null)
-                        else if (list.length > 0) setSelectedAddressId(list[0].id || null)
-
                     } catch (e) {
                         console.error("Error fetching user details", e)
                     }
                 }
             } else {
                 // Not logged in -> Redirect check
-                // We'll redirect to login, preserving return URL
-                // router.push(`/login?redirect=${encodeURIComponent('/checkout')}`)
-                // For now, simple redirect
                 if (typeof window !== 'undefined') {
                     const returnUrl = window.location.pathname + window.location.search;
                     localStorage.setItem('redirectAfterLogin', returnUrl);
@@ -126,7 +118,7 @@ function CheckoutContent() {
             }
             setLoading(false)
         })
-        return () => unsubscribe()
+        return () => subscription.unsubscribe()
     }, [router])
 
     // Load Razorpay Script
@@ -155,15 +147,26 @@ function CheckoutContent() {
     // Handlers
     const handleAddressSave = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!user || !db) return
+        if (!user) return
 
         try {
-            const phone = user.phoneNumber?.replace('+91', '')
+            const phone = user.phone?.replace('+91', '') || user.user_metadata?.phone || ''
             if (phone) {
-                const docRef = await addDoc(collection(db, 'users', phone, 'addresses'), newAddress)
-                const savedAddr = { ...newAddress, id: docRef.id }
-                setSavedAddresses(prev => [...prev, savedAddr])
-                setSelectedAddressId(docRef.id)
+                const newId = Date.now().toString()
+                const savedAddr = { ...newAddress, id: newId }
+                
+                const updatedAddresses = [...savedAddresses, savedAddr]
+                
+                const { data: userDoc } = await supabase.from('users').select('*').eq('id', phone).maybeSingle()
+                const document = userDoc?.document || {}
+                
+                await supabase.from('users').upsert({
+                    id: phone,
+                    document: { ...document, addresses: updatedAddresses }
+                })
+                
+                setSavedAddresses(updatedAddresses)
+                setSelectedAddressId(newId)
                 setShowAddressForm(false)
                 // Clear form
                 setNewAddress({ doorNo: '', street: '', area: '', city: '', state: '', pincode: '', type: 'home' })
@@ -175,16 +178,16 @@ function CheckoutContent() {
     }
 
     const saveOrder = async (paymentDetails: any) => {
-        if (!user || !selectedAddressId || !db) return
+        if (!user || !selectedAddressId) return
 
         try {
-            const phone = user.phoneNumber?.replace('+91', '')
+            const phone = user.phone?.replace('+91', '') || user.user_metadata?.phone || ''
             const address = savedAddresses.find(a => a.id === selectedAddressId)
 
             const orderData = {
                 items: cartItems,
                 userDetails: contactInfo,
-                userId: user.uid,
+                userId: user.id,
                 userPhone: phone,
                 shippingAddress: address,
                 subtotal,
@@ -195,11 +198,15 @@ function CheckoutContent() {
                 paymentDetails, // Save all Razorpay details
                 razorpayOrderId: paymentDetails.razorpay_order_id,
                 razorpayPaymentId: paymentDetails.razorpay_payment_id,
-                createdAt: serverTimestamp()
+                createdAt: new Date().toISOString()
             }
 
             // Save Order
-            const orderRef = await addDoc(collection(db, 'orders'), orderData)
+            const newOrderId = `ord_${Date.now()}`
+            await supabase.from('orders').insert({
+                id: newOrderId,
+                document: orderData
+            })
 
             // Clear Cart or Buy Now Data
             if (source === 'buyNow') {
@@ -209,7 +216,7 @@ function CheckoutContent() {
                 window.dispatchEvent(new Event('cartUpdated'))
             }
 
-            router.push(`/order-confirmation?orderId=${orderRef.id}`)
+            router.push(`/order-confirmation?orderId=${newOrderId}`)
         } catch (e) {
             console.error("Error saving order", e)
             alert("Payment successful but failed to save order. Please contact support.")
@@ -219,7 +226,7 @@ function CheckoutContent() {
     }
 
     const handlePlaceOrder = async () => {
-        if (!user || !selectedAddressId || !db) return
+        if (!user || !selectedAddressId) return
 
         setIsPlacingOrder(true)
 

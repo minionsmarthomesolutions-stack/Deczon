@@ -4,13 +4,9 @@ import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { auth, db } from '@/lib/firebase'
-import {
-  signInWithPhoneNumber,
-  RecaptchaVerifier,
-  ConfirmationResult
-} from 'firebase/auth'
-import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { supabase } from '@/lib/supabase'
+import { getAuthInstance } from '@/lib/firebase'
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth'
 import styles from './login.module.css'
 
 
@@ -23,28 +19,20 @@ function LoginContent() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [resendTimer, setResendTimer] = useState(0)
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null)
   const [firebaseReady, setFirebaseReady] = useState(false)
-  const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null)
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null)
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([])
 
-  // Check Firebase initialization
+  // Initialize Firebase Recaptcha
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const checkFirebase = () => {
-        if (auth) {
-          setFirebaseReady(true)
-        } else {
-          // Retry after a short delay
-          setTimeout(checkFirebase, 100)
-        }
-      }
-      checkFirebase()
+    const auth = getAuthInstance();
+    if (auth && typeof window !== 'undefined' && !(window as any).recaptchaVerifier) {
+      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible',
+      });
+      setFirebaseReady(true);
     }
   }, [])
-
-  // Don't pre-initialize reCAPTCHA - create it on-demand when needed
-  // This avoids issues with DOM readiness and ensures clean state
 
   // Resend timer countdown
   useEffect(() => {
@@ -87,37 +75,6 @@ function LoginContent() {
       return
     }
 
-    if (!firebaseReady || !auth) {
-      setError('Firebase is not ready. Please wait a moment and try again, or refresh the page.')
-      return
-    }
-
-    const container = document.getElementById('recaptcha-container')
-    if (!container) {
-      setError('reCAPTCHA container not found. Please refresh the page.')
-      return
-    }
-
-    // Only create the verifier once and reuse it
-    if (!recaptchaVerifierRef.current) {
-      try {
-        recaptchaVerifierRef.current = new RecaptchaVerifier(auth, container, {
-          size: 'invisible',
-          callback: () => {
-            console.log('reCAPTCHA solved')
-          },
-          'expired-callback': () => {
-            console.log('reCAPTCHA expired')
-          }
-        })
-        console.log('reCAPTCHA verifier initialized')
-      } catch (e: any) {
-        console.error('Error initializing reCAPTCHA:', e)
-        setError(e?.message || 'Failed to initialize reCAPTCHA. Please refresh the page.')
-        return
-      }
-    }
-
     setLoading(true)
     setError('')
 
@@ -125,9 +82,13 @@ function LoginContent() {
       const fullPhoneNumber = '+91' + phoneNumber
       console.log('Sending OTP to:', fullPhoneNumber)
 
-      const confirmation = await signInWithPhoneNumber(auth, fullPhoneNumber, recaptchaVerifierRef.current!)
+      const auth = getAuthInstance();
+      const appVerifier = (window as any).recaptchaVerifier;
+      if (!auth || !appVerifier) throw new Error('Auth not initialized properly');
 
-      setConfirmationResult(confirmation)
+      const result = await signInWithPhoneNumber(auth, fullPhoneNumber, appVerifier);
+      setConfirmationResult(result);
+
       setShowOtp(true)
       setResendTimer(30)
 
@@ -164,17 +125,17 @@ function LoginContent() {
       return
     }
 
-    if (!confirmationResult) {
-      setError('OTP session expired. Please request a new OTP.')
-      return
-    }
-
     setLoading(true)
     setError('')
 
     try {
-      const result = await confirmationResult.confirm(otpCode)
-      const user = result.user
+      if (!confirmationResult) throw new Error('No OTP confirmation object. Please try sending OTP again.');
+      
+      const result = await confirmationResult.confirm(otpCode);
+
+      if (!result.user) {
+        throw new Error('Verification failed')
+      }
 
       // Store user session
       if (typeof window !== 'undefined') {
@@ -182,28 +143,31 @@ function LoginContent() {
         localStorage.setItem('isLoggedIn', 'true')
       }
 
-      // Save/update user data in Firestore
-      if (db && user.phoneNumber) {
-        const userPhone = user.phoneNumber.replace('+91', '')
-        try {
-          const userDoc = await getDoc(doc(db, 'users', userPhone))
-          if (!userDoc.exists()) {
-            // Create new user document
-            await setDoc(doc(db, 'users', userPhone), {
-              phoneNumber: user.phoneNumber,
+      // Save/update user data in Supabase (JSONB)
+      try {
+        const { data: userDoc } = await supabase.from('users').select('*').eq('id', phoneNumber).maybeSingle()
+        if (!userDoc) {
+          // Create new user document
+          await supabase.from('users').insert({
+            id: phoneNumber,
+            document: {
+              phoneNumber: '+91' + phoneNumber,
               createdAt: new Date().toISOString(),
               lastLogin: new Date().toISOString()
-            })
-          } else {
-            // Update last login
-            await setDoc(doc(db, 'users', userPhone), {
+            }
+          })
+        } else {
+          // Update last login
+          const curDoc = userDoc.document || {}
+          await supabase.from('users').update({
+            document: {
+              ...curDoc,
               lastLogin: new Date().toISOString()
-            }, { merge: true })
-          }
-        } catch (error) {
-          console.warn('Error saving user data:', error)
-          // Continue even if Firestore save fails
+            }
+          }).eq('id', phoneNumber)
         }
+      } catch (error) {
+        console.warn('Error saving user data:', error)
       }
 
       // Redirect
@@ -229,45 +193,17 @@ function LoginContent() {
   const handleResendOtp = async () => {
     if (resendTimer > 0) return
 
-    if (!firebaseReady || !auth) {
-      setError('Firebase is not ready. Please wait a moment and try again, or refresh the page.')
-      return
-    }
-
-    const container = document.getElementById('recaptcha-container')
-    if (!container) {
-      setError('reCAPTCHA container not found. Please refresh the page.')
-      return
-    }
-
-    // Reuse existing verifier if available, otherwise create a new one
-    if (!recaptchaVerifierRef.current) {
-      try {
-        recaptchaVerifierRef.current = new RecaptchaVerifier(auth, container, {
-          size: 'invisible',
-          callback: () => {
-            console.log('reCAPTCHA solved for resend')
-          },
-          'expired-callback': () => {
-            console.log('reCAPTCHA expired')
-          }
-        })
-        console.log('reCAPTCHA verifier initialized for resend')
-      } catch (e: any) {
-        console.error('Error initializing reCAPTCHA for resend:', e)
-        setError(e?.message || 'Failed to initialize reCAPTCHA. Please refresh the page.')
-        return
-      }
-    }
-
     setLoading(true)
     setError('')
 
     try {
       const fullPhoneNumber = '+91' + phoneNumber
-      const confirmation = await signInWithPhoneNumber(auth, fullPhoneNumber, recaptchaVerifierRef.current!)
+      const auth = getAuthInstance();
+      const appVerifier = (window as any).recaptchaVerifier;
+      if (!auth || !appVerifier) throw new Error('Auth not initialized properly');
+      const result = await signInWithPhoneNumber(auth, fullPhoneNumber, appVerifier);
+      setConfirmationResult(result);
 
-      setConfirmationResult(confirmation)
       setResendTimer(30)
       setOtp(['', '', '', '', '', ''])
       setTimeout(() => otpInputRefs.current[0]?.focus(), 100)
@@ -303,6 +239,7 @@ function LoginContent() {
             </div>
           )}
 
+          <div id="recaptcha-container"></div>
           <div className={styles.loginHeader}>
             <div className={styles.logo}>
               <Link href="/">
@@ -333,8 +270,7 @@ function LoginContent() {
             </div>
           )}
 
-          {/* reCAPTCHA container (invisible) */}
-          <div id="recaptcha-container"></div>
+
 
           {/* Phone Number Step */}
           {!showOtp && (

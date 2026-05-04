@@ -23,18 +23,20 @@
 .slide {
     min-width: 100%;
     flex-shrink: 0;
+    height: 260px;
 }
+
 
 .singleBannerWrapper {
     position: relative;
     width: 100%;
-    aspect-ratio: 5 / 1;
-    /* 20% height relative to width */
+    height: 260px;
     cursor: pointer;
     overflow: hidden;
     border-radius: 0;
     transition: transform 0.3s ease;
 }
+
 
 .singleBannerWrapper:hover {
     transform: scale(1.01);
@@ -58,12 +60,12 @@
 .doubleBannerWrapper {
     position: relative;
     width: 100%;
-    aspect-ratio: 2.5 / 1;
-    /* 40% height relative to width */
+    height: 200px;
     cursor: pointer;
     overflow: hidden;
     transition: transform 0.3s ease;
 }
+
 
 .doubleBannerWrapper:hover {
     transform: scale(1.02);
@@ -143,9 +145,12 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    .bannerSection {
+        margin-bottom: 1.5rem;
+    }
+
     .singleBannerWrapper {
         aspect-ratio: 3 / 1;
-        /* Taller on mobile */
         border-radius: 8px;
     }
 
@@ -183,14 +188,36 @@
     }
 }
 
+@media (max-width: 600px) {
+    .bannerSection {
+        margin-bottom: 1rem;
+    }
+
+    .singleBannerContainer {
+        margin-bottom: 1rem;
+    }
+
+    .doubleBannerContainer {
+        gap: 0.5rem;
+    }
+}
+
 @media (max-width: 480px) {
+    .bannerSection {
+        margin-bottom: 0.75rem;
+    }
+
     .singleBannerWrapper {
         aspect-ratio: 2 / 1;
-        /* Even taller on small mobile */
     }
 
     .doubleBannerWrapper {
         aspect-ratio: 2 / 1;
+    }
+
+    .doubleBannerContainer {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
     }
 
     .ctaOverlay {
@@ -201,6 +228,19 @@
 
     .ctaText {
         font-size: 0.75rem;
+    }
+
+    .sliderIndicators {
+        gap: 0.4rem;
+    }
+
+    .indicator {
+        width: 6px;
+        height: 6px;
+    }
+
+    .indicator.active {
+        width: 16px;
     }
 }
 

@@ -5,8 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import styles from './search.module.css'
-import { db } from '@/lib/firebase'
-import { collection, getDocs } from 'firebase/firestore'
+import { supabase } from '@/lib/supabase'
 import { getServiceImageUrl } from '@/lib/serviceImageUtils'
 
 // Common types
@@ -67,24 +66,19 @@ export default function SearchClient() {
     useEffect(() => {
         const fetchAllData = async () => {
             setIsLoading(true)
-            if (!db) {
-                console.warn("Firebase DB not initialized")
-                setIsLoading(false)
-                return
-            }
-
             const results: SearchResult[] = []
             const term = currentQuery.toLowerCase().trim()
 
             try {
                 // 1. Fetch Products
-                const productsSnap = await getDocs(collection(db, 'products'))
-                productsSnap.forEach(doc => {
-                    const data = doc.data()
+                const resProducts = await fetch('/api/products')
+                if (resProducts.ok) {
+                  const productsData = await resProducts.json()
+                  productsData.forEach((data: any) => {
                     const rel = calculateRelevance(data, term, 'product')
                     if (rel > 0) {
                         results.push({
-                            id: doc.id,
+                            id: data.id,
                             type: 'product',
                             title: data.name || data.productName || 'Untitled Product',
                             description: data.description || data.desc || data.longDescription || '',
@@ -98,22 +92,24 @@ export default function SearchClient() {
                             priceLabel: 'Price',
                             categories: [data.category, data.mainCategory, data.subcategory].filter(Boolean),
                             tags: data.tags || [],
-                            slug: data.slug || doc.id,
+                            slug: data.slug || data.id,
                             isVerified: true, // most products are internal/verified
                             relevance: rel
                         })
                     }
-                })
+                  })
+                }
 
                 // 2. Fetch Services
-                const servicesSnap = await getDocs(collection(db, 'services'))
-                servicesSnap.forEach(doc => {
-                    const data = doc.data()
+                const resServices = await fetch('/api/services')
+                if (resServices.ok) {
+                  const servicesData = await resServices.json()
+                  servicesData.forEach((data: any) => {
                     const rel = calculateRelevance(data, term, 'service')
                     if (rel > 0) {
                         const minPrice = getServiceMinPrice(data)
                         results.push({
-                            id: doc.id,
+                            id: data.id,
                             type: 'service',
                             title: data.name || data.title || 'Untitled Service',
                             description: data.description || data.shortDescription || '',
@@ -126,23 +122,25 @@ export default function SearchClient() {
                             priceLabel: 'Starting from',
                             categories: [data.category, 'Services'].filter(Boolean),
                             tags: data.features || [], // features act like tags
-                            slug: data.slug || doc.id,
+                            slug: data.slug || data.id,
                             isVerified: data.isVerified ?? true,
                             relevance: rel
                         })
                     }
-                })
+                  })
+                }
 
                 // 3. Fetch Blogs (optional if collection exists)
                 // Assuming 'blogs' collection might exist based on header
                 try {
-                    const blogsSnap = await getDocs(collection(db, 'blogs'))
-                    blogsSnap.forEach(doc => {
-                        const data = doc.data()
+                    const resBlogs = await fetch('/api/blogs')
+                    if (resBlogs.ok) {
+                      const blogsData = await resBlogs.json()
+                      blogsData.forEach((data: any) => {
                         const rel = calculateRelevance(data, term, 'blog')
                         if (rel > 0) {
                             results.push({
-                                id: doc.id,
+                                id: data.id,
                                 type: 'blog',
                                 title: data.title || 'Untitled Blog',
                                 description: data.excerpt || data.summary || '',
@@ -151,13 +149,14 @@ export default function SearchClient() {
                                 reviewCount: 0,
                                 author: data.author,
                                 date: data.date, // formatted date string
-                                slug: data.slug || doc.id,
+                                slug: data.slug || data.id,
                                 relevance: rel,
                                 priceLabel: '',
                                 categories: [data.category, 'Blog'].filter(Boolean)
                             })
                         }
-                    })
+                      })
+                    }
                 } catch (e) {
                     // Ignore if blog collection doesn't exist
                     console.log('Blogs collection not found or empty')

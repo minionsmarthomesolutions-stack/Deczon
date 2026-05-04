@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { db } from '@/lib/firebase'
-import { doc, getDoc, collection, getDocs, orderBy, limit, query, updateDoc, increment, where } from 'firebase/firestore'
+import { supabase } from '@/lib/supabase'
 import styles from './blog-post.module.css'
 
 interface Blog {
@@ -65,66 +64,20 @@ export default function BlogPost() {
         try {
             let blogData: Blog | null = null
 
-            // 1. Try Firebase
-            if (db) {
-                try {
-                    const docRef = doc(db, 'blogs', blogId)
-                    const docSnap = await getDoc(docRef)
-
-                    if (docSnap.exists()) {
-                        blogData = { id: docSnap.id, ...docSnap.data() } as Blog
-                        // Increment view count
-                        incrementViewCount(blogId)
-                    }
-                } catch (err) {
-                    console.warn('Firebase error fetching blog:', err)
+            // 1. Try Supabase
+            try {
+                const { data: docSnap, error } = await supabase.from('blogs').select('*').eq('id', blogId).maybeSingle()
+                
+                if (docSnap && docSnap.document) {
+                    blogData = { id: docSnap.id, ...docSnap.document } as Blog
+                    // Increment view count
+                    incrementViewCount(blogId)
                 }
+            } catch (err) {
+                console.warn('Supabase error fetching blog:', err)
             }
 
-            // 2. Fallback to localStorage (sample data)
-            if (!blogData) {
-                const localBlogs = typeof window !== 'undefined' ?
-                    JSON.parse(localStorage.getItem('minion-blogs') || '[]') : []
-                blogData = localBlogs.find((b: any) => b.id === blogId)
-            }
 
-            // 3. Fallback static data if purely sample ID or testing
-            if (!blogData && (blogId === '1' || blogId === '2' || blogId === '3')) {
-                // Using sample data
-                const samples: Record<string, any> = {
-                    '1': {
-                        id: '1',
-                        title: 'Revolutionary Smart Home Security System Launched',
-                        content: '<p>Discover the latest AI-powered security system that revolutionizes home protection with advanced AI technology and seamless integration.</p><p>Standard security systems are becoming a thing of the past. The future is AI-driven, proactive, and intelligent.</p>',
-                        excerpt: 'Discover the latest AI-powered...',
-                        author: 'DECZON Team',
-                        createdAt: new Date(),
-                        category: 'Security',
-                        readingTime: 4
-                    },
-                    '2': {
-                        id: '2',
-                        title: 'Top Interior Design Trends to Refresh Your Home in 2025',
-                        content: '<p>From sustainable materials to bold colors, here are the top trends shaping homes in 2025.</p>',
-                        excerpt: 'Discover the latest interior design trends...',
-                        author: 'DECZON Team',
-                        createdAt: new Date(),
-                        category: 'Design',
-                        readingTime: 6
-                    },
-                    '3': {
-                        id: '3',
-                        title: 'Smart Lighting Solutions for Modern Homes',
-                        content: '<p>Control your ambiance with a tap. Smart lighting is more than just bulbs; it is a lifestyle.</p>',
-                        excerpt: 'Explore how smart lighting can transform...',
-                        author: 'DECZON Team',
-                        createdAt: new Date(),
-                        category: 'Lighting',
-                        readingTime: 3
-                    }
-                }
-                blogData = samples[blogId]
-            }
 
             if (blogData) {
                 setBlog(blogData)
@@ -145,31 +98,19 @@ export default function BlogPost() {
         try {
             let posts: Blog[] = []
 
-            if (db) {
-                try {
-                    const q = query(
-                        collection(db, 'blogs'),
-                        orderBy('createdAt', 'desc'),
-                        limit(6)
-                    )
-                    const querySnapshot = await getDocs(q)
-                    posts = querySnapshot.docs
-                        .map(d => ({ id: d.id, ...d.data() } as Blog))
+            try {
+                const { data: querySnapshot, error } = await supabase.from('blogs').select('*').limit(6)
+                if (querySnapshot) {
+                    posts = querySnapshot
+                        .map((d: any) => ({ id: d.id, ...(d.document || {}) } as Blog))
                         .filter(b => b.id !== currentId)
                         .slice(0, 4)
-                } catch (err: any) {
-                    if (err?.code !== 'permission-denied') {
-                        console.warn('Error loading related posts:', err)
-                    }
                 }
+            } catch (err: any) {
+                console.warn('Error loading related posts:', err)
             }
 
-            if (posts.length === 0 && typeof window !== 'undefined') {
-                const localBlogs = JSON.parse(localStorage.getItem('minion-blogs') || '[]')
-                posts = localBlogs
-                    .filter((b: any) => b.id !== currentId)
-                    .slice(0, 4)
-            }
+
 
             setRelatedPosts(posts)
         } catch (err) {
@@ -178,7 +119,6 @@ export default function BlogPost() {
     }
 
     const incrementViewCount = async (blogId: string) => {
-        if (!db) return
         const viewedKey = 'viewedPosts'
         const viewedPosts = JSON.parse(sessionStorage.getItem(viewedKey) || '[]')
 
@@ -186,10 +126,13 @@ export default function BlogPost() {
             viewedPosts.push(blogId)
             sessionStorage.setItem(viewedKey, JSON.stringify(viewedPosts))
             try {
-                const r = doc(db, 'blogs', blogId)
-                await updateDoc(r, {
-                    views: increment(1)
-                })
+                const { data: docData } = await supabase.from('blogs').select('*').eq('id', blogId).maybeSingle()
+                if (docData && docData.document) {
+                    const currentDoc = docData.document
+                    await supabase.from('blogs').update({
+                        document: { ...currentDoc, views: (currentDoc.views || 0) + 1 }
+                    }).eq('id', blogId)
+                }
             } catch (e) { /* ignore */ }
         }
     }
@@ -229,15 +172,16 @@ export default function BlogPost() {
         setLikeCount(newCount)
         localStorage.setItem('likedPosts', JSON.stringify(likedPosts))
 
-        // Update Firebase
-        if (db) {
-            try {
-                const r = doc(db, 'blogs', blog.id)
-                await updateDoc(r, {
-                    likes: newCount
-                })
-            } catch (e) { /* ignore */ }
-        }
+        // Update Supabase
+        try {
+            const { data: docData } = await supabase.from('blogs').select('*').eq('id', blog.id).maybeSingle()
+            if (docData && docData.document) {
+                const currentDoc = docData.document
+                await supabase.from('blogs').update({
+                    document: { ...currentDoc, likes: newCount }
+                }).eq('id', blog.id)
+            }
+        } catch (e) { /* ignore */ }
     }
 
     const handleBookmark = () => {

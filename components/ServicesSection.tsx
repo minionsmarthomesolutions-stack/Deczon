@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { db } from '@/lib/firebase'
-import { collection, getDocs, query, limit, orderBy } from 'firebase/firestore'
+import { supabase } from '@/lib/supabase'
 import { getServiceImageUrl } from '@/lib/serviceImageUtils'
 import styles from './ServicesSection.module.css'
 
@@ -66,35 +65,35 @@ export default function ServicesSection({
   }, [propServices])
 
   const loadServices = async () => {
-    if (!db) {
-      setServices([
-        { id: '1', name: 'Smart Home Setup', startingPrice: 2999 },
-        { id: '2', name: 'Security Installation', startingPrice: 4999 },
-        { id: '3', name: 'Automation Setup', startingPrice: 3999 },
-      ])
-      setLoading(false)
-      return
-    }
-
     try {
       let servicesData: Service[] = []
 
       // Try with orderBy first
       try {
-        const servicesQuery = query(collection(db, 'services'), orderBy('createdAt', 'desc'), limit(6))
-        const servicesSnapshot = await getDocs(servicesQuery)
-        servicesData = servicesSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Service[]
+        const { data, error } = await supabase
+          .from('services')
+          .select('*')
+          .order('document->>createdAt', { ascending: false })
+          .limit(6)
+        
+        if (data && !error) {
+          servicesData = data.map((doc: any) => ({
+            id: doc.id,
+            ...doc.document
+          })) as Service[]
+        } else if (error) {
+          throw error
+        }
       } catch (orderError) {
         // If orderBy fails, try without ordering
         console.warn('Services orderBy failed, trying without order:', orderError)
-        const servicesSnapshot = await getDocs(collection(db, 'services'))
-        servicesData = servicesSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })).slice(0, 6) as Service[]
+        const { data } = await supabase.from('services').select('*').limit(6)
+        if (data) {
+          servicesData = data.map((doc: any) => ({
+            id: doc.id,
+            ...doc.document
+          })) as Service[]
+        }
       }
 
       setServices(servicesData)
