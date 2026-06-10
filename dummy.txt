@@ -1,0 +1,1 @@
+import { getHomePageData } from './lib/getHomeData.js'; // This is compiled TS? No, it's a ts file, I can't run it with node directly unless I use tsx or something.

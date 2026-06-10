@@ -1,6 +1,11 @@
 /* Products Page Styles - Matching HTML exactly */
 /* CSS variables are defined in globals.css */
 
+.productCardWrapper {
+  width: 100%;
+  min-width: 0;
+}
+
 .container {
   max-width: 1400px;
   margin: 0 auto;
@@ -313,22 +318,22 @@
 
 @media (max-width: 900px) {
   .productsGridFull {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
   }
 }
 
 @media (max-width: 600px) {
   .productsGridFull {
-    grid-template-columns: 1fr;
-    gap: 16px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
   }
 }
 
 @media (max-width: 480px) {
   .productsGridFull {
-    grid-template-columns: 1fr;
-    gap: 12px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
   }
 }
 
@@ -871,30 +876,84 @@
 /* Mobile Filter */
 .filterToggleBtn {
   display: none;
-  width: 100%;
   background: #ffffff;
-  border: 2px solid #ffc000;
-  border-radius: 12px;
-  padding: 16px 20px;
-  margin-bottom: 20px;
+  border: 1.5px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 10px 16px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: #2c2c2c;
+  align-items: center;
+  gap: 8px;
 }
 
 @media (max-width: 900px) {
   .filterToggleBtn {
-    display: block;
+    display: inline-flex;
   }
 }
 
 @media (max-width: 480px) {
   .filterToggleBtn {
-    padding: 14px 16px;
-    font-size: 15px;
-    margin-bottom: 16px;
-    border-radius: 10px;
+    padding: 9px 14px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+}
+
+/* Active Filters Bar */
+.activeFiltersBar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 1;
+}
+
+.filterChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffc000;
+  color: #2c2c2c;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 20px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.filterChip:hover {
+  background: #e6a800;
+}
+
+.filterChipClose {
+  font-size: 15px;
+  line-height: 1;
+  font-weight: 700;
+  margin-left: 2px;
+  opacity: 0.7;
+}
+
+.filterChipClose:hover {
+  opacity: 1;
+}
+
+/* Mobile filter + chips row */
+.mobileFilterRow {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 900px) {
+  .mobileFilterRow {
+    display: flex;
   }
 }
 
@@ -983,8 +1042,8 @@
   }
 
   .productsGridFull {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
   }
 
   .modalMain {
@@ -996,7 +1055,8 @@
 
 @media (max-width: 600px) {
   .productsGridFull {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
   }
 
   .pageHeader h1 {
@@ -1077,5 +1137,11 @@
   .servicesItemPrice .slideAddToCart {
     width: 100%;
     text-align: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .mixedItemActionButtons {
+    display: none !important;
   }
 }

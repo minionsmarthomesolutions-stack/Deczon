@@ -36,10 +36,6 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
     || product.imageUrl
     || '/placeholder.svg?height=200&width=200&text=Product'
 
-  // Ensure Firebase Storage URLs have proper format
-  if (primaryImageUrl && primaryImageUrl.includes('firebasestorage.googleapis.com') && !primaryImageUrl.includes('?')) {
-    primaryImageUrl = `${primaryImageUrl}?alt=media`
-  }
 
   // Calculate discount percentage
   const currentPriceNum = typeof product.currentPrice === 'string'
@@ -139,13 +135,51 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
   return (
     <div className={styles.productCard}>
       <Link href={productUrl} className={styles.linkWrapper} aria-label={product.name} target="_blank" rel="noopener noreferrer">
-        {badgeText && (
-          <div className={styles.productBadge}>{badgeText}</div>
-        )}
 
-        {discountPercent > 0 && (
-          <div className={styles.discountTag}>-{discountPercent}%</div>
-        )}
+        {/* ── Top strip: badge left, discount right (mobile) / icon buttons (desktop) ── */}
+        <div className={styles.productActionButtons}>
+          {badgeText && (
+            <div className={styles.productBadge}>{badgeText}</div>
+          )}
+          {onQuickView && (
+            <button
+              className={styles.quickViewBtn}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                onQuickView(product)
+              }}
+              title="Quick View"
+              aria-label="Quick View"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            </button>
+          )}
+          <button
+            className={`${styles.wishlistBtn} ${isWishlisted ? styles.active : ''}`}
+            onClick={handleWishlistToggle}
+            title={isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
+            aria-label={isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
+            style={{ color: isWishlisted ? '#ef4444' : 'inherit' }}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill={isWishlisted ? "currentColor" : "none"}
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+          </button>
+          {discountPercent > 0 && (
+            <div className={styles.discountTag}>-{discountPercent}%</div>
+          )}
+        </div>
 
         <div className={styles.productImage}>
           {imageError ? (
@@ -166,45 +200,6 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
               decoding="async"
             />
           )}
-
-          {/* Action Buttons - Hidden by default, shown on hover */}
-          <div className={styles.productActionButtons}>
-            <button
-              className={`${styles.wishlistBtn} ${isWishlisted ? styles.active : ''}`}
-              onClick={handleWishlistToggle}
-              title={isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
-              aria-label={isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
-              style={{ color: isWishlisted ? '#ef4444' : 'inherit' }}
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill={isWishlisted ? "currentColor" : "none"}
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-              </svg>
-            </button>
-
-            {onQuickView && (
-              <button
-                className={styles.quickViewBtn}
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  onQuickView(product)
-                }}
-                title="Quick View"
-                aria-label="Quick View"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                </svg>
-              </button>
-            )}
-          </div>
         </div>
 
         <div className={styles.productInfo}>
@@ -227,7 +222,12 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
                 onClick={handleAddToCart}
                 aria-label={`Add ${product.name} to cart`}
               >
-                Add to Cart
+                <svg className={styles.cartIcon} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <circle cx="9" cy="21" r="1"></circle>
+                  <circle cx="20" cy="21" r="1"></circle>
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                </svg>
+                <span className={styles.addToCartText}>Add to Cart</span>
               </button>
             </div>
           </div>

@@ -329,3 +329,32 @@
         }
     }
 }
+
+/* Mobile header – compact location button */
+@media (max-width: 768px) {
+    .lg-loc-trigger-btn {
+        padding: 6px 8px;
+        font-size: 12px;
+        max-width: 140px;
+        gap: 5px;
+        min-height: unset;
+        border: 1px solid var(--border-color, #e0e0e0);
+        background: var(--bg-secondary, #f8f8f8);
+        border-radius: 8px;
+    }
+
+    .lg-loc-trigger-btn svg {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+    }
+
+    .lg-loc-trigger-label {
+        font-size: 9px;
+    }
+
+    .lg-loc-trigger-value {
+        font-size: 11px;
+        max-width: 90px;
+    }
+}

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { getServiceImageUrl } from '@/lib/serviceImageUtils'
 import ProductDetailPopup from '@/components/ProductDetailPopup'
+import ProductCard from '@/components/ProductCard'
 import styles from './products.module.css'
 
 interface Product {
@@ -134,7 +135,7 @@ function ProductsContent() {
 
   const loadAllProducts = async (): Promise<Product[] | undefined> => {
     try {
-      const res = await fetch('/api/products')
+      const res = await fetch(`/api/products?t=${Date.now()}`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data: any[] = await res.json()
       return data.map((doc: any) => ({ ...doc, id: doc.id, itemType: 'product' as const }))
@@ -146,7 +147,7 @@ function ProductsContent() {
 
   const loadAllServices = async (): Promise<Product[] | undefined> => {
     try {
-      const res = await fetch('/api/services')
+      const res = await fetch(`/api/services?t=${Date.now()}`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data: any[] = await res.json()
       return data.map((doc: any) => {
@@ -230,15 +231,17 @@ function ProductsContent() {
         return itemName.includes(searchTerm) ||
           itemSubcategory.includes(searchTerm) ||
           itemCategory.includes(searchTerm) ||
-          itemSubcategory === searchTerm ||
-          itemCategory === searchTerm
+          (itemCategory && searchTerm.includes(itemCategory)) ||
+          (itemSubcategory && searchTerm.includes(itemSubcategory))
       })
 
       // Also filter by main category and subcategory if they are set
       if (selectedCategory) {
         filtered = filtered.filter(item =>
           item.mainCategory?.toLowerCase() === selectedCategory.toLowerCase() ||
-          item.category?.toLowerCase() === selectedCategory.toLowerCase()
+          item.category?.toLowerCase() === selectedCategory.toLowerCase() ||
+          (item.category && selectedCategory.toLowerCase().includes(item.category.toLowerCase())) ||
+          (item.mainCategory && selectedCategory.toLowerCase().includes(item.mainCategory.toLowerCase()))
         )
       }
     } else if (selectedSubcategory) {
@@ -248,21 +251,28 @@ function ProductsContent() {
         const itemCategory = item.category?.toLowerCase() || ''
         const searchTerm = selectedSubcategory.toLowerCase()
 
-        return itemSubcategory === searchTerm || itemCategory === searchTerm
+        return itemSubcategory === searchTerm || itemCategory === searchTerm ||
+               itemSubcategory.includes(searchTerm) || itemCategory.includes(searchTerm) ||
+               (itemCategory && searchTerm.includes(itemCategory)) || 
+               (itemSubcategory && searchTerm.includes(itemSubcategory))
       })
 
       // Also filter by main category if set
       if (selectedCategory) {
         filtered = filtered.filter(item =>
           item.mainCategory?.toLowerCase() === selectedCategory.toLowerCase() ||
-          item.category?.toLowerCase() === selectedCategory.toLowerCase()
+          item.category?.toLowerCase() === selectedCategory.toLowerCase() ||
+          (item.category && selectedCategory.toLowerCase().includes(item.category.toLowerCase())) ||
+          (item.mainCategory && selectedCategory.toLowerCase().includes(item.mainCategory.toLowerCase()))
         )
       }
     } else if (selectedCategory) {
       // When only main category is selected
       filtered = filtered.filter(item =>
         item.mainCategory?.toLowerCase() === selectedCategory.toLowerCase() ||
-        item.category?.toLowerCase() === selectedCategory.toLowerCase()
+        item.category?.toLowerCase() === selectedCategory.toLowerCase() ||
+        (item.category && selectedCategory.toLowerCase().includes(item.category.toLowerCase())) ||
+        (item.mainCategory && selectedCategory.toLowerCase().includes(item.mainCategory.toLowerCase()))
       )
     }
 
@@ -288,9 +298,19 @@ function ProductsContent() {
       }
       return newSet
     })
+    
+    if (selectedCategory === categoryName && !selectedSubcategory && !selectedItem) {
+      // Deselect if already selected as the sole filter
+      setSelectedCategory(null)
+    } else {
+      setSelectedCategory(categoryName)
+    }
+    setSelectedSubcategory(null)
+    setSelectedItem(null)
+    setMobileFiltersOpen(false)
   }
 
-  const toggleSubcategory = (subcategoryName: string) => {
+  const toggleSubcategory = (mainCategory: string, subcategoryName: string) => {
     setExpandedSubcategories(prev => {
       const newSet = new Set(prev)
       if (newSet.has(subcategoryName)) {
@@ -300,6 +320,16 @@ function ProductsContent() {
       }
       return newSet
     })
+    
+    if (selectedCategory === mainCategory && selectedSubcategory === subcategoryName && !selectedItem) {
+      // Deselect subcategory if already selected as the sole filter under this main category
+      setSelectedSubcategory(null)
+    } else {
+      setSelectedCategory(mainCategory)
+      setSelectedSubcategory(subcategoryName)
+    }
+    setSelectedItem(null)
+    setMobileFiltersOpen(false)
   }
 
   const selectAllItems = () => {
@@ -312,6 +342,7 @@ function ProductsContent() {
     setSelectedCategory(mainCategory)
     setSelectedSubcategory(subcategoryName)
     setSelectedItem(item)
+    setMobileFiltersOpen(false)
   }
 
   const toggleWishlist = (itemId: string, event: React.MouseEvent) => {
@@ -328,8 +359,8 @@ function ProductsContent() {
     })
   }
 
-  const openQuickView = (item: Product, event: React.MouseEvent) => {
-    event.stopPropagation()
+  const openQuickView = (item: Product, event?: React.MouseEvent) => {
+    event?.stopPropagation()
     setQuickViewItem(item)
     setCurrentModalImageIndex(0)
   }
@@ -423,6 +454,66 @@ function ProductsContent() {
     }).join(' ')
   }
 
+  const renderFiltersContent = () => (
+    <div className={styles.filtersContent}>
+      <h3>Categories</h3>
+
+      <div className={styles.categoryTree} id="category-tree">
+        <div className={styles.mainCategoryGroup}>
+          <div
+            className={`${styles.mainCategoryHeader} ${!selectedCategory ? styles.active : ''}`}
+            onClick={selectAllItems}
+          >
+            <span>All Items</span>
+          </div>
+        </div>
+
+        {Object.keys(categories).map(mainCategory => (
+          <div
+            key={mainCategory}
+            className={`${styles.mainCategoryGroup} ${expandedCategories.has(mainCategory) ? styles.expanded : ''}`}
+          >
+            <div
+              className={`${styles.mainCategoryHeader} ${selectedCategory === mainCategory ? styles.active : ''}`}
+              onClick={() => toggleMainCategory(mainCategory)}
+            >
+              <span>{formatCategoryName(mainCategory)}</span>
+              <span className={styles.categoryArrow}>▼</span>
+            </div>
+            <div className={styles.mainCategoryContent}>
+              {Object.keys(categories[mainCategory].subcategories).map(subcategoryName => (
+                <div key={subcategoryName} className={`${styles.categoryGroup} ${expandedSubcategories.has(subcategoryName) ? styles.expanded : ''}`}>
+                  <div
+                    className={`${styles.categoryHeader} ${expandedSubcategories.has(subcategoryName) ? styles.active : ''} ${selectedSubcategory === subcategoryName && !selectedItem ? styles.active : ''}`}
+                    onClick={() => toggleSubcategory(mainCategory, subcategoryName)}
+                  >
+                    {subcategoryName}
+                    <span className={styles.categoryArrow}>▼</span>
+                  </div>
+                  <div className={`${styles.subcategories} ${expandedSubcategories.has(subcategoryName) ? styles.expanded : ''}`}>
+                    {categories[mainCategory].subcategories[subcategoryName].items?.map((item: string) => (
+                      <div
+                        key={item}
+                        className={`${styles.subcategoryItem} ${selectedItem === item ? styles.active : ''}`}
+                        onClick={() => selectSubcategory(mainCategory, subcategoryName, item)}
+                      >
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <button className={styles.clearFiltersBtn} onClick={selectAllItems}>
+        Clear All Filters
+      </button>
+    </div>
+  )
+
   if (loading) {
     return (
       <div className={styles.loading}>
@@ -443,72 +534,54 @@ function ProductsContent() {
         </div>
 
         <div className={styles.productsContent}>
-          {/* Left Sidebar - Filters */}
+        {/* Left Sidebar - Filters (desktop) + Mobile filter row */}
           <div className={styles.productsFilters}>
-            <button
-              className={styles.filterToggleBtn}
-              onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
-            >
-              Filters
-            </button>
-
-            <div className={styles.filtersContent}>
-              <h3>Categories</h3>
-
-              <div className={styles.categoryTree} id="category-tree">
-                <div className={styles.mainCategoryGroup}>
-                  <div
-                    className={`${styles.mainCategoryHeader} ${!selectedCategory ? styles.active : ''}`}
-                    onClick={selectAllItems}
-                  >
-                    <span>All Items</span>
-                  </div>
-                </div>
-
-                {Object.keys(categories).map(mainCategory => (
-                  <div
-                    key={mainCategory}
-                    className={`${styles.mainCategoryGroup} ${expandedCategories.has(mainCategory) ? styles.expanded : ''}`}
-                  >
-                    <div
-                      className={`${styles.mainCategoryHeader} ${selectedCategory === mainCategory ? styles.active : ''}`}
-                      onClick={() => toggleMainCategory(mainCategory)}
-                    >
-                      <span>{formatCategoryName(mainCategory)}</span>
-                      <span className={styles.categoryArrow}>▼</span>
-                    </div>
-                    <div className={styles.mainCategoryContent}>
-                      {Object.keys(categories[mainCategory].subcategories).map(subcategoryName => (
-                        <div key={subcategoryName} className={`${styles.categoryGroup} ${expandedSubcategories.has(subcategoryName) ? styles.expanded : ''}`}>
-                          <div
-                            className={`${styles.categoryHeader} ${expandedSubcategories.has(subcategoryName) ? styles.active : ''}`}
-                            onClick={() => toggleSubcategory(subcategoryName)}
-                          >
-                            {subcategoryName}
-                            <span className={styles.categoryArrow}>▼</span>
-                          </div>
-                          <div className={`${styles.subcategories} ${expandedSubcategories.has(subcategoryName) ? styles.expanded : ''}`}>
-                            {categories[mainCategory].subcategories[subcategoryName].items?.map((item: string) => (
-                              <div
-                                key={item}
-                                className={`${styles.subcategoryItem} ${selectedItem === item ? styles.active : ''}`}
-                                onClick={() => selectSubcategory(mainCategory, subcategoryName, item)}
-                              >
-                                {item}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <button className={styles.clearFiltersBtn} onClick={selectAllItems}>
-                Clear All Filters
+            {/* Mobile: filter button + active chips row */}
+            <div className={styles.mobileFilterRow}>
+              <button
+                className={styles.filterToggleBtn}
+                onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="4" y1="6" x2="20" y2="6" />
+                  <line x1="8" y1="12" x2="16" y2="12" />
+                  <line x1="11" y1="18" x2="13" y2="18" />
+                </svg>
+                Filters
               </button>
+              <div className={styles.activeFiltersBar}>
+                {selectedCategory && (
+                  <span
+                    className={styles.filterChip}
+                    onClick={() => { setSelectedCategory(null); setSelectedSubcategory(null); setSelectedItem(null) }}
+                  >
+                    {formatCategoryName(selectedCategory)}
+                    <span className={styles.filterChipClose}>×</span>
+                  </span>
+                )}
+                {selectedSubcategory && (
+                  <span
+                    className={styles.filterChip}
+                    onClick={() => { setSelectedSubcategory(null); setSelectedItem(null) }}
+                  >
+                    {selectedSubcategory}
+                    <span className={styles.filterChipClose}>×</span>
+                  </span>
+                )}
+                {selectedItem && (
+                  <span
+                    className={styles.filterChip}
+                    onClick={() => setSelectedItem(null)}
+                  >
+                    {selectedItem}
+                    <span className={styles.filterChipClose}>×</span>
+                  </span>
+                )}
+              </div>
             </div>
+
+            {/* Desktop sidebar filters */}
+            {renderFiltersContent()}
           </div>
 
           {/* Main Products Area */}
@@ -530,95 +603,19 @@ function ProductsContent() {
             </div>
 
             <div className={styles.productsGridFull}>
-              {filteredItems.map(item => {
-                const imageUrl = item.primaryImageUrl || item.imageUrl || '/placeholder.svg?height=280&width=280'
-                const currentPrice = item.currentPrice || item.price || 0
-                const originalPrice = item.originalPrice || 0
-                const discountPercent = originalPrice > currentPrice
-                  ? Math.round((1 - currentPrice / originalPrice) * 100)
-                  : 0
-                const isInWishlist = wishlist.includes(item.id)
-
-                const href = item.itemType === 'product'
-                  ? `/products/${item.slug || item.id}`
-                  : `/services/${item.id}`
-
-                return (
-                  <div
-                    key={`${item.itemType}-${item.id}`}
-                    className={styles.mixedItem}
-                  >
-                    <div className={styles.mixedItemImage}>
-                      <Link
-                        href={href}
-                        target={item.itemType === 'product' ? "_blank" : undefined}
-                        rel={item.itemType === 'product' ? "noopener noreferrer" : undefined}
-                        style={{ display: 'block', width: '100%', height: '100%' }}
-                      >
-                        <Image
-                          src={imageUrl}
-                          alt={item.name || 'Product'}
-                          width={280}
-                          height={280}
-                          unoptimized
-                        />
-                      </Link>
-                      {discountPercent > 0 && (
-                        <div className={styles.discountTag}>
-                          {discountPercent}% OFF
-                        </div>
-                      )}
-
-                      <div className={styles.mixedItemActionButtons}>
-                        <button
-                          className={styles.mixedItemWishlistBtn}
-                          onClick={(e) => toggleWishlist(item.id, e)}
-                          title="Add to Wishlist"
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill={isInWishlist ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                          </svg>
-                        </button>
-                        <button
-                          className={styles.mixedItemQuickViewBtn}
-                          onClick={(e) => openQuickView(item, e)}
-                          title="Quick View"
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                            <circle cx="12" cy="12" r="3" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className={styles.mixedItemInfo}>
-                      <Link
-                        href={href}
-                        target={item.itemType === 'product' ? "_blank" : undefined}
-                        rel={item.itemType === 'product' ? "noopener noreferrer" : undefined}
-                        style={{ textDecoration: 'none', color: 'inherit' }}
-                      >
-                        <h3 className={styles.mixedItemName}>{item.name || item.productName}</h3>
-                      </Link>
-                      <div className={styles.mixedItemPrice}>
-                        <div className={styles.priceSection}>
-                          <span className={styles.currentPrice}>₹{currentPrice.toLocaleString('en-IN')}</span>
-                          {originalPrice > currentPrice && (
-                            <span className={styles.originalPrice}>₹{originalPrice.toLocaleString('en-IN')}</span>
-                          )}
-                        </div>
-                        <button
-                          className={styles.slideAddToCart}
-                          onClick={(e) => item.itemType === 'product' ? addToCart(item, e) : enquireService(item.id)}
-                        >
-                          {item.itemType === 'product' ? 'Add to Cart' : 'Enquire'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
+              {filteredItems.map(item => (
+                <div key={`${item.itemType}-${item.id}`} className={styles.productCardWrapper}>
+                  <ProductCard
+                    product={{
+                      ...item,
+                      name: item.name || item.productName || 'Product',
+                      currentPrice: item.currentPrice || item.price,
+                      originalPrice: item.originalPrice
+                    } as any}
+                    onQuickView={(prod) => openQuickView(prod as any, null as any)}
+                  />
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -643,9 +640,7 @@ function ProductsContent() {
         <div className={styles.mobileFilterOverlay} onClick={() => setMobileFiltersOpen(false)}>
           <div className={styles.mobileFilterSidebar} onClick={(e) => e.stopPropagation()}>
             <button className={styles.mobileFilterClose} onClick={() => setMobileFiltersOpen(false)}>×</button>
-            <div className={styles.filtersContent}>
-              {/* Same filter content as desktop */}
-            </div>
+            {renderFiltersContent()}
           </div>
         </div>
       )}

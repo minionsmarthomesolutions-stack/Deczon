@@ -149,9 +149,16 @@
         margin-bottom: 1.5rem;
     }
 
+    .slide {
+        height: auto;
+        display: block;
+    }
+
     .singleBannerWrapper {
-        aspect-ratio: 3 / 1;
-        border-radius: 8px;
+        display: block;
+        height: unset;
+        aspect-ratio: 16 / 7;
+        border-radius: 0;
     }
 
     .doubleBannerContainer {
@@ -160,8 +167,10 @@
     }
 
     .doubleBannerWrapper {
-        aspect-ratio: 3 / 1;
-        border-radius: 8px;
+        display: block;
+        height: unset;
+        aspect-ratio: 16 / 7;
+        border-radius: 0;
     }
 
     .ctaOverlay {
@@ -207,12 +216,21 @@
         margin-bottom: 0.75rem;
     }
 
+    .slide {
+        height: auto;
+        display: block;
+    }
+
     .singleBannerWrapper {
-        aspect-ratio: 2 / 1;
+        display: block;
+        height: unset;
+        aspect-ratio: 16 / 9;
     }
 
     .doubleBannerWrapper {
-        aspect-ratio: 2 / 1;
+        display: block;
+        height: unset;
+        aspect-ratio: 16 / 9;
     }
 
     .doubleBannerContainer {

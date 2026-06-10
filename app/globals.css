@@ -92,6 +92,11 @@ header, .header, .site-header, .layout-wrapper, .page-wrapper {
     --header-height: 80px;
     --category-nav-height: 48px;
   }
+
+  /* Add bottom padding so fixed bottom nav doesn't overlap content */
+  body {
+    padding-bottom: 62px;
+  }
 }
 
 @media (max-width: 480px) {

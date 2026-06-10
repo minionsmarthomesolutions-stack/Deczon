@@ -201,7 +201,7 @@
   align-items: center;
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 50px;
   overflow: visible;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: var(--shadow-sm);
@@ -234,14 +234,14 @@
   color: var(--text-light);
   border: none;
   height: calc(100% - 10px);
-  margin: 5px 5px 5px 0;
+  margin: 5px;
   padding: 0 24px;
   font-weight: 600;
   font-size: 14px;
   letter-spacing: 0.5px;
   cursor: pointer;
-  border-radius: 6px;
-  transition: all 0.25s ease;
+  border-radius: 50px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -640,49 +640,58 @@
 
 @media (max-width: 768px) {
   .searchBtnRight {
-    padding: 0 14px !important;
-    border-radius: 6px !important;
+    padding: 0 !important;
+    width: 38px !important;
+    border-radius: 50% !important;
     height: calc(100% - 10px) !important;
-    margin: 5px 5px 5px 0 !important;
+    margin: 5px !important;
   }
 
   .searchBtnRight span {
     display: none !important;
   }
 
-
-  /* Mobile header - Two rows:
-     Row 1: Logo + Icons (tight, vertically centered)
-     Row 2: Search bar (full width) */
+  /* =============================================
+     MOBILE HEADER LAYOUT
+     Row 1: [Logo] ................. [Location]
+     Row 2: [======= Search Bar =======]
+     Bottom: Fixed bottom navigation bar
+     ============================================= */
+  /* =============================================
+     Row 1: logo flush LEFT ↔ location flush RIGHT
+     Row 2: full-width search bar
+     ============================================= */
   .headerTop {
-    display: grid !important;
-    grid-template-columns: 1fr auto !important;
-    grid-template-rows: auto auto !important;
+    display: flex !important;
+    flex-direction: column !important;
     height: auto !important;
     padding: 10px 12px 12px !important;
-    gap: 10px 8px !important;
-    align-items: center !important;
+    gap: 8px !important;
+    align-items: stretch !important;
   }
 
-  /* Row 1 Left: Logo (hide location on mobile) */
+  /* Row 1: Logo LEFT, Location RIGHT */
   .headerLeft {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    flex-shrink: 0;
+    gap: 0;
+  }
+
+  /* Location wrapper — stays inside headerLeft, pushed right by space-between */
+  .locationWrapper {
     display: flex;
     align-items: center;
-    gap: 0;
+    margin-left: 0;
     flex-shrink: 0;
-    width: auto;
-    grid-column: 1 / 2;
-    grid-row: 1 / 2;
-  }
-
-  /* Hide location selector div on mobile */
-  .locationWrapper {
-    display: none;
+    justify-content: flex-end;
   }
 
   /* Logo - Compact for mobile */
   .logo {
-    height: 48px;
+    height: 44px;
     display: flex;
     align-items: center;
   }
@@ -710,14 +719,12 @@
     margin-top: -1px;
   }
 
+  /* Row 2: Search bar - full width */
   .headerSearch {
     display: flex !important;
-    flex: 1;
     justify-content: center;
     align-items: center;
     margin: 0;
-    grid-column: 1 / 3;
-    grid-row: 2 / 3;
     width: 100%;
   }
 
@@ -725,7 +732,7 @@
     width: 100%;
     max-width: 100%;
     height: 48px;
-    border-radius: 8px;
+    border-radius: 50px;
     background: var(--bg-primary);
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--border-color);
@@ -762,43 +769,9 @@
     height: 32px;
   }
 
-  /* Right side - Icon-only navigation */
+  /* Hide the top-right icon section on mobile (moved to bottom nav) */
   .headerRight {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex-shrink: 0;
-    width: auto;
-    grid-column: 2 / 3;
-    grid-row: 1 / 2;
-    justify-content: flex-end;
-  }
-
-  /* Icon buttons - Samsung style */
-  .userSection,
-  .cartSection {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    border-radius: 50%;
-    transition: background-color 0.2s ease;
-    position: relative;
-  }
-
-  /* Hide text labels on mobile */
-  .userSection span:not(.cartCount),
-  .cartSection span:not(.cartCount) {
     display: none !important;
-  }
-
-  /* Icon sizing */
-  .userSection svg,
-  .cartSection svg {
-    width: 20px;
-    height: 20px;
   }
 
   /* Cart count badge */
@@ -820,62 +793,12 @@
     line-height: 1;
   }
 
-  /* Three dot menu (hamburger) */
-  .threeDotMenu {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    border-radius: 50%;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-  }
-
-  .threeDotMenu svg {
-    width: 20px;
-    height: 20px;
-  }
-
-  /* Touch feedback */
-  .userSection:active,
-  .cartSection:active,
-  .threeDotMenu:active {
-    background-color: var(--bg-secondary);
-    transform: scale(0.95);
-  }
-
-  /* Mobile menu toggle (hamburger) */
-  .mobileMenuToggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    border-radius: 50%;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    margin: 0;
-  }
-
-  .mobileMenuToggle svg {
-    width: 20px;
-    height: 20px;
-  }
-
-  .mobileMenuToggle:active {
-    background-color: var(--bg-secondary);
-    transform: scale(0.95);
-  }
-
-  /* Hide category navbar on mobile */
+  /* Hide category navbar on mobile (shown in bottom nav instead) */
   .mainNavbar {
     display: none !important;
   }
 
-  /* Category drawer (slide-in from hamburger) */
+  /* Category drawer (slide-in from Categories button) */
   .mainNavbarList {
     display: none;
   }
@@ -900,13 +823,8 @@
   }
 
   @keyframes slideInRight {
-    from {
-      transform: translateX(100%);
-    }
-
-    to {
-      transform: translateX(0);
-    }
+    from { transform: translateX(100%); }
+    to   { transform: translateX(0); }
   }
 
   .mainNavbarList.mobileOpen .mainNavbarItem {
@@ -944,10 +862,16 @@
   /* Dropdown menu positioning */
   .dropdownMenu {
     position: fixed;
-    top: 56px;
+    bottom: 70px;
     right: 16px;
+    top: auto;
     left: auto;
     min-width: 200px;
+  }
+
+  /* Add bottom padding to main content area so bottom nav doesn't overlap */
+  .header {
+    padding-bottom: 0;
   }
 }
 
@@ -1240,5 +1164,457 @@
 
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* ==========================================
+   MOBILE BOTTOM NAVIGATION BAR
+   ========================================== */
+
+.mobileBottomNav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobileBottomNav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 62px;
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border-color);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+    z-index: 1100;
+    align-items: stretch;
+    justify-content: space-around;
+    padding: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .mobileBottomNav::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+    opacity: 0.4;
+  }
+
+  .bottomNavItem {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px 4px;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    border: none;
+    background: transparent;
+    position: relative;
+    transition: color 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .bottomNavItem:active {
+    transform: scale(0.92);
+  }
+
+  .bottomNavItem.active {
+    color: var(--accent-color);
+  }
+
+  .bottomNavItem.active .bottomNavIcon {
+    background: color-mix(in srgb, var(--accent-color) 12%, transparent);
+    border-radius: 14px;
+  }
+
+  .bottomNavItem svg {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+  }
+
+  .bottomNavItem:active svg {
+    transform: scale(0.88);
+  }
+
+  .bottomNavIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 28px;
+    position: relative;
+    transition: background 0.2s ease;
+  }
+
+  .bottomNavLabel {
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  /* Active indicator pill above icon */
+  .bottomNavItem.active .bottomNavIcon::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 3px;
+    background: var(--accent-color);
+    border-radius: 0 0 3px 3px;
+  }
+
+  /* Cart badge on bottom nav */
+  .bottomNavCartBadge {
+    position: absolute;
+    top: 0px;
+    right: 4px;
+    background: var(--accent-color);
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3px;
+    line-height: 1;
+    border: 2px solid var(--bg-primary);
+  }
+
+  /* More dropdown above bottom nav */
+  .moreDropdown {
+    position: fixed;
+    bottom: 68px;
+    right: 8px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
+    min-width: 180px;
+    z-index: 1200;
+    overflow: hidden;
+    animation: slideUpFade 0.2s ease-out;
+  }
+
+  @keyframes slideUpFade {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .moreDropdown a,
+  .moreDropdown button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.15s ease;
+    border-bottom: 1px solid var(--border-light);
+    width: 100%;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .moreDropdown a:last-child,
+  .moreDropdown button:last-child {
+    border-bottom: none;
+  }
+
+  .moreDropdown a:hover,
+  .moreDropdown button:hover {
+    background: var(--bg-secondary);
+    color: var(--accent-color);
+  }
+
+  .moreDropdown a svg,
+  .moreDropdown button svg {
+    width: 18px;
+    height: 18px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+
+  /* Overlay for more dropdown */
+  .moreOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1150;
+    background: transparent;
+  }
+
+  /* Main content padding to avoid bottom nav overlap */
+  .headerSpacer {
+    height: 62px;
+  }
+}
+
+/* ============================================================
+   MOBILE CATEGORY DRAWER  (full-screen accordion tree)
+   ============================================================ */
+
+/* Dimmed overlay behind the drawer */
+.mobileCatOverlay {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobileCatOverlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(2px);
+    z-index: 1200;
+    animation: mobileCatFadeIn 0.25s ease;
+  }
+
+  @keyframes mobileCatFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  /* Drawer panel slides in from left */
+  .mobileCatDrawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 88vw;
+    max-width: 360px;
+    background: var(--bg-primary);
+    z-index: 1201;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 4px 0 32px rgba(0, 0, 0, 0.18);
+    animation: mobileCatSlideIn 0.28s cubic-bezier(0.32, 0, 0.2, 1);
+    overflow: hidden;
+  }
+
+  @keyframes mobileCatSlideIn {
+    from { transform: translateX(-100%); }
+    to   { transform: translateX(0); }
+  }
+
+  /* ── Sticky header strip ── */
+  .mobileCatHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 16px 14px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    flex-shrink: 0;
+  }
+
+  .mobileCatTitle {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: -0.2px;
+  }
+
+  .mobileCatClose {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: var(--bg-secondary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: background 0.15s ease, color 0.15s ease;
+    flex-shrink: 0;
+  }
+
+  .mobileCatClose:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+
+  /* ── Scrollable body ── */
+  .mobileCatBody {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 8px 0 80px; /* bottom pad avoids bottom nav overlap */
+  }
+
+  /* "View All Products" shortcut row */
+  .mobileCatAllLink {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    color: var(--accent-color);
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 4px;
+    letter-spacing: 0.2px;
+    transition: background 0.15s ease;
+  }
+
+  .mobileCatAllLink:hover {
+    background: var(--bg-secondary);
+  }
+
+  /* ── Level 1: Category group wrapper ── */
+  .mobileCatGroup {
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  /* Level 1 row (label + chevron) */
+  .mobileCatRow {
+    display: flex;
+    align-items: center;
+    min-height: 50px;
+    background: var(--bg-primary);
+    transition: background 0.15s ease;
+  }
+
+  .mobileCatRow:hover {
+    background: var(--bg-secondary);
+  }
+
+  .mobileCatRowActive {
+    background: color-mix(in srgb, var(--accent-color) 6%, var(--bg-primary));
+  }
+
+  /* The clickable label part (navigates to category page) */
+  .mobileCatRowLink {
+    flex: 1;
+    padding: 14px 12px 14px 16px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    line-height: 1.3;
+  }
+
+  .mobileCatRowActive .mobileCatRowLink {
+    color: var(--accent-color);
+  }
+
+  /* Chevron toggle button */
+  .mobileCatChevron {
+    width: 44px;
+    height: 50px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    border-left: 1px solid var(--border-light);
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .mobileCatChevron:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+  }
+
+  /* ── Level 2: Subcategory group (indented) ── */
+  .mobileCatSubGroup {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-light);
+  }
+
+  .mobileCatSubRow {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    background: var(--bg-secondary);
+    transition: background 0.15s ease;
+  }
+
+  .mobileCatSubRow:hover {
+    background: var(--bg-tertiary);
+  }
+
+  .mobileCatSubRowActive {
+    background: color-mix(in srgb, var(--accent-color) 8%, var(--bg-secondary));
+  }
+
+  .mobileCatSubRowLink {
+    flex: 1;
+    padding: 12px 12px 12px 28px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    line-height: 1.3;
+  }
+
+  .mobileCatSubRowActive .mobileCatSubRowLink {
+    color: var(--accent-color);
+  }
+
+  /* ── Level 3: Leaf items (deepest) ── */
+  .mobileCatItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px 10px 40px;
+    color: var(--text-muted);
+    font-size: 12.5px;
+    font-weight: 500;
+    text-decoration: none;
+    border-top: 1px solid var(--border-light);
+    background: var(--bg-primary);
+    transition: background 0.15s ease, color 0.15s ease;
+    line-height: 1.3;
+  }
+
+  .mobileCatItem:hover {
+    background: var(--bg-secondary);
+    color: var(--accent-color);
+  }
+
+  /* Bullet dot before leaf items */
+  .mobileCatItemDot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    flex-shrink: 0;
+    opacity: 0.7;
   }
 }

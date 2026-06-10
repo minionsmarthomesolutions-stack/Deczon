@@ -402,11 +402,12 @@
   .sectionHeader {
     flex-direction: column;
     gap: var(--spacing-sm);
-    align-items: flex-start;
+    align-items: center;
+    text-align: center;
   }
 
   .sectionHeader>div {
-    text-align: left;
+    text-align: center;
     width: 100%;
   }
 
@@ -433,21 +434,52 @@
     max-width: 100%;
     min-width: 100%;
     height: auto;
-    min-height: 380px;
   }
 
   .productImage {
     height: 220px;
   }
 
+  /* Price section: always visible, no slide-out */
+  .priceSection {
+    position: static !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+
+  /* productPricing: flex row so price left, button right */
+  .productPricing {
+    height: auto !important;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  /* Add to Cart section: always shown */
+  .addToCartSection {
+    position: static !important;
+    transform: none !important;
+    opacity: 1 !important;
+    top: auto !important;
+    right: auto !important;
+    height: auto;
+    flex-shrink: 0;
+  }
+
   .addToCartBtn {
-    min-height: 48px;
-    padding: 14px 20px;
+    min-height: 44px;
+    padding: 12px 16px;
+    font-size: 12px;
+    white-space: nowrap;
   }
 
   .productInfo {
     height: auto;
-    min-height: 140px;
+    min-height: 0;
+    padding: var(--spacing-md) var(--spacing-sm);
   }
 }
 
@@ -467,5 +499,72 @@
   .productsGrid {
     gap: var(--spacing-sm);
     padding: 0;
+  }
+}
+
+/* ============================================================
+   TOUCH/MOBILE: No hover — make all actions permanently visible
+   ============================================================ */
+@media (hover: none) and (pointer: coarse) {
+  /* No lift on hover */
+  .productCard:hover {
+    transform: none;
+    box-shadow: var(--shadow-sm);
+    border-color: var(--border-color);
+  }
+  .productCard:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+
+  /* Image scale: don't zoom on hover */
+  .productCard:hover .lazyImage {
+    transform: none;
+    filter: none;
+  }
+
+  /* Price stays visible — don't slide out */
+  .priceSection {
+    transform: translateX(0) !important;
+    opacity: 1 !important;
+  }
+
+  /* Add to Cart section: always visible */
+  .addToCartSection {
+    position: static !important;
+    transform: none !important;
+    opacity: 1 !important;
+    top: auto !important;
+    right: auto !important;
+    padding-top: 6px;
+  }
+
+  /* Repurpose productPricing as a flex row: price left, button right */
+  .productPricing {
+    height: auto !important;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .priceSection {
+    position: static !important;
+    flex: 1;
+  }
+
+  /* Slightly larger tap target */
+  .addToCartBtn {
+    min-height: 40px;
+    font-size: 11px;
+    padding: 10px 14px;
+    white-space: nowrap;
+  }
+
+  /* Title: don't color-change on non-hover */
+  .productCard:hover .productTitle {
+    color: var(--text-primary);
   }
 }

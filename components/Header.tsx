@@ -51,6 +51,9 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState('')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
+  const [expandedSubcategory, setExpandedSubcategory] = useState<string | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
   const [cameraModalOpen, setCameraModalOpen] = useState(false)
@@ -450,6 +453,7 @@ export default function Header() {
   }
 
   return (
+    <>
     <header className={styles.header}>
       <div className={styles.headerContent}>
         <div className={styles.headerTop}>
@@ -724,7 +728,279 @@ export default function Header() {
           </nav>
         )}
       </div>
-    </header>
+    </header>
+
+    {/* ===== Mobile Full-Screen Category Drawer ===== */}
+    {mobileMenuOpen && (
+      <>
+        {/* Overlay */}
+        <div
+          className={styles.mobileCatOverlay}
+          onClick={() => {
+            setMobileMenuOpen(false)
+            setExpandedCategory(null)
+            setExpandedSubcategory(null)
+          }}
+        />
+        {/* Drawer panel */}
+        <div className={styles.mobileCatDrawer}>
+          {/* Header */}
+          <div className={styles.mobileCatHeader}>
+            <h2 className={styles.mobileCatTitle}>All Categories</h2>
+            <button
+              className={styles.mobileCatClose}
+              onClick={() => {
+                setMobileMenuOpen(false)
+                setExpandedCategory(null)
+                setExpandedSubcategory(null)
+              }}
+              aria-label="Close categories"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+
+          {/* Scrollable list */}
+          <div className={styles.mobileCatBody}>
+
+            {/* View All shortcut */}
+            <Link
+              href="/products"
+              className={styles.mobileCatAllLink}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+              </svg>
+              View All Products
+            </Link>
+
+            {/* Category accordion */}
+            {categories.map((category) => {
+              const subcategoryKeys = Object.keys(category.subcategories)
+              const isExpanded = expandedCategory === category.name
+              return (
+                <div key={category.name} className={styles.mobileCatGroup}>
+                  {/* Level 1: Category row */}
+                  <div className={`${styles.mobileCatRow} ${isExpanded ? styles.mobileCatRowActive : ''}`}>
+                    <Link
+                      href={`/products?mainCategory=${encodeURIComponent(category.name)}`}
+                      className={styles.mobileCatRowLink}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {category.name}
+                    </Link>
+                    {subcategoryKeys.length > 0 && (
+                      <button
+                        className={styles.mobileCatChevron}
+                        onClick={() => {
+                          setExpandedCategory(isExpanded ? null : category.name)
+                          setExpandedSubcategory(null)
+                        }}
+                        aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                      >
+                        <svg
+                          width="16" height="16" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" strokeWidth="2.5"
+                          style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}
+                        >
+                          <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Level 2: Subcategories */}
+                  {isExpanded && subcategoryKeys.map((subcatKey) => {
+                    const subcatVal = category.subcategories[subcatKey]
+                    const items: string[] = Array.isArray(subcatVal)
+                      ? subcatVal
+                      : (subcatVal as any)?.items && Array.isArray((subcatVal as any).items)
+                        ? (subcatVal as any).items
+                        : typeof subcatVal === 'object' && subcatVal !== null
+                          ? Object.keys(subcatVal as Record<string, any>)
+                          : []
+                    const isSubExpanded = expandedSubcategory === `${category.name}::${subcatKey}`
+                    return (
+                      <div key={subcatKey} className={styles.mobileCatSubGroup}>
+                        {/* Level 2 row */}
+                        <div className={`${styles.mobileCatSubRow} ${isSubExpanded ? styles.mobileCatSubRowActive : ''}`}>
+                          <Link
+                            href={`/products?mainCategory=${encodeURIComponent(category.name)}&category=${encodeURIComponent(subcatKey)}`}
+                            className={styles.mobileCatSubRowLink}
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            {subcatKey}
+                          </Link>
+                          {items.length > 0 && (
+                            <button
+                              className={styles.mobileCatChevron}
+                              onClick={() => {
+                                const key = `${category.name}::${subcatKey}`
+                                setExpandedSubcategory(isSubExpanded ? null : key)
+                              }}
+                              aria-label={isSubExpanded ? 'Collapse' : 'Expand'}
+                            >
+                              <svg
+                                width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" strokeWidth="2.5"
+                                style={{ transform: isSubExpanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}
+                              >
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                        {/* Level 3: sub-items */}
+                        {isSubExpanded && items.map((item, idx) => (
+                          <Link
+                            key={idx}
+                            href={`/products?mainCategory=${encodeURIComponent(category.name)}&category=${encodeURIComponent(subcatKey)}&subcategory=${encodeURIComponent(item)}`}
+                            className={styles.mobileCatItem}
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <span className={styles.mobileCatItemDot}></span>
+                            {item}
+                          </Link>
+                        ))}
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </>
+    )}
+    {/* ===== Mobile Bottom Navigation Bar ===== */}
+    <nav className={styles.mobileBottomNav}>
+
+      {/* Home */}
+      <Link
+        href="/"
+        className={`${styles.bottomNavItem} ${pathname === '/' ? styles.active : ''}`}
+      >
+        <span className={styles.bottomNavIcon}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+        </span>
+        <span className={styles.bottomNavLabel}>Home</span>
+      </Link>
+
+      {/* Categories */}
+      <button
+        className={`${styles.bottomNavItem} ${mobileMenuOpen ? styles.active : ''}`}
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        aria-label="Categories"
+      >
+        <span className={styles.bottomNavIcon}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+          </svg>
+        </span>
+        <span className={styles.bottomNavLabel}>Categories</span>
+      </button>
+
+      {/* Cart */}
+      <Link
+        href="/cart"
+        className={`${styles.bottomNavItem} ${pathname === '/cart' ? styles.active : ''}`}
+      >
+        <span className={styles.bottomNavIcon}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
+          {cartCount > 0 && (
+            <span className={styles.bottomNavCartBadge}>{cartCount}</span>
+          )}
+        </span>
+        <span className={styles.bottomNavLabel}>Cart</span>
+      </Link>
+
+      {/* More */}
+      <button
+        className={`${styles.bottomNavItem} ${moreOpen ? styles.active : ''}`}
+        onClick={() => setMoreOpen(!moreOpen)}
+        aria-label="More options"
+      >
+        <span className={styles.bottomNavIcon}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="5" r="1"></circle>
+            <circle cx="12" cy="12" r="1"></circle>
+            <circle cx="12" cy="19" r="1"></circle>
+          </svg>
+        </span>
+        <span className={styles.bottomNavLabel}>More</span>
+      </button>
+    </nav>
+
+    {/* More dropdown — Account, Wishlist, Orders, Logout */}
+    {moreOpen && (
+      <>
+        <div className={styles.moreOverlay} onClick={() => setMoreOpen(false)} />
+        <div className={styles.moreDropdown}>
+          {/* Account / Login */}
+          <Link
+            href={user ? '/account' : '/login'}
+            onClick={() => setMoreOpen(false)}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            {user ? 'My Account' : 'Login'}
+          </Link>
+          <Link href="/wishlist" onClick={() => setMoreOpen(false)}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+            Wishlist
+          </Link>
+          <Link href="/orders" onClick={() => setMoreOpen(false)}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+            My Orders
+          </Link>
+          {user && (
+            <button
+              onClick={async () => {
+                setMoreOpen(false)
+                const auth = getAuthInstance()
+                if (auth) await signOut(auth)
+              }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              Logout
+            </button>
+          )}
+        </div>
+      </>
+    )}
+  </>
   )
 }
+
+
 

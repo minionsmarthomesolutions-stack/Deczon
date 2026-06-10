@@ -12,9 +12,9 @@ interface Category {
 
 interface PromoSectionProps {
   categories: Category[]
+  products?: any[]
 }
 
-// Helper function to get category info (matching index.html logic)
 function getCategoryInfo(mainCategory: string) {
   const specificInfo: Record<string, { title: string; subtitle: string }> = {
     Tech: {
@@ -53,184 +53,131 @@ function getCategoryInfo(mainCategory: string) {
   }
 }
 
-// Helper function to get top subcategories with logos
-function getTopSubcategories(category: Category, limit: number = 3): Array<{ name: string; logo?: string }> {
+function getTopSubcategories(category: Category, limit = 3): Array<{ name: string; logo?: string }> {
   if (!category.subcategories) return []
-
-  const subcategories = category.subcategories
   const allItems: Array<{ name: string; logo?: string }> = []
 
-  // Extract items from subcategories with logos (matching index.html logic)
-  Object.keys(subcategories).forEach((subName) => {
-    const sub = subcategories[subName]
+  Object.keys(category.subcategories).forEach((subName) => {
+    const sub = category.subcategories[subName]
     const itemLogos = (sub && typeof sub === 'object' && 'itemLogos' in sub) ? sub.itemLogos : {}
 
     if (Array.isArray(sub)) {
-      sub.slice(0, limit).forEach((itemName: string) => {
-        allItems.push({
-          name: itemName,
-          logo: itemLogos[itemName] || undefined
-        })
-      })
-    } else if (sub && sub.items && Array.isArray(sub.items)) {
-      sub.items.slice(0, limit).forEach((itemName: string) => {
-        allItems.push({
-          name: itemName,
-          logo: itemLogos[itemName] || undefined
-        })
-      })
+      sub.forEach((itemName: string) => allItems.push({ name: itemName, logo: itemLogos[itemName] }))
+    } else if (sub?.items && Array.isArray(sub.items)) {
+      sub.items.forEach((itemName: string) => allItems.push({ name: itemName, logo: itemLogos[itemName] }))
     } else if (typeof sub === 'object' && sub !== null) {
-      // If it's an object with keys, use the keys
-      Object.keys(sub).slice(0, limit).forEach((itemName: string) => {
-        allItems.push({
-          name: itemName,
-          logo: itemLogos[itemName] || undefined
-        })
-      })
+      Object.keys(sub).forEach((itemName: string) => allItems.push({ name: itemName, logo: itemLogos[itemName] }))
     }
   })
 
   return allItems.slice(0, limit)
 }
 
-export default function PromoSection({ categories }: PromoSectionProps) {
+export default function PromoSection({ categories, products = [] }: PromoSectionProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [mounted, setMounted] = useState(false)
-  const autoScrollIntervalRef = useRef<NodeJS.Timeout | null>(null)
-  const isScrollingRef = useRef(false)
+  const autoScrollRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Create promo cards from categories
-  const promoCards = categories.slice(0, 6).map(category => {
-    const categoryInfo = getCategoryInfo(category.name)
-    const topSubcategories = getTopSubcategories(category, 3)
+  const promoCards = categories.map(category => ({
+    id: category.id || category.name,
+    name: category.name,
+    ...getCategoryInfo(category.name),
+    subcategories: getTopSubcategories(category, 4).map(sub => {
+      if (!sub.logo && products) {
+        const product = products.find(p => 
+          (p.mainCategory === category.name || p.category === category.name) && 
+          p.subcategory === sub.name
+        )
+        if (product && (product.primaryImageUrl || product.imageUrl)) {
+          sub.logo = product.primaryImageUrl || product.imageUrl
+        }
+      }
+      return sub
+    }),
+  }))
 
-    return {
-      id: category.id || category.name,
-      name: category.name,
-      title: categoryInfo.title,
-      subtitle: categoryInfo.subtitle,
-      subcategories: topSubcategories
-    }
-  })
-
-  // Duplicate cards for infinite loop
+  // Triple for infinite loop
   const duplicatedCards = [...promoCards, ...promoCards, ...promoCards]
 
-  // Card width including margin (275px + 16px = 291px)
-  const cardWidth = 291
+  // The step is one card width + gap. 
+  // Desktop: 4 cards visible. Container = 4 * card + 3 * gap => card = (Container - 3*gap) / 4. 
+  // Step = card + gap = (Container + gap) / 4.
+  const getStep = () => {
+    if (!scrollRef.current) return 0
+    const w = window.innerWidth
+    const c = scrollRef.current.clientWidth
+    if (w <= 768) return c // 1 card, 0 gap
+    if (w <= 992) return (c + 16) / 2 // 2 cards, 16px gap
+    return (c + 16) / 4 // 4 cards, 16px gap
+  }
 
   useEffect(() => {
-    // Trigger animation after component mounts
     setMounted(true)
-
-    // Initialize scroll position to the middle set of cards
     if (scrollRef.current && promoCards.length > 0) {
-      scrollRef.current.scrollLeft = cardWidth * promoCards.length
+      // Start at the beginning of the second set of cards
+      scrollRef.current.scrollLeft = getStep() * promoCards.length
     }
-  }, [])
+  }, [promoCards.length])
 
   useEffect(() => {
-    // Auto-scroll functionality
     const startAutoScroll = () => {
-      if (autoScrollIntervalRef.current) {
-        clearInterval(autoScrollIntervalRef.current)
-      }
-
-      autoScrollIntervalRef.current = setInterval(() => {
-        if (scrollRef.current && !isScrollingRef.current) {
-          const container = scrollRef.current
-          const currentScroll = container.scrollLeft
-          const maxScroll = container.scrollWidth - container.clientWidth
-
-          // Check if we're near the end (within one card width)
-          if (currentScroll >= maxScroll - cardWidth) {
-            // Reset to the beginning of the middle set without animation
-            isScrollingRef.current = true
-            container.style.scrollBehavior = 'auto'
-            container.scrollLeft = cardWidth * promoCards.length
-            // Force reflow
-            container.offsetHeight
-            container.style.scrollBehavior = 'smooth'
-            isScrollingRef.current = false
-          } else {
-            // Normal scroll
-            container.scrollBy({ left: cardWidth, behavior: 'smooth' })
-          }
+      if (autoScrollRef.current) clearInterval(autoScrollRef.current)
+      autoScrollRef.current = setInterval(() => {
+        const el = scrollRef.current
+        if (!el || promoCards.length === 0) return
+        const step = getStep()
+        
+        // If we have scrolled past the second set, jump back to the first set
+        if (el.scrollLeft >= step * promoCards.length * 2) {
+          el.style.scrollBehavior = 'auto'
+          el.scrollLeft = el.scrollLeft - (step * promoCards.length)
+          el.offsetHeight // reflow
+          el.style.scrollBehavior = 'smooth'
         }
-      }, 3000) // Auto-scroll every 3 seconds
+        el.scrollBy({ left: step, behavior: 'smooth' })
+      }, 3000)
     }
 
     startAutoScroll()
+    const el = scrollRef.current
+    const pause = () => { if (autoScrollRef.current) clearInterval(autoScrollRef.current) }
+    const resume = () => startAutoScroll()
 
-    // Pause on hover
-    const container = scrollRef.current
-    const handleMouseEnter = () => {
-      if (autoScrollIntervalRef.current) {
-        clearInterval(autoScrollIntervalRef.current)
-      }
-    }
-    const handleMouseLeave = () => {
-      startAutoScroll()
-    }
-
-    if (container) {
-      container.addEventListener('mouseenter', handleMouseEnter)
-      container.addEventListener('mouseleave', handleMouseLeave)
-    }
+    el?.addEventListener('mouseenter', pause)
+    el?.addEventListener('mouseleave', resume)
 
     return () => {
-      if (autoScrollIntervalRef.current) {
-        clearInterval(autoScrollIntervalRef.current)
-      }
-      if (container) {
-        container.removeEventListener('mouseenter', handleMouseEnter)
-        container.removeEventListener('mouseleave', handleMouseLeave)
-      }
+      if (autoScrollRef.current) clearInterval(autoScrollRef.current)
+      el?.removeEventListener('mouseenter', pause)
+      el?.removeEventListener('mouseleave', resume)
     }
-  }, [promoCards.length, cardWidth])
+  }, [promoCards.length])
 
-  const scrollLeft = () => {
-    if (scrollRef.current && !isScrollingRef.current) {
-      const container = scrollRef.current
-      const currentScroll = container.scrollLeft
+  const slide = (dir: 'left' | 'right') => {
+    const el = scrollRef.current
+    if (!el || promoCards.length === 0) return
+    const step = getStep()
 
-      if (currentScroll <= cardWidth) {
-        // Reset to the end of the middle set
-        isScrollingRef.current = true
-        container.style.scrollBehavior = 'auto'
-        container.scrollLeft = cardWidth * promoCards.length * 2 - cardWidth
-        container.offsetHeight
-        container.style.scrollBehavior = 'smooth'
-        isScrollingRef.current = false
-      } else {
-        container.scrollBy({ left: -cardWidth, behavior: 'smooth' })
+    if (dir === 'right') {
+      if (el.scrollLeft >= step * promoCards.length * 2) {
+        el.style.scrollBehavior = 'auto'
+        el.scrollLeft = el.scrollLeft - (step * promoCards.length)
+        el.offsetHeight
+        el.style.scrollBehavior = 'smooth'
       }
-    }
-  }
-
-  const scrollRight = () => {
-    if (scrollRef.current && !isScrollingRef.current) {
-      const container = scrollRef.current
-      const currentScroll = container.scrollLeft
-      const maxScroll = container.scrollWidth - container.clientWidth
-
-      if (currentScroll >= maxScroll - cardWidth) {
-        // Reset to the beginning of the middle set
-        isScrollingRef.current = true
-        container.style.scrollBehavior = 'auto'
-        container.scrollLeft = cardWidth * promoCards.length
-        container.offsetHeight
-        container.style.scrollBehavior = 'smooth'
-        isScrollingRef.current = false
-      } else {
-        container.scrollBy({ left: cardWidth, behavior: 'smooth' })
+      el.scrollBy({ left: step, behavior: 'smooth' })
+    } else {
+      if (el.scrollLeft <= step * 0.5) {
+        el.style.scrollBehavior = 'auto'
+        el.scrollLeft = el.scrollLeft + (step * promoCards.length)
+        el.offsetHeight
+        el.style.scrollBehavior = 'smooth'
       }
+      el.scrollBy({ left: -step, behavior: 'smooth' })
     }
   }
 
-  if (promoCards.length === 0) {
-    return null
-  }
+  if (promoCards.length === 0) return null
 
   return (
     <section className={styles.promoSection}>
@@ -241,11 +188,7 @@ export default function PromoSection({ categories }: PromoSectionProps) {
         </div>
 
         <div className={styles.promoSlider}>
-          <button
-            className={`${styles.sliderBtn} ${styles.prev}`}
-            onClick={scrollLeft}
-            aria-label="Previous categories"
-          >
+          <button className={`${styles.sliderBtn} ${styles.prev}`} onClick={() => slide('left')} aria-label="Previous">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 18l-6-6 6-6" />
             </svg>
@@ -256,9 +199,7 @@ export default function PromoSection({ categories }: PromoSectionProps) {
               <div
                 key={`${card.id}-${index}`}
                 className={`${styles.promoCard} ${mounted ? styles.promoCardAnimate : ''}`}
-                style={mounted ? {
-                  animationDelay: `${(index % promoCards.length) * 0.1}s`
-                } : {}}
+                style={mounted ? { animationDelay: `${(index % promoCards.length) * 0.1}s` } : {}}
               >
                 <div className={styles.promoHeader}>
                   <div className={styles.brandPartners}>
@@ -277,20 +218,12 @@ export default function PromoSection({ categories }: PromoSectionProps) {
                         className={styles.dealItem}
                       >
                         {subcat.logo ? (
-                          <img
-                            src={subcat.logo}
-                            alt={subcat.name}
-                            className={styles.dealItemLogo}
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement
-                              target.style.display = 'none'
-                            }}
-                          />
+                          <img src={subcat.logo} alt={subcat.name} className={styles.dealItemLogo}
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
                         ) : (
                           <img
                             src={`/placeholder.svg?height=32&width=32&text=${encodeURIComponent(subcat.name.substring(0, 1))}`}
-                            alt={subcat.name}
-                            className={styles.dealItemLogo}
+                            alt={subcat.name} className={styles.dealItemLogo}
                           />
                         )}
                         <span>{subcat.name}</span>
@@ -302,11 +235,7 @@ export default function PromoSection({ categories }: PromoSectionProps) {
             ))}
           </div>
 
-          <button
-            className={`${styles.sliderBtn} ${styles.next}`}
-            onClick={scrollRight}
-            aria-label="Next categories"
-          >
+          <button className={`${styles.sliderBtn} ${styles.next}`} onClick={() => slide('right')} aria-label="Next">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 18l6-6-6-6" />
             </svg>
@@ -316,4 +245,3 @@ export default function PromoSection({ categories }: PromoSectionProps) {
     </section>
   )
 }
-

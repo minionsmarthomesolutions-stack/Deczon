@@ -70,17 +70,21 @@
 /* Mobile Responsive for ProductCard */
 @media (max-width: 768px) {
   .productCard {
-    min-width: 200px;
-    max-width: 200px;
-    height: 260px;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    height: auto !important;
+    overflow: visible !important;
   }
 }
 
 @media (max-width: 480px) {
   .productCard {
-    min-width: 160px;
-    max-width: 160px;
-    height: 240px;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    height: auto !important;
+    overflow: visible !important;
   }
 }
 
@@ -152,18 +156,30 @@
 
 /* Product Action Buttons Container */
 .productActionButtons {
+  /* Always visible — holds badge + discount + icon buttons */
   position: absolute;
-  top: var(--spacing-md);
-  right: var(--spacing-md);
+  top: 0;
+  left: 0;
+  right: 0;
   display: flex;
+  justify-content: flex-end;
   gap: var(--spacing-sm);
   z-index: 10;
+  padding: var(--spacing-md);
+  pointer-events: none;
+}
+
+/* Icon buttons hidden by default, revealed on hover */
+.productActionButtons .quickViewBtn,
+.productActionButtons .wishlistBtn {
   opacity: 0;
   transform: translateY(-10px);
   transition: all 0.3s ease;
+  pointer-events: auto;
 }
 
-.productCard:hover .productActionButtons {
+.productCard:hover .quickViewBtn,
+.productCard:hover .wishlistBtn {
   opacity: 1;
   transform: translateY(0);
 }
@@ -449,125 +465,282 @@
   }
 }
 
+/* ================================================================
+   MOBILE LAYOUT (≤ 768px)
+   Card layout:
+   ┌───────────────────────────┐
+   │[HOT DEAL]         [-20%] │  ← badge + discount in top strip
+   ├───────────────────────────┤
+   │[👁]  product image   [♥] │  ← icons float over image corners
+   │                           │
+   ├───────────────────────────┤
+   │ Title (2 lines)           │
+   │ ₹Price  ₹orig       [🛒] │
+   └───────────────────────────┘
+   ================================================================ */
 @media (max-width: 768px) {
+
+  /* Card: fill grid cell width */
   .productCard {
-    min-width: 160px;
-    max-width: 160px;
-    height: 240px;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    height: auto !important;
+    min-height: 0;
   }
 
-  .productImage {
-    height: 140px;
+  /* ── Top area: 2 rows — badges on top, icons below ── */
+  .productActionButtons {
+    position: static !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    width: 100%;
+    padding: 4px 5px;
+    background: transparent;
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none;
+    z-index: auto;
+    gap: 2px 0;
+    box-sizing: border-box;
   }
 
-  .productInfo {
-    padding: var(--spacing-sm);
-  }
-
-  .productTitle {
-    font-size: var(--font-size-sm);
-    line-height: 1.3;
-  }
-
-  .currentPrice {
-    font-size: var(--font-size-base);
-  }
-
-  .originalPrice {
-    font-size: var(--font-size-xs);
-  }
-
-  .discountTag {
-    font-size: 9px;
-    padding: 4px 8px;
-    min-width: 32px;
-    height: 20px;
-  }
-
+  /* Row 1 left: Badge */
   .productBadge {
-    font-size: 9px;
-    padding: 2px 4px;
-    top: 6px;
-    left: 6px;
+    position: static !important;
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
+    font-size: 7px;
+    padding: 2px 5px;
+    border-radius: 6px;
+    animation: none;
+    z-index: auto;
+    box-shadow: none;
   }
 
-  .wishlistBtn,
-  .quickViewBtn {
-    width: 36px;
-    height: 36px;
+  /* Row 1 right: Discount tag */
+  .discountTag {
+    position: static !important;
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    transform: none !important;
+    clip-path: none;
+    border-radius: 6px;
+    font-size: 8px;
+    padding: 2px 5px;
+    min-width: auto;
+    height: auto;
+    border: none;
   }
 
-  .wishlistBtn svg,
-  .quickViewBtn svg {
-    width: 14px;
-    height: 14px;
+  .productCard:hover .discountTag {
+    opacity: 1;
+    transform: none !important;
   }
 
-  .addToCartBtn {
-    font-size: 11px;
-    padding: 6px 10px;
-  }
-}
-
-@media (max-width: 480px) {
-  .productCard {
-    min-width: 150px;
-    max-width: 150px;
-    height: 220px;
+  /* Row 2: icon buttons — view left, like right */
+  .quickViewBtn,
+  .wishlistBtn {
+    display: none !important;
   }
 
+  /* Image area */
   .productImage {
-    height: 120px;
+    height: 90px;
+    display: block;
+    position: relative;
+    padding: 4px;
+    overflow: hidden;
   }
 
+  .image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  /* ── Product info section ── */
   .productInfo {
-    padding: var(--spacing-sm);
+    padding: 5px 8px 6px;
   }
 
   .productTitle {
-    font-size: 12px;
+    font-size: 11px;
+    line-height: 1.3;
     -webkit-line-clamp: 2;
     line-clamp: 2;
+    margin-bottom: 4px;
+  }
+
+  /* ── Pricing row ── */
+  .productPricing {
+    height: auto !important;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    margin-top: 0;
+  }
+
+  .priceSection {
+    position: static !important;
+    transform: none !important;
+    opacity: 1 !important;
+    flex: 1;
+    min-width: 0;
   }
 
   .currentPrice {
-    font-size: 14px;
+    font-size: 12px;
+    font-weight: 700;
   }
 
   .originalPrice {
-    font-size: 10px;
+    font-size: 9px;
   }
 
+  /* ── Add to Cart: bare icon ── */
   .addToCartSection {
-    right: 10px;
+    position: static !important;
+    transform: none !important;
+    opacity: 1 !important;
+    top: auto !important;
+    right: auto !important;
+    height: auto;
+    flex-shrink: 0;
   }
 
   .addToCartBtn {
-    font-size: 10px;
-    padding: 5px 8px;
+    width: auto;
+    height: auto;
+    padding: 4px;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 0;
   }
-}
 
-/* Touch-friendly hover states for mobile */
-@media (hover: none) and (pointer: coarse) {
-  .productCard:active {
-    transform: translateY(-4px) scale(1.01);
+  .addToCartBtn::before {
+    display: none;
   }
 
-  .productCard:hover {
+  .addToCartBtn:hover {
+    background: transparent;
+    box-shadow: none;
     transform: none;
   }
 
-  .productCard:active .addToCartSection {
-    transform: translateX(0) translateY(-50%);
+  .addToCartBtn:active {
+    transform: scale(0.9);
+  }
+
+  /* Show only the cart icon on mobile */
+  .cartIcon {
+    display: block;
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    stroke: var(--accent-dark);
+  }
+
+  /* Hide the text label on mobile */
+  .addToCartText {
+    display: none;
+  }
+
+  /* Tap feedback — no lift */
+  .productCard:hover {
+    transform: none;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .productCard:active {
+    transform: scale(0.97);
+    transition: transform 0.1s ease;
+  }
+
+  .productCard:hover .image {
+    transform: none;
+    filter: none;
+  }
+
+  .productCard:hover .priceSection {
+    transform: none;
+    opacity: 1;
+  }
+
+  .productCard:hover .addToCartSection {
+    transform: none;
     opacity: 1;
   }
 }
+
+
+/* Desktop: show text, hide cart icon (icon already on desktop via separate SVG) */
+@media (min-width: 769px) {
+  .cartIcon {
+    display: none;
+  }
+
+  .addToCartText {
+    display: inline;
+  }
+
+  /* Badge and discount are now children of productActionButtons,
+     but on desktop they need to be always visible and positioned
+     on the card — not hidden with the hover-reveal container. */
+  .productBadge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 11;
+    opacity: 1;
+  }
+
+  .discountTag {
+    position: absolute;
+    top: var(--spacing-md);
+    right: var(--spacing-xs);
+    z-index: 11;
+    opacity: 1;
+  }
+}
+
+/* ── Wishlist active state ── */
 .wishlistBtn.active {
   color: #ef4444;
-  background: rgba(255, 255, 255, 1);
+  background: transparent;
+  animation: heartPop 0.45s cubic-bezier(0.17, 0.89, 0.32, 1.49);
 }
+
 .wishlistBtn.active svg {
   stroke: #ef4444;
   fill: #ef4444;
+}
+
+@keyframes heartPop {
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.4);
+  }
+  50% {
+    transform: scale(0.9);
+  }
+  75% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
 }

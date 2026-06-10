@@ -27,48 +27,46 @@
   color: var(--text-secondary);
 }
 
+/* Slider wrapper — clips overflow so no card peeks */
 .promoSlider {
   position: relative;
   overflow: hidden;
   width: 100%;
-  max-width: 100%;
 }
 
+/* Scrollable track */
 .promoGrid {
   display: flex;
-  gap: 0;
+  gap: 16px;
   overflow-x: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  padding: 0;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
-  /* For smooth scrolling on iOS */
-  scroll-snap-type: x mandatory;
-  width: 100%;
-  max-width: 100%;
   box-sizing: border-box;
+  /* No scroll-snap — JS handles step precision */
 }
 
 .promoGrid::-webkit-scrollbar {
   display: none;
 }
 
+/*
+ * 4 cards fill the container exactly:
+ *   4 cards + 3 gaps (16px each) = 100%
+ *   card = (100% - 3×16px) / 4 = 25% - 12px
+ */
 .promoCard {
   background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
   border-radius: var(--radius-lg);
   padding: var(--spacing-xl);
-  width: 275px;
-  min-width: 275px;
-  flex: 0 0 275px;
+  flex: 0 0 calc(25% - 12px);
+  width: calc(25% - 12px);
+  min-width: calc(25% - 12px);
   color: var(--text-light);
   position: relative;
   overflow: hidden;
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
   box-sizing: border-box;
-  margin: 0;
-  margin-right: 16px;
   opacity: 0;
   transform: translateY(20px);
   transition: transform 0.2s ease;
@@ -78,7 +76,6 @@
   animation: slideIn 0.5s ease-out forwards;
 }
 
-/* Touch feedback for promo cards */
 .promoCard:active {
   transform: scale(0.98);
 }
@@ -123,56 +120,6 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 600;
-}
-
-/* Mobile Responsive for PromoSection */
-@media (max-width: 768px) {
-  .promoSection {
-    padding: var(--spacing-2xl) 0;
-  }
-
-  .promoCard {
-    width: 240px;
-    min-width: 240px;
-    flex: 0 0 240px;
-    padding: var(--spacing-lg);
-  }
-
-  .promoContent h2 {
-    font-size: var(--font-size-lg);
-  }
-
-  .discountText {
-    font-size: var(--font-size-xs);
-  }
-}
-
-@media (max-width: 480px) {
-  .promoSection {
-    padding: var(--spacing-xl) 0;
-  }
-
-  .sectionHeader h2 {
-    font-size: var(--font-size-2xl);
-  }
-
-  .promoCard {
-    width: 200px;
-    min-width: 200px;
-    flex: 0 0 200px;
-    padding: var(--spacing-md);
-    margin-right: 12px;
-  }
-
-  .promoContent h2 {
-    font-size: var(--font-size-base);
-    margin-bottom: var(--spacing-xs);
-  }
-
-  .discountText {
-    font-size: var(--font-size-xs);
-    margin-bottom: var(--spacing-sm);
-  }
 }
 
 .brandName {
@@ -221,12 +168,6 @@
   transform: translateX(4px);
 }
 
-.dealItem svg {
-  flex-shrink: 0;
-  width: 24px;
-  height: 24px;
-}
-
 .dealItemLogo {
   flex-shrink: 0;
   width: 32px;
@@ -240,6 +181,7 @@
   flex: 1;
 }
 
+/* Arrow buttons */
 .sliderBtn {
   position: absolute;
   top: 50%;
@@ -266,30 +208,24 @@
 }
 
 .sliderBtn.prev {
-  left: var(--spacing-md);
+  left: var(--spacing-sm);
 }
 
 .sliderBtn.next {
-  right: var(--spacing-md);
+  right: var(--spacing-sm);
 }
 
-@media (max-width: 1200px) {
-  .promoCard {
-    width: 275px;
-    min-width: 275px;
-    flex: 0 0 275px;
-  }
-}
-
+/* ── Tablet: 2 cards per view ── */
 @media (max-width: 992px) {
   .promoSection {
     padding: var(--spacing-2xl) 0;
   }
 
+  /* 2 cards + 1 gap = 100%  →  card = 50% - 8px */
   .promoCard {
-    width: 260px;
-    min-width: 260px;
-    flex: 0 0 260px;
+    flex: 0 0 calc(50% - 8px);
+    width: calc(50% - 8px);
+    min-width: calc(50% - 8px);
     padding: var(--spacing-lg);
   }
 
@@ -298,70 +234,159 @@
   }
 }
 
+/* ── Mobile: full-width vertical card (like desktop) ── */
 @media (max-width: 768px) {
   .sliderBtn {
     display: none;
   }
 
   .promoSection {
-    padding: var(--spacing-xl) 0;
-  }
-
-  .promoCard {
-    width: 85vw;
-    min-width: 85vw;
-    flex: 0 0 85vw;
-    padding: var(--spacing-md);
-    margin-right: var(--spacing-md);
-  }
-
-  .sectionHeader {
-    margin-bottom: var(--spacing-lg);
-  }
-
-  .sectionHeader h2 {
-    font-size: var(--font-size-xl);
-  }
-
-  .sectionSubtitle {
-    font-size: var(--font-size-sm);
-  }
-
-  .promoContent h2 {
-    font-size: var(--font-size-lg);
-  }
-
-  .discountText {
-    font-size: var(--font-size-xs);
-  }
-}
-
-@media (max-width: 480px) {
-  .promoSection {
     padding: var(--spacing-lg) 0;
   }
 
-  .container {
-    padding: 0 var(--spacing-sm);
-  }
-
-  .promoCard {
-    width: 90vw;
-    min-width: 90vw;
-    flex: 0 0 90vw;
-    padding: var(--spacing-sm);
+  .sectionHeader {
+    margin-bottom: var(--spacing-md);
+    text-align: center;
   }
 
   .sectionHeader h2 {
     font-size: var(--font-size-lg);
   }
 
-  .promoContent h2 {
+  .sectionSubtitle {
+    font-size: var(--font-size-xs);
+  }
+
+  /* Grid: snap one card at a time, no gap, no padding so card fills full width */
+  .promoGrid {
+    gap: 0;
+    scroll-snap-type: x mandatory;
+    padding: 0;
+  }
+
+  /* ── Card: full-width vertical card ── */
+  .promoCard {
+    flex: 0 0 100%;
+    width: 100%;
+    min-width: 100%;
+    height: auto;
+    padding: var(--spacing-md);
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    overflow: hidden;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    box-sizing: border-box;
+  }
+
+  /* Keep the decorative circle */
+  .promoCard::before {
+    display: block;
+  }
+
+  /* ── Header: category label row ── */
+  .promoHeader {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    margin-bottom: var(--spacing-sm);
+    gap: 2px;
+  }
+
+  .brandPartners {
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .partnersLabel {
+    font-size: var(--font-size-xs);
+    letter-spacing: 0.5px;
+    opacity: 0.7;
+  }
+
+  .brandName {
     font-size: var(--font-size-base);
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: var(--accent-color);
+    text-align: left;
+  }
+
+  /* ── Content: heading + pills ── */
+  .promoContent {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  /* Show the category title heading */
+  .promoContent h2 {
+    display: block;
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: var(--text-light);
+    margin: 0;
+    line-height: 1.3;
+  }
+
+  /* Hide the "Most popular choices" subtitle */
+  .discountText {
+    display: none;
+  }
+
+  /* 2-column × 2-row grid of pills */
+  .dealCategories {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 6px;
+    width: 100%;
   }
 
   .dealItem {
-    font-size: var(--font-size-xs);
-    padding: 3px 6px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 5px 10px 5px 5px;
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.95);
+    text-decoration: none;
+    transition: background 0.15s ease;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  .dealItem:hover {
+    background: rgba(255, 255, 255, 0.28);
+    transform: none;
+  }
+
+  .dealItemLogo {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: rgba(255, 255, 255, 0.2);
+    flex-shrink: 0;
+  }
+
+  .dealItem span {
+    display: block;
+    line-height: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
   }
 }

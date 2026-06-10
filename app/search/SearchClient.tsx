@@ -70,73 +70,64 @@ export default function SearchClient() {
             const term = currentQuery.toLowerCase().trim()
 
             try {
-                // 1. Fetch Products
-                const resProducts = await fetch('/api/products')
-                if (resProducts.ok) {
-                  const productsData = await resProducts.json()
-                  productsData.forEach((data: any) => {
-                    const rel = calculateRelevance(data, term, 'product')
-                    if (rel > 0) {
-                        results.push({
-                            id: data.id,
-                            type: 'product',
-                            title: data.name || data.productName || 'Untitled Product',
-                            description: data.description || data.desc || data.longDescription || '',
-                            image: resolveImageUrl(data.primaryImageUrl || data.imageUrl || data.image),
-                            rating: data.rating || 4.5, // fallback rating
-                            reviewCount: data.reviewCount || Math.floor(Math.random() * 50) + 5,
-                            price: formatPrice(data.price || data.currentPrice),
-                            rawPrice: data.price || data.currentPrice || 0,
-                            currentPrice: data.price || data.currentPrice || 0,
-                            primaryImageUrl: data.primaryImageUrl || data.imageUrl || data.image,
-                            priceLabel: 'Price',
-                            categories: [data.category, data.mainCategory, data.subcategory].filter(Boolean),
-                            tags: data.tags || [],
-                            slug: data.slug || data.id,
-                            isVerified: true, // most products are internal/verified
-                            relevance: rel
-                        })
-                    }
-                  })
-                }
+                const res = await fetch(`/api/search?q=${encodeURIComponent(term)}&t=${Date.now()}`)
+                if (res.ok) {
+                    const searchData = await res.json()
 
-                // 2. Fetch Services
-                const resServices = await fetch('/api/services')
-                if (resServices.ok) {
-                  const servicesData = await resServices.json()
-                  servicesData.forEach((data: any) => {
-                    const rel = calculateRelevance(data, term, 'service')
-                    if (rel > 0) {
-                        const minPrice = getServiceMinPrice(data)
-                        results.push({
-                            id: data.id,
-                            type: 'service',
-                            title: data.name || data.title || 'Untitled Service',
-                            description: data.description || data.shortDescription || '',
-                            image: getServiceImageUrl(data) || '/placeholder.svg?height=300&width=400&text=Service',
-                            rating: data.rating || 4.8,
-                            reviewCount: data.reviews?.length || Math.floor(Math.random() * 100) + 10,
-                            location: data.location || data.serviceArea || 'Available Online',
-                            price: minPrice > 0 ? `₹${minPrice.toLocaleString()}` : 'Custom Quote',
-                            rawPrice: minPrice,
-                            priceLabel: 'Starting from',
-                            categories: [data.category, 'Services'].filter(Boolean),
-                            tags: data.features || [], // features act like tags
-                            slug: data.slug || data.id,
-                            isVerified: data.isVerified ?? true,
-                            relevance: rel
-                        })
-                    }
-                  })
-                }
+                    // 1. Process Products
+                    searchData.products?.forEach((data: any) => {
+                        const rel = calculateRelevance(data, term, 'product')
+                        if (rel > 0) {
+                            results.push({
+                                id: data.id,
+                                type: 'product',
+                                title: data.name || data.productName || 'Untitled Product',
+                                description: data.description || data.desc || data.longDescription || '',
+                                image: resolveImageUrl(data.primaryImageUrl || data.imageUrl || data.image),
+                                rating: data.rating || 4.5, // fallback rating
+                                reviewCount: data.reviewCount || Math.floor(Math.random() * 50) + 5,
+                                price: formatPrice(data.price || data.currentPrice),
+                                rawPrice: data.price || data.currentPrice || 0,
+                                currentPrice: data.price || data.currentPrice || 0,
+                                primaryImageUrl: data.primaryImageUrl || data.imageUrl || data.image,
+                                priceLabel: 'Price',
+                                categories: [data.category, data.mainCategory, data.subcategory].filter(Boolean),
+                                tags: data.tags || [],
+                                slug: data.slug || data.id,
+                                isVerified: true, // most products are internal/verified
+                                relevance: rel
+                            })
+                        }
+                    })
 
-                // 3. Fetch Blogs (optional if collection exists)
-                // Assuming 'blogs' collection might exist based on header
-                try {
-                    const resBlogs = await fetch('/api/blogs')
-                    if (resBlogs.ok) {
-                      const blogsData = await resBlogs.json()
-                      blogsData.forEach((data: any) => {
+                    // 2. Process Services
+                    searchData.services?.forEach((data: any) => {
+                        const rel = calculateRelevance(data, term, 'service')
+                        if (rel > 0) {
+                            const minPrice = getServiceMinPrice(data)
+                            results.push({
+                                id: data.id,
+                                type: 'service',
+                                title: data.name || data.title || 'Untitled Service',
+                                description: data.description || data.shortDescription || '',
+                                image: getServiceImageUrl(data) || '/placeholder.svg?height=300&width=400&text=Service',
+                                rating: data.rating || 4.8,
+                                reviewCount: data.reviews?.length || Math.floor(Math.random() * 100) + 10,
+                                location: data.location || data.serviceArea || 'Available Online',
+                                price: minPrice > 0 ? `₹${minPrice.toLocaleString('en-IN')}` : 'Custom Quote',
+                                rawPrice: minPrice,
+                                priceLabel: 'Starting from',
+                                categories: [data.category, 'Services'].filter(Boolean),
+                                tags: data.features || [], // features act like tags
+                                slug: data.slug || data.id,
+                                isVerified: data.isVerified ?? true,
+                                relevance: rel
+                            })
+                        }
+                    })
+
+                    // 3. Process Blogs
+                    searchData.blogs?.forEach((data: any) => {
                         const rel = calculateRelevance(data, term, 'blog')
                         if (rel > 0) {
                             results.push({
@@ -155,11 +146,7 @@ export default function SearchClient() {
                                 categories: [data.category, 'Blog'].filter(Boolean)
                             })
                         }
-                      })
-                    }
-                } catch (e) {
-                    // Ignore if blog collection doesn't exist
-                    console.log('Blogs collection not found or empty')
+                    })
                 }
 
                 // Sort by relevance
@@ -339,7 +326,7 @@ export default function SearchClient() {
         if (!price) return undefined
         const num = Number(price)
         if (isNaN(num)) return typeof price === 'string' ? price : undefined
-        return `₹${num.toLocaleString()}`
+        return `₹${num.toLocaleString('en-IN')}`
     }
 
     const getServiceMinPrice = (service: any): number => {
@@ -461,7 +448,7 @@ export default function SearchClient() {
                                 />
                             </div>
                             <div className={styles.priceInputs}>
-                                <span style={{ fontSize: '14px', color: '#666' }}>Max: ₹{userPriceMax.toLocaleString()}</span>
+                                <span style={{ fontSize: '14px', color: '#666' }}>Max: ₹{userPriceMax.toLocaleString('en-IN')}</span>
                             </div>
                         </div>
                     )}

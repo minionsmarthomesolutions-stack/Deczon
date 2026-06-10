@@ -246,7 +246,7 @@ export default function CartPage() {
                                                             <svg className={styles['meta-icon']} viewBox="0 0 24 24" fill="none">
                                                                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke="currentColor" strokeWidth="2" />
                                                             </svg>
-                                                            <span>Area: {item.squareFeet.toLocaleString()} sq ft</span>
+                                                            <span>Area: {item.squareFeet.toLocaleString('en-IN')} sq ft</span>
                                                         </div>
                                                         {item.pricePerSqFt && (
                                                             <div className={styles['meta-item']}>
@@ -263,7 +263,7 @@ export default function CartPage() {
                                                                     <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
                                                                     <path d="M12 6v6l4 2" stroke="currentColor" strokeWidth="2" />
                                                                 </svg>
-                                                                <span>Total Project: ₹{item.totalPrice.toLocaleString()}</span>
+                                                                <span>Total Project: ₹{item.totalPrice.toLocaleString('en-IN')}</span>
                                                             </div>
                                                         )}
                                                     </div>

@@ -78,10 +78,15 @@ export async function getHomePageData(): Promise<HomePageData> {
             if (error) throw error;
             
             if (productsArray) {
-                allProducts = productsArray.map((row: any) => ({
-                    id: row.id,
-                    ...(row.document || {})
-                }));
+                allProducts = productsArray.map((row: any) => {
+                    const doc = row.document || {};
+                    const id = row.id || doc.id || '';
+                    const { id: _ignored, ...rest } = doc;
+                    return { id, ...rest };
+                }).filter((p: any) => {
+                    const str = JSON.stringify(p);
+                    return !str.includes('firebasestorage.googleapis.com') && !str.includes('storage.googleapis.com');
+                });
             }
         } catch (error) {
             console.warn('Error fetching products from Supabase:', error);
@@ -137,18 +142,28 @@ export async function getHomePageData(): Promise<HomePageData> {
             if (error) throw error;
 
             if (servicesArray && servicesArray.length > 0) {
-                allServices = servicesArray.map((row: any) => ({
-                    id: row.id,
-                    ...(row.document || {})
-                }));
+                allServices = servicesArray.map((row: any) => {
+                    const doc = row.document || {};
+                    const id = row.id || doc.id || '';
+                    const { id: _ignored, ...rest } = doc;
+                    return { id, ...rest };
+                }).filter((s: any) => {
+                    const str = JSON.stringify(s);
+                    return !str.includes('firebasestorage.googleapis.com') && !str.includes('storage.googleapis.com');
+                });
             } else {
                 // fallback
                 const { data: fallbackServices } = await supabase.from('services').select('*').limit(100);
                 if (fallbackServices) {
-                    allServices = fallbackServices.map((row: any) => ({
-                        id: row.id,
-                        ...(row.document || {})
-                    }));
+                    allServices = fallbackServices.map((row: any) => {
+                        const doc = row.document || {};
+                        const id = row.id || doc.id || '';
+                        const { id: _ignored, ...rest } = doc;
+                        return { id, ...rest };
+                    }).filter((s: any) => {
+                        const str = JSON.stringify(s);
+                        return !str.includes('firebasestorage.googleapis.com') && !str.includes('storage.googleapis.com');
+                    });
                 }
             }
         } catch (error) {
@@ -162,10 +177,12 @@ export async function getHomePageData(): Promise<HomePageData> {
             if (error) throw error;
             
             if (blogsArray) {
-                allBlogs = blogsArray.map((row: any) => ({
-                    id: row.id,
-                    ...(row.document || {})
-                }));
+                allBlogs = blogsArray.map((row: any) => {
+                    const doc = row.document || {};
+                    const id = row.id || doc.id || '';
+                    const { id: _ignored, ...rest } = doc;
+                    return { id, ...rest };
+                });
             }
         } catch (error) {
             console.warn('Error loading blogs:', error);

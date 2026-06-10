@@ -1,0 +1,87 @@
+[
+  {
+    "id": "36041d3d-9cde-417c-87fe-a93a9b65f0f9",
+    "document": {
+      "id": "36041d3d-9cde-417c-87fe-a93a9b65f0f9",
+      "name": "CCTV & Security Setup",
+      "slug": "cctv-security-setup",
+      "status": "active",
+      "seoTags": [],
+      "category": "Automation",
+      "packages": {},
+      "createdAt": "2026-05-08T06:58:44.252Z",
+      "updatedAt": "2026-05-08T06:58:44.252Z",
+      "description": "<p>Protect your home or office with our <strong>professional CCTV installation</strong>. We supply and install HD cameras, NVR/DVR systems, and configure remote viewing on your phone.</p>",
+      "mainCategory": "Automation Solutions",
+      "galleryImages": []
+    }
+  },
+  {
+    "id": "b456bfda-b22c-4205-a52e-f3412824b010",
+    "document": {
+      "id": "b456bfda-b22c-4205-a52e-f3412824b010",
+      "name": "False Ceiling Design & Installation",
+      "slug": "false-ceiling-design-installation",
+      "status": "active",
+      "seoTags": [],
+      "category": "Ceiling",
+      "packages": {},
+      "createdAt": "2026-05-08T06:58:43.219Z",
+      "updatedAt": "2026-05-08T06:58:43.219Z",
+      "description": "<p>From <strong>POP to gypsum board</strong>, we design and install stunning false ceilings with integrated LED cove lighting, downlights, and custom patterns.</p>",
+      "mainCategory": "Ceiling Design & Ambient Lighting",
+      "galleryImages": []
+    }
+  },
+  {
+    "id": "cfcc0ad5-1c98-4332-a7e9-9cb27a6ac358",
+    "document": {
+      "id": "cfcc0ad5-1c98-4332-a7e9-9cb27a6ac358",
+      "name": "Interior Painting",
+      "slug": "interior-painting",
+      "status": "active",
+      "seoTags": [],
+      "category": "Interior",
+      "packages": {},
+      "createdAt": "2026-05-08T06:58:44.752Z",
+      "updatedAt": "2026-05-08T06:58:44.752Z",
+      "description": "<p>Give your home a fresh look with our <strong>professional interior painting</strong> service. We use premium zero-VOC paints with thorough surface prep, crack filling, and two coats of finish.</p>",
+      "mainCategory": "Interior Service",
+      "galleryImages": []
+    }
+  },
+  {
+    "id": "9fd7ddeb-92d0-4355-90a9-4032bc822b6c",
+    "document": {
+      "id": "9fd7ddeb-92d0-4355-90a9-4032bc822b6c",
+      "name": "Smart Home Installation",
+      "slug": "smart-home-installation",
+      "status": "active",
+      "seoTags": [],
+      "category": "Automation",
+      "packages": {},
+      "createdAt": "2026-05-08T06:58:42.405Z",
+      "updatedAt": "2026-05-08T06:58:42.405Z",
+      "description": "<p>Our certified technicians will <strong>design and install</strong> a complete smart home system tailored to your lifestyle. From smart lighting to security cameras and voice control — we handle everything.</p>",
+      "mainCategory": "Automation Solutions",
+      "galleryImages": []
+    }
+  },
+  {
+    "id": "18972221-4cd4-4076-b0a5-d11be80367cf",
+    "document": {
+      "id": "18972221-4cd4-4076-b0a5-d11be80367cf",
+      "name": "Flooring Installation",
+      "slug": "flooring-installation",
+      "status": "active",
+      "seoTags": [],
+      "category": "Flooring",
+      "packages": {},
+      "createdAt": "2026-05-08T06:58:43.789Z",
+      "updatedAt": "2026-05-08T06:58:43.789Z",
+      "description": "<p>We supply and install <strong>premium flooring solutions</strong> including SPC vinyl, LVT planks, laminate, and engineered hardwood. Old floor removal and surface prep included.</p>",
+      "mainCategory": "Textured Flooring & Surface Designs",
+      "galleryImages": []
+    }
+  }
+]

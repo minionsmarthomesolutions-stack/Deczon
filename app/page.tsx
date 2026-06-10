@@ -107,7 +107,7 @@ export default async function Home() {
       </h1>
 
       {/* Smart Home Categories Promo Section */}
-      <PromoSection categories={categories} />
+      <PromoSection categories={categories} products={products} />
 
       {/* Dynamic Main Category Sections */}
       {mainCategorySections.length > 0 && (
